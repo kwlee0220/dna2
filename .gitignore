@@ -127,3 +127,12 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# PyTorch weights
+*.pt
+
+# model weights
+*.weights
+
+# .vscode/
+configurations.yaml
