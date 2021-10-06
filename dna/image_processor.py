@@ -111,8 +111,10 @@ class ImageProcessor(metaclass=ABCMeta):
                         sync_fps = not sync_fps
             
             elapsed = time.time() - started
-            if elapsed_avg is not None:
+            if frame_idx > 10:
                 elapsed_avg = elapsed_avg * (1-ImageProcessor.__ALPHA) + elapsed * ImageProcessor.__ALPHA
+            elif frame_idx > 1:
+                elapsed_avg = elapsed_avg * 0.5 + elapsed * 0.5
             else:
                 elapsed_avg = elapsed
             fps = 1 / elapsed_avg
