@@ -29,5 +29,23 @@
                 "--show"
             ]
         },
+        {
+            "name": "Track Video",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/track_video.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--detector", "yolov4",
+                // "--detector", "file:C:/Temp/data/cam_1.txt",
+                // "--input", "C:/Temp/data/cam_1.mp4",
+                // "--detector", "file:C:/Temp/data/channel05_9.txt",
+                "--input", "C:/Temp/data/channel05_9.avi",
+                // "--input", "C:/Temp/data/gun_fighting.mp4",
+                // "--output", "C:/Temp/cam_1_track.txt",
+                "--show",
+                // "--show_progress",
+            ]
+        },
     ]
 }
