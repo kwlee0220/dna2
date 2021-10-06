@@ -13,6 +13,21 @@
             "args": [
                 "--input", "C:/Temp/data/channel05_9.avi"
             ]
-        }
+        },
+        {
+            "name": "Detect Video",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/detect_video.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--detector", "yolov4",
+                "--input", "C:/Temp/data/cam_1_test.mp4",
+                // "--output", "C:/Temp/data/cam_1_test.txt",
+                // "--fps", "30",
+                // "--show_progress",
+                "--show"
+            ]
+        },
     ]
 }
