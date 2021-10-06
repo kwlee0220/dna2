@@ -7,7 +7,7 @@ import logging
 
 import numpy as np
 
-from dna import Size2d, BBox, plot_utils
+from dna import BBox
 from dna.det import Detection
 
 
@@ -57,6 +57,7 @@ class LogReadingDetector(ObjectDetector):
         # throw detection lines upto target_idx -
         while idx < frame_index:
             self.look_ahead = self._look_ahead()
+            idx = int(self.look_ahead[0])
 
         detections = []
         while idx == frame_index and self.look_ahead:
