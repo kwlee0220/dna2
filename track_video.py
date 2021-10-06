@@ -94,7 +94,7 @@ class TrackWriter(TrackerCallback):
     def _to_string(self, frame_idx: int, track: Track) -> str:
         tlbr = track.location.tlbr
         return (f"{frame_idx},{track.id},{tlbr[0]:.3f},{tlbr[1]:.3f},{tlbr[2]:.3f},{tlbr[3]:.3f},"
-                f"{track.state.value},-1,-1,-1")
+                f"{track.state.value}")
 
 import argparse
 def parse_args():

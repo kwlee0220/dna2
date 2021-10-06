@@ -22,11 +22,11 @@
             "console": "integratedTerminal",
             "args": [
                 "--detector", "yolov4",
-                "--input", "C:/Temp/data/cam_1_test.mp4",
-                // "--output", "C:/Temp/data/cam_1_test.txt",
+                "--input", "C:/Temp/data/cam_6.mp4",
+                "--output", "C:/Temp/cam_6_det.txt",
                 // "--fps", "30",
-                // "--show_progress",
-                "--show"
+                "--show_progress",
+                // "--show"
             ]
         },
         {
