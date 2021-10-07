@@ -47,5 +47,19 @@
                 // "--show_progress",
             ]
         },
+        {
+            "name": "Replay tracks",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/replay_tracks.py",
+            "console": "integratedTerminal",
+            "args": [
+                // "--detector", "yolov4",
+                "--track_file", "C:/Temp/data/cam_1_track.txt",
+                "--video_file", "C:/Temp/data/cam_1.mp4",
+                "--show",
+                // "--show_progress",
+            ]
+        },
     ]
 }
