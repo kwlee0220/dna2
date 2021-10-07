@@ -72,7 +72,7 @@ if __name__ == '__main__':
     tracker = LogFileBasedObjectTracker(args.track_file)
 
     display_window_name = "output" if args.show else None
-    with ReplayingTrackProcessor(capture, tracker, callback=None, window_name=display_window_name,
+    with ReplayingTrackProcessor(capture, tracker, callback=None,window_name=display_window_name,
                                 show_progress=args.show_progress) as processor:
         from timeit import default_timer as timer
         from datetime import timedelta
