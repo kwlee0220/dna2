@@ -36,8 +36,7 @@ class Track:
         return self.state == TrackState.Deleted
     
     def __repr__(self) -> str:
-        length = len(self.location_trail)
-        return f"{self.state.name}[{self.id}:len={length}]={self.location}"
+        return f"{self.state.name}[{self.id}]={self.location}"
 
     def draw(self, mat, color, label_color=None, line_thickness=2) -> np.ndarray:
         loc = self.location

@@ -32,11 +32,13 @@ class DemuxTrackerCallback(TrackerCallback):
 
     def track_stopped(self, tracker) -> None:
         for cb in self.callbacks:
-            with suppress(Exception): cb.track_stopped(tracker)
+            cb.track_stopped(tracker)
+            # with suppress(Exception): cb.track_stopped(tracker)
 
     def tracked(self, tracker, frame, frame_idx: int, tracks: List[Track]) -> None:
         for cb in self.callbacks:
-            with suppress(Exception): cb.tracked(tracker, frame, frame_idx, detections, tracks)
+            cb.tracked(tracker, frame, frame_idx, tracks)
+            # with suppress(Exception): cb.tracked(tracker, frame, frame_idx, tracks)
 
 
 class TrailCollector(TrackerCallback):

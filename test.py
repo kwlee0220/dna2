@@ -1,23 +1,13 @@
-from pathlib import Path
-import cv2
+import pubsub
+from pubsub import PubSub
 
-from dna import plot_utils
-from dna.det import DetectorLoader
+communicator = PubSub()
+messageQueue = communicator.subscribe('test')
+communicator.publish('test', 'Hello World!')
 
-detector = DetectorLoader.YOLOv4Torch(Path('./dna/det/yolov4_torch').absolute())
-# detector = DetectorFactory.YOLOv5Torch(Path('./dna/det/yolov5/weights/yolov5s.pt').absolute())
+o = messageQueue.listen()
+o2 = next(o)
+print(o2)
+print(o2['data'])
 
-image_dir = Path('./images')
-print(f'loading images from {image_dir.absolute()}')
-for image in image_dir.glob('*.jpg'):
-    mat = cv2.imread(str(image))
-    det_list = detector.detect(mat)
-
-    # print(det_list)
-    for det in det_list:
-        plot_utils.plot_detection(mat, det)
-    cv2.imshow('output', mat)
-    key = cv2.waitKey(5000)
-    if key == ord('q'):
-        break
-cv2.destroyAllWindows()
+print(next(messageQueue.listen()))['data']

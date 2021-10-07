@@ -61,5 +61,28 @@
                 // "--show_progress",
             ]
         },
+        {
+            "name": "DNA Node",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/dna_node.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--camera_id", "1",
+                "--detector", "file:C:/Temp/data/cam_1_det.txt",
+                "--input", "C:/Temp/data/cam_1.mp4",
+                "--max_age", "20",
+                "--show",
+            ]
+        },
+        {
+            "name": "Test",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/test.py",
+            "console": "integratedTerminal",
+            "args": [
+            ]
+        },
     ]
 }
