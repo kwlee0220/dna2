@@ -1,24 +1,15 @@
 from typing import List
 from abc import ABCMeta, abstractmethod
-import logging
+from contextlib import suppress
 from pathlib import Path
+import logging
 
 import numpy as np
 
 from dna import BBox
 from dna.det import Detection
+from dna.det.detector import ObjectDetector
 from . import Track, TrackState
-
-
-class TrackerCallback(metaclass=ABCMeta):
-    @abstractmethod
-    def track_started(self) -> None: pass
-
-    @abstractmethod
-    def track_stopped(self) -> None: pass
-
-    @abstractmethod
-    def tracked(self, frame, frame_idx: int, detections: List[Detection], tracks: List[Track]) -> None: pass
 
 
 class ObjectTracker(metaclass=ABCMeta):
@@ -26,11 +17,16 @@ class ObjectTracker(metaclass=ABCMeta):
     logger.setLevel(logging.INFO)
 
     @abstractmethod
-    def track(self, mat, frame_idx:int, det_list: List[Detection]) -> List[Track]: pass
+    def track(self, frame, frame_idx:int) -> List[Track]: pass
 
-    # @property
-    # @abstractmethod
-    # def tracks(self) -> List[Track] : pass
+
+class DetectionBasedObjectTracker(ObjectTracker):
+    @property
+    @abstractmethod
+    def detector(self) -> ObjectDetector: pass
+
+    @abstractmethod
+    def last_frame_detections(self) -> List[Detection]: pass
 
 
 class LogFileBasedObjectTracker(ObjectTracker):
@@ -47,7 +43,7 @@ class LogFileBasedObjectTracker(ObjectTracker):
     def file(self) -> Path:
         return self.__file
 
-    def track(self, mat, frame_idx:int, det_list: List[Detection]) -> List[Track]:
+    def track(self, frame, frame_idx:int) -> List[Track]:
         if not self.look_ahead:
             return []
 

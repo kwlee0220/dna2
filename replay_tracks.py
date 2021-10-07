@@ -1,12 +1,12 @@
 from typing import List
 from pathlib import Path
 from datetime import datetime
-import cv2
 import numpy as np
 
 from dna import ImageProcessor, VideoFileCapture
 from dna import color
-from dna.track import ObjectTracker, LogFileBasedObjectTracker, TrackerCallback
+from dna.track import ObjectTracker, LogFileBasedObjectTracker, TrackerCallback, DemuxTrackerCallback
+from dna.track.track_callbacks import TrailCollector
 
 
 class ReplayingTrackProcessor(ImageProcessor):
@@ -16,7 +16,9 @@ class ReplayingTrackProcessor(ImageProcessor):
 
         self.tracker = tracker
         self.show_label = True
-        self.callback = callback
+        self.trail_collector = TrailCollector()
+        self.callback = DemuxTrackerCallback([self.trail_collector, callback])  \
+                            if callback else self.trail_collector
 
     def on_started(self) -> None:
         if self.callback:
