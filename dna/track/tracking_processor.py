@@ -10,7 +10,7 @@ from .utils import draw_track_trail
 
 
 class ObjectTrackingProcessor(ImageProcessor):
-    def __init__(self, capture: ImageCapture, tracker: ObjectTracker, callback: TrackerCallback,
+    def __init__(self, capture: ImageCapture, tracker: ObjectTracker, callback: TrackerCallback=None,
                 window_name:str=None, show_progress=False) -> None:
         super().__init__(capture, window_name=window_name, show_progress=show_progress)
 

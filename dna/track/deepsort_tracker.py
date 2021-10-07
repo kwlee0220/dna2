@@ -58,7 +58,7 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
             state = TrackState.Deleted
 
         return Track(id=str(ds_track.track_id), state=state, location=BBox(ds_track.to_tlwh()),
-                    frame_idx=frame_idx)
+                    frame_index=frame_idx)
 
     def split_boxes_scores(self, det_list):
         boxes = []

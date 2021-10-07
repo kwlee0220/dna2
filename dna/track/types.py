@@ -21,7 +21,7 @@ class Track:
     id: str
     state: TrackState
     location: BBox
-    frame_idx: int
+    frame_index: int
 
     def is_tentative(self) -> bool:
         return self.state == TrackState.Tentative

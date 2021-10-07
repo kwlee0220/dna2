@@ -47,15 +47,15 @@ class LogFileBasedObjectTracker(ObjectTracker):
         if not self.look_ahead:
             return []
 
-        if self.look_ahead.frame_idx > frame_idx:
+        if self.look_ahead.frame_index > frame_idx:
             return []
 
         # throw track event lines upto target_idx -
-        while self.look_ahead.frame_idx < frame_idx:
+        while self.look_ahead.frame_index < frame_idx:
             self.look_ahead = self._look_ahead()
 
         tracks = []
-        while self.look_ahead.frame_idx == frame_idx:
+        while self.look_ahead.frame_index == frame_idx:
             tracks.append(self.look_ahead)
 
             # read next line
@@ -79,7 +79,7 @@ class LogFileBasedObjectTracker(ObjectTracker):
         tlbr = np.array(parts[2:6]).astype(float)
         bbox = BBox.from_tlbr(tlbr)
         state = TrackState(int(parts[6]))
-        return Track(track_id, state, bbox, frame_idx, [])
+        return Track(id=track_id, state=state, location=bbox, frame_index=frame_idx)
 
     def __repr__(self) -> str:
         current_idx = int(self.look_ahead[0]) if self.look_ahead else -1
