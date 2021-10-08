@@ -1,13 +1,11 @@
-import pubsub
-from pubsub import PubSub
+import psycopg2 as pg2
 
-communicator = PubSub()
-messageQueue = communicator.subscribe('test')
-communicator.publish('test', 'Hello World!')
+conn = pg2.connect("host=localhost dbname=dna user=postgres password=dna2021 port=5432")
+conn.autocommit = True
 
-o = messageQueue.listen()
-o2 = next(o)
-print(o2)
-print(o2['data'])
+cur = conn.cursor()
+cur.execute("select * from track_events")
+rows = cur.fetchall()
+conn.commit()
 
-print(next(messageQueue.listen()))['data']
+print(rows)
