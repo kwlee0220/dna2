@@ -10,6 +10,14 @@ from numpy.lib.arraysetops import isin
 class Point:
     xy: np.ndarray
 
+    @property
+    def x(self):
+        return self.xy[0]
+
+    @property
+    def y(self):
+        return self.xy[1]
+
     @classmethod
     def distance(cls, pt1:Point, pt2:Point) -> float:
         return np.linalg.norm(pt1.xy - pt2.xy)

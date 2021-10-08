@@ -1,19 +1,48 @@
-from datetime import datetime
 from typing import List
-from dataclasses import dataclass
 from pathlib import Path
 from threading import Thread
 
-from pubsub import PubSub
+from pubsub import PubSub, Queue
+import psycopg2 as pg2
+from psycopg2.extras import execute_values
 
-from dna import VideoFileCapture, BBox
+from dna import VideoFileCapture
 from dna.det import DetectorLoader
 from dna.track import DeepSORTTracker, ObjectTrackingProcessor
 from dna.enhancer import TrackEventEnhancer
 from dna.enhancer.types import TrackEvent
+import dna.utils as utils
 
-def store_track_event(event: TrackEvent):
-    print(event)
+
+_INSERT_SQL = "insert into track_events(camera_id,luid,bbox,frame_index,ts) values %s"
+_BULK_SIZE = 100
+
+def store_track_event(conn, mqueue: Queue):
+    print("starting a thread...")
+
+    bulk = []
+    for entry in mqueue.listen():
+        ev = entry['data']
+        if ev.camera_id is None:
+            if len(bulk) > 0:
+                _upload(conn, bulk)
+            break
+
+        bulk.append(_to_values(ev))
+        if len(bulk) >= _BULK_SIZE:
+            _upload(conn, bulk)
+
+def _upload(conn, bulk):
+    cur = conn.cursor()
+    execute_values(cur, _INSERT_SQL, bulk)
+    conn.commit()
+    cur.close()
+    bulk.clear()
+
+
+def _to_values(ev: TrackEvent):
+    box_expr = '{},{},{},{}'.format(*ev.location.tlbr)
+    return (ev.camera_id, ev.luid, box_expr, ev.frame_index, utils.utc2datetime(ev.ts))
 
 import argparse
 def parse_args():
@@ -26,6 +55,12 @@ def parse_args():
     parser.add_argument("--max_age", type=int, help="max. # of frames to delete", default=30)
     parser.add_argument("--input", help="input source.", required=True)
     parser.add_argument("--show", help="show detections.", action="store_true")
+
+    parser.add_argument("--db_host", help="host name of DNA data platform", default="localhost")
+    parser.add_argument("--db_port", type=int, help="port number of DNA data platform", default=5432)
+    parser.add_argument("--db_name", help="database name", default="dna")
+    parser.add_argument("--db_user", help="user name", default="postgres")
+    parser.add_argument("--db_passwd", help="password", default="dna2021")
     return parser.parse_args()
 
 
@@ -45,7 +80,12 @@ if __name__ == '__main__':
                                 max_age=args.max_age)
 
     pubsub = PubSub()
-    enhancer = TrackEventEnhancer(pubsub, args.camera_id, store_track_event)
+    enhancer = TrackEventEnhancer(pubsub, args.camera_id)
+
+    conn = pg2.connect(host=args.db_host, port=args.db_port,
+                        user=args.db_user, password=args.db_passwd, dbname=args.db_name)
+    thread = Thread(target=store_track_event, args=(conn, enhancer.subscribe(),))
+    thread.start()
 
     win_name = "output" if args.show else None
     with ObjectTrackingProcessor(capture, tracker, enhancer, window_name=win_name) as processor:

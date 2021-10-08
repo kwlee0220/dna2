@@ -2,40 +2,37 @@ from typing import List
 from dataclasses import dataclass
 from threading import Thread
 
-from pubsub import PubSub
+from pubsub import PubSub, Queue
 
 from dna.track import Track, TrackState, ObjectTracker
 from dna.track.track_callbacks import TrackerCallback
 from .types import TrackEvent
 
 
-_CHANNEL = "track_events"
-
-def _listen(queue, event_consume):
-    for entry in queue.listen():
-        event = entry['data']
-        event_consume(event)
-
 @dataclass(unsafe_hash=True)
 class Session:
     state: TrackState
     pendings: List[Track]
 
+_CHANNEL = "track_events"
 class TrackEventEnhancer(TrackerCallback):
-    def __init__(self, pubsub: PubSub, camera_id, event_consume) -> None:
+    def __init__(self, pubsub: PubSub, camera_id) -> None:
         super().__init__()
         self.sessions = {}
 
         self.camera_id = camera_id
         self.pubsub = pubsub
-        self.mqueue = self.pubsub.subscribe(_CHANNEL)
-        thread1 = Thread(target=_listen, args=(self.mqueue, event_consume))
-        thread1.start()
+        self.queue = self.pubsub.subscribe(_CHANNEL)
+
+    def subscribe(self) -> Queue:
+        return self.pubsub.subscribe(_CHANNEL)
 
     def track_started(self, tracker: ObjectTracker) -> None: pass
     def track_stopped(self, tracker: ObjectTracker) -> None:
+        self.pubsub.publish(_CHANNEL, TrackEvent(camera_id=None, luid=None,
+                                                location=None, frame_index=None, ts=None))
         self.sessions.clear()
-        self.mqueue.task_done()
+        self.queue.task_done()
 
     def tracked(self, tracker: ObjectTracker, frame, frame_idx: int, tracks: List[Track]) -> None:
         for track in tracks:

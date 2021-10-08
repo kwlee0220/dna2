@@ -48,7 +48,8 @@ class ImageProcessor(metaclass=ABCMeta):
         return self
 
     def __exit__(self, exc_type, exc_value, exc_tb):
-        with suppress(Exception): self.on_stopped()
+        # with suppress(Exception): self.on_stopped()
+        self.on_stopped()
         self.capture.close()
 
     @property
