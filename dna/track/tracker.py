@@ -17,7 +17,7 @@ class ObjectTracker(metaclass=ABCMeta):
     logger.setLevel(logging.INFO)
 
     @abstractmethod
-    def track(self, frame, frame_idx:int) -> List[Track]: pass
+    def track(self, frame, frame_idx:int, utc_epoch:int) -> List[Track]: pass
 
 
 class DetectionBasedObjectTracker(ObjectTracker):
@@ -43,7 +43,7 @@ class LogFileBasedObjectTracker(ObjectTracker):
     def file(self) -> Path:
         return self.__file
 
-    def track(self, frame, frame_idx:int) -> List[Track]:
+    def track(self, frame, frame_idx:int, utc_epoch:int) -> List[Track]:
         if not self.look_ahead:
             return []
 
@@ -65,21 +65,13 @@ class LogFileBasedObjectTracker(ObjectTracker):
 
         return tracks
         
-    def _look_ahead(self):
+    def _look_ahead(self) -> Track:
         line = self.__file.readline().rstrip()
         if line:
-            return self._parse_line(line.split(','))
+            return Track.from_string(line)
         else:
             self.__file.close()
             return None
-
-    def _parse_line(self, parts: List[str]):
-        frame_idx = int(parts[0])
-        track_id = parts[1]
-        tlbr = np.array(parts[2:6]).astype(float)
-        bbox = BBox.from_tlbr(tlbr)
-        state = TrackState(int(parts[6]))
-        return Track(id=track_id, state=state, location=bbox, frame_index=frame_idx)
 
     def __repr__(self) -> str:
         current_idx = int(self.look_ahead[0]) if self.look_ahead else -1

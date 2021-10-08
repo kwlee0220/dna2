@@ -11,7 +11,7 @@ class VideoFileDisplayer(ImageProcessor):
     def __init__(self, capture, window_name: str="video_output") -> None:
         super().__init__(capture, window_name=window_name, show_progress=False)
 
-    def process_image(self, ts: datetime, frame_idx: int, mat: np.ndarray) -> np.ndarray:
+    def process_image(self, utc_epoch: int, frame_idx: int, mat: np.ndarray) -> np.ndarray:
         return mat
 
     def on_started(self) -> None:

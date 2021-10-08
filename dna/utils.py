@@ -1,5 +1,19 @@
+from datetime import datetime, timezone
+from time import time
 from typing import Tuple
 from pathlib import Path
+
+def datetime2utc(dt: datetime) -> int:
+    return int(dt.replace(tzinfo=timezone.utc).timestamp())
+
+def utc2datetime(ts: int) -> datetime:
+    return datetime.fromtimestamp(ts / 1000)
+
+def datetime2str(dt: datetime) -> str:
+    return dt.strftime("%Y-%m-%d %H:%M:%S.%f")
+
+def utc_now() -> int:
+    return int(time() * 1000)
 
 def _parse_keyvalue(kv) -> Tuple[str,str]:
     pair = kv.split('=')

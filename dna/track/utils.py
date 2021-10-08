@@ -4,7 +4,7 @@ from cv2 import line
 import numpy as np
 
 from dna import BBox, plot_utils
-from . import Track
+from . import Track, TrackState
 
 
 def draw_track_trail(mat, track: Track, color, label_color=None,

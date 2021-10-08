@@ -30,7 +30,7 @@ class ImageProcessor(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def process_image(self, ts: datetime, frame_idx: int, mat: np.ndarray) -> np.ndarray:
+    def process_image(self, utc_epoch: int, frame_idx: int, mat: np.ndarray) -> np.ndarray:
         pass
 
     @abstractmethod

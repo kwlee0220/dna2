@@ -30,8 +30,8 @@ class ObjectTrackingProcessor(ImageProcessor):
         if self.callback:
             self.callback.track_stopped(self.tracker)
 
-    def process_image(self, ts: datetime, frame_idx: int, frame: np.ndarray) -> np.ndarray:
-        track_events = self.tracker.track(frame, frame_idx)
+    def process_image(self, utc_epoch: int, frame_idx: int, frame: np.ndarray) -> np.ndarray:
+        track_events = self.tracker.track(frame, frame_idx, utc_epoch)
         if self.callback:
             self.callback.tracked(self.tracker, frame, frame_idx, track_events)
 

@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List
 from dataclasses import dataclass
 from pathlib import Path
@@ -9,9 +10,10 @@ from dna import VideoFileCapture, BBox
 from dna.det import DetectorLoader
 from dna.track import DeepSORTTracker, ObjectTrackingProcessor
 from dna.enhancer import TrackEventEnhancer
+from dna.enhancer.types import TrackEvent
 
-def store_track_event(camera_id:str, luid:str, location:BBox, frame_idx:int):
-    print(f"camera={camera_id}, id={luid}, location={location}, frame_idx={frame_idx}")
+def store_track_event(event: TrackEvent):
+    print(event)
 
 import argparse
 def parse_args():
@@ -27,6 +29,8 @@ def parse_args():
     return parser.parse_args()
 
 
+import dna.utils as utils
+
 if __name__ == '__main__':
     args = parse_args()
 
@@ -40,7 +44,8 @@ if __name__ == '__main__':
                                 max_iou_distance=args.max_iou_distance,
                                 max_age=args.max_age)
 
-    enhancer = TrackEventEnhancer(args.camera_id, store_track_event)
+    pubsub = PubSub()
+    enhancer = TrackEventEnhancer(pubsub, args.camera_id, store_track_event)
 
     win_name = "output" if args.show else None
     with ObjectTrackingProcessor(capture, tracker, enhancer, window_name=win_name) as processor:

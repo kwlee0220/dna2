@@ -1,24 +1,20 @@
 from typing import List
 from dataclasses import dataclass
-from pathlib import Path
 from threading import Thread
 
 from pubsub import PubSub
 
-from dna import VideoFileCapture
-from dna.det import DetectorLoader
-from dna.track import Track, TrackState, ObjectTracker, DeepSORTTracker, ObjectTrackingProcessor
+from dna.track import Track, TrackState, ObjectTracker
 from dna.track.track_callbacks import TrackerCallback
+from .types import TrackEvent
 
 
 _CHANNEL = "track_events"
 
-def _listen(cam_id, queue, event_consume):
+def _listen(queue, event_consume):
     for entry in queue.listen():
-        track = entry['data']
-        event_consume(cam_id, track.id, track.location, track.frame_index)
-
-    print('XXXXXXXXXXXXXXXX')
+        event = entry['data']
+        event_consume(event)
 
 @dataclass(unsafe_hash=True)
 class Session:
@@ -26,19 +22,20 @@ class Session:
     pendings: List[Track]
 
 class TrackEventEnhancer(TrackerCallback):
-    def __init__(self, camera_id, event_consume) -> None:
+    def __init__(self, pubsub: PubSub, camera_id, event_consume) -> None:
         super().__init__()
         self.sessions = {}
 
-        self.pubsub = PubSub()
-
+        self.camera_id = camera_id
+        self.pubsub = pubsub
         self.mqueue = self.pubsub.subscribe(_CHANNEL)
-        thread1 = Thread(target=_listen, args=(camera_id, self.mqueue, event_consume))
+        thread1 = Thread(target=_listen, args=(self.mqueue, event_consume))
         thread1.start()
 
     def track_started(self, tracker: ObjectTracker) -> None: pass
     def track_stopped(self, tracker: ObjectTracker) -> None:
-        self.mqueue.unsubscribe()
+        self.sessions.clear()
+        self.mqueue.task_done()
 
     def tracked(self, tracker: ObjectTracker, frame, frame_idx: int, tracks: List[Track]) -> None:
         for track in tracks:
@@ -55,30 +52,33 @@ class TrackEventEnhancer(TrackerCallback):
                     self.sessions[track.id] = Session(track.state, [track])
             elif session.state == TrackState.Tentative:
                 if track.state == TrackState.Confirmed:
-                    for pended in session.pendings:
-                        confirmed = self.__to_confirmed_track(pended)
-                        self.pubsub.publish(_CHANNEL, confirmed)
-                    self.pubsub.publish(_CHANNEL, track)
+                    self.__publish_all_pended_events(session)
+                    self.__publish(track)
                     session.state = TrackState.Confirmed
-                    session.pendings.clear()
                 elif track.state == TrackState.Tentative:
                     session.pendings.append(track)
             elif session.state == TrackState.Confirmed:
                 if track.state == TrackState.Confirmed:
-                    self.pubsub.publish(_CHANNEL, track)
+                    self.__publish(track)
                 elif track.state == TrackState.TemporarilyLost:
                     session.pendings.append(track)
                     session.state = TrackState.TemporarilyLost
             elif session.state == TrackState.TemporarilyLost:
                 if track.state == TrackState.Confirmed:
-                    for pended in session.pendings:
-                        confirmed = self.__to_confirmed_track(pended)
-                        self.pubsub.publish(_CHANNEL, confirmed)
-                    self.pubsub.publish(_CHANNEL, track)
+                    self.__publish_all_pended_events(session)
+                    self.__publish(track)
                     session.state = TrackState.Confirmed
-                    session.pendings.clear()
                 elif track.state == TrackState.TemporarilyLost:
                     session.pendings.append(track)
 
-    def __to_confirmed_track(self, track):
-        return Track(track.id, TrackState.Confirmed, track.location, track.frame_index)
+    def __publish_all_pended_events(self, session):
+        for pended in session.pendings:
+            self.__publish(pended)
+        session.pendings.clear()
+
+    def __publish(self, track):
+        self.pubsub.publish(_CHANNEL, self.__to_event(track))
+
+    def __to_event(self, track):
+        return TrackEvent(camera_id=self.camera_id, luid=track.id, location=track.location,
+                            frame_index=track.frame_index, ts=track.utc_epoch)

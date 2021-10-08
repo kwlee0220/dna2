@@ -29,7 +29,7 @@ class ObjectDetectingProcessor(ImageProcessor):
             self.out_handle.close()
             self.out_handle = None
 
-    def process_image(self, ts: datetime, frame_idx: int, mat: np.ndarray) -> np.ndarray:
+    def process_image(self, utc_epoch: int, frame_idx: int, mat: np.ndarray) -> np.ndarray:
         for det in self.detector.detect(mat, frame_idx):
             if self.out_handle:
                 self.out_handle.write(self._to_string(frame_idx, det) + '\n')

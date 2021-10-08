@@ -7,7 +7,7 @@ from collections import defaultdict
 
 from dna.det import Detection
 from dna.types import BBox
-from . import Track, TrackState, ObjectTracker
+from . import Track, TrackState, ObjectTracker, utils
 
 
 class TrackerCallback(metaclass=ABCMeta):
@@ -89,9 +89,4 @@ class TrackWriter(TrackerCallback):
 
     def tracked(self, frame, frame_idx: int, tracks: List[Track]) -> None:
         for track in tracks:
-            self.out_handle.write(self._to_string(frame_idx, track) + '\n')
-
-    def _to_string(self, frame_idx: int, track: Track) -> str:
-        tlbr = track.location.tlbr
-        return (f"{frame_idx},{track.id},{tlbr[0]:.3f},{tlbr[1]:.3f},{tlbr[2]:.3f},{tlbr[3]:.3f},"
-                f"{track.state.value}")
+            self.out_handle.write(track.to_string() + '\n')

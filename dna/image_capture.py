@@ -6,6 +6,8 @@ from pathlib import Path
 import numpy as np
 import cv2
 
+import dna.utils as utils
+
 class ImageCapture(metaclass=ABCMeta):
     @abstractmethod
     def is_open(self) -> bool:
@@ -56,11 +58,9 @@ class ImageCapture(metaclass=ABCMeta):
 
 
 class VideoFileCapture(ImageCapture):
-    def __init__(self, file: Path, start_ts: datetime =None, fps: float=-1) -> None:
+    def __init__(self, file: Path, fps: float=-1) -> None:
         self.__file = file
-        self.start_ts = datetime.now()
         self.__fps = fps if fps > 0 else -1
-        self.offset = (start_ts - self.start_ts) if start_ts else timedelta(milliseconds=0)
         self.__vid = None     # None on if it is closed
         self.__frame_count = -1
         self.__frame_index = -1
@@ -110,7 +110,7 @@ class VideoFileCapture(ImageCapture):
         _, mat = self.__vid.read()
         if mat is not None:
             self.__frame_index += 1
-        return datetime.now() + self.offset, self.__frame_index, mat
+        return utils.utc_now(), self.__frame_index, mat
 
     def __repr__(self) -> str:
         repr = super().__repr__()
