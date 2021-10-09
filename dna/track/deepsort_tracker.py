@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List
 from pathlib import Path
 
@@ -39,17 +40,17 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
     def last_frame_detections(self) -> List[Detection]:
         return self.__last_frame_detections
 
-    def track(self, frame, frame_idx:int, utc_epoch:int) -> List[Track]:
+    def track(self, frame, frame_idx:int, ts:datetime) -> List[Track]:
         self.__last_frame_detections = self.detector.detect(frame, frame_index=frame_idx)
         boxes, scores = self.split_boxes_scores(self.__last_frame_detections)
 
         tracker, deleted_tracks = self.deepsort.run_deep_sort(frame.astype(np.uint8), boxes, scores)
 
-        active_tracks = [self.to_dna_track(ds_track, frame_idx, utc_epoch) for ds_track in tracker.tracks]
-        deleted_tracks = [self.to_dna_track(ds_track, frame_idx, utc_epoch) for ds_track in deleted_tracks]
+        active_tracks = [self.to_dna_track(ds_track, frame_idx, ts) for ds_track in tracker.tracks]
+        deleted_tracks = [self.to_dna_track(ds_track, frame_idx, ts) for ds_track in deleted_tracks]
         return active_tracks + deleted_tracks
 
-    def to_dna_track(self, ds_track: DSTrack, frame_idx: int, utc_epoch:int) -> Track:
+    def to_dna_track(self, ds_track: DSTrack, frame_idx: int, ts:datetime) -> Track:
         if ds_track.state == DSTrackState.Confirmed:
             state = TrackState.Confirmed if ds_track.time_since_update <= 0 else TrackState.TemporarilyLost
         elif ds_track.state == DSTrackState.Tentative:
@@ -58,7 +59,7 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
             state = TrackState.Deleted
 
         return Track(id=str(ds_track.track_id), state=state, location=BBox(ds_track.to_tlwh()),
-                    frame_index=frame_idx, utc_epoch=utc_epoch)
+                    frame_index=frame_idx, ts=ts)
 
     def split_boxes_scores(self, det_list):
         boxes = []

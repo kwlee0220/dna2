@@ -76,6 +76,15 @@
             ]
         },
         {
+            "name": "Format",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/create_schema.py",
+            "console": "integratedTerminal",
+            "args": [
+            ]
+        },
+        {
             "name": "Test",
             "type": "python",
             "request": "launch",

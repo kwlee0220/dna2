@@ -110,7 +110,7 @@ class VideoFileCapture(ImageCapture):
         _, mat = self.__vid.read()
         if mat is not None:
             self.__frame_index += 1
-        return utils.utc_now(), self.__frame_index, mat
+        return datetime.now(), self.__frame_index, mat
 
     def __repr__(self) -> str:
         repr = super().__repr__()

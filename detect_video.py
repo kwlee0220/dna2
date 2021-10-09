@@ -29,14 +29,15 @@ class ObjectDetectingProcessor(ImageProcessor):
             self.out_handle.close()
             self.out_handle = None
 
-    def process_image(self, utc_epoch: int, frame_idx: int, mat: np.ndarray) -> np.ndarray:
-        for det in self.detector.detect(mat, frame_idx):
+    def process_image(self, frame: np.ndarray, frame_idx: int, ts: datetime) -> np.ndarray:
+        for det in self.detector.detect(frame, frame_idx):
             if self.out_handle:
                 self.out_handle.write(self._to_string(frame_idx, det) + '\n')
             if self.window_name:
-                mat = det.draw(mat, color=color.RED, label_color=self.label_color, show_score=self.show_score)
+                frame = det.draw(frame, color=color.RED, label_color=self.label_color,
+                                    show_score=self.show_score)
 
-        return mat
+        return frame
 
     def set_control(self, key: int) -> int:
         if key == ord('l'):

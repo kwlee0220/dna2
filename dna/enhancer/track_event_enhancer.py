@@ -4,6 +4,7 @@ from threading import Thread
 
 from pubsub import PubSub, Queue
 
+from dna import BBox
 from dna.track import Track, TrackState, ObjectTracker
 from dna.track.track_callbacks import TrackerCallback
 from .types import TrackEvent
@@ -77,5 +78,6 @@ class TrackEventEnhancer(TrackerCallback):
         self.pubsub.publish(_CHANNEL, self.__to_event(track))
 
     def __to_event(self, track):
-        return TrackEvent(camera_id=self.camera_id, luid=track.id, location=track.location,
-                            frame_index=track.frame_index, ts=track.utc_epoch)
+        location = BBox.from_tlbr(track.location.tlbr.astype(int))
+        return TrackEvent(camera_id=self.camera_id, luid=track.id, location=location,
+                            frame_index=track.frame_index, ts=track.ts)

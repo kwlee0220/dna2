@@ -11,6 +11,7 @@ from dna.det import DetectorLoader
 from dna.track import DeepSORTTracker, ObjectTrackingProcessor
 from dna.enhancer import TrackEventEnhancer
 from dna.enhancer.types import TrackEvent
+from dna.enhancer.trajectory_uploader import TrajectoryUploader
 import dna.utils as utils
 
 
@@ -41,8 +42,8 @@ def _upload(conn, bulk):
 
 
 def _to_values(ev: TrackEvent):
-    box_expr = '{},{},{},{}'.format(*ev.location.tlbr)
-    return (ev.camera_id, ev.luid, box_expr, ev.frame_index, utils.utc2datetime(ev.ts))
+    box_expr = '({},{}),({},{})'.format(*ev.location.tlbr)
+    return (ev.camera_id, ev.luid, box_expr, ev.frame_index, ev.ts)
 
 import argparse
 def parse_args():
@@ -84,7 +85,12 @@ if __name__ == '__main__':
 
     conn = pg2.connect(host=args.db_host, port=args.db_port,
                         user=args.db_user, password=args.db_passwd, dbname=args.db_name)
+
     thread = Thread(target=store_track_event, args=(conn, enhancer.subscribe(),))
+    thread.start()
+
+    trj_upload = TrajectoryUploader(enhancer.subscribe(), conn)
+    thread = Thread(target=trj_upload.run, args=tuple())
     thread.start()
 
     win_name = "output" if args.show else None

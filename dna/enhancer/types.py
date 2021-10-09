@@ -13,10 +13,10 @@ class TrackEvent:
     luid: str
     location: BBox
     frame_index: int
-    ts: int
+    ts: datetime
     
     def __repr__(self) -> str:
-        ts_str = utils.datetime2str(utils.utc2datetime(self.ts))
+        ts_str = utils.datetime2str(self.ts)
         return (f"TrackEvent[cam={self.camera_id}, id={self.luid}, loc=={self.location}, "
                 f"frame={self.frame_index}, ts={ts_str}]")
 

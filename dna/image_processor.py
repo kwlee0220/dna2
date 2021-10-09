@@ -30,7 +30,7 @@ class ImageProcessor(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def process_image(self, utc_epoch: int, frame_idx: int, mat: np.ndarray) -> np.ndarray:
+    def process_image(self, frame: np.ndarray, frame_idx: int, ts: datetime) -> np.ndarray:
         pass
 
     @abstractmethod
@@ -82,7 +82,7 @@ class ImageProcessor(metaclass=ABCMeta):
             if mat is None:
                 break
 
-            mat = self.process_image(ts, frame_idx, mat)
+            mat = self.process_image(mat, frame_idx, ts)
             wait_millis = 1
             if self.window_name and self.show:
                 if show_fps:

@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List
 from abc import ABCMeta, abstractmethod
 from contextlib import suppress
@@ -17,7 +18,7 @@ class ObjectTracker(metaclass=ABCMeta):
     logger.setLevel(logging.INFO)
 
     @abstractmethod
-    def track(self, frame, frame_idx:int, utc_epoch:int) -> List[Track]: pass
+    def track(self, frame, frame_idx:int, ts:datetime) -> List[Track]: pass
 
 
 class DetectionBasedObjectTracker(ObjectTracker):
@@ -43,7 +44,7 @@ class LogFileBasedObjectTracker(ObjectTracker):
     def file(self) -> Path:
         return self.__file
 
-    def track(self, frame, frame_idx:int, utc_epoch:int) -> List[Track]:
+    def track(self, frame, frame_idx:int, ts:datetime) -> List[Track]:
         if not self.look_ahead:
             return []
 
