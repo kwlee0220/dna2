@@ -20,6 +20,7 @@ class ImageProcessor(metaclass=ABCMeta):
         self.window_name = window_name
         self.show = window_name is not None
         self.show_progress = show_progress
+        self.capture_count = 0
 
     @abstractmethod
     def on_started(self) -> None:
@@ -71,7 +72,9 @@ class ImageProcessor(metaclass=ABCMeta):
         fps = 0
 
         video_interval = 1000 / self.capture.fps
-        if self.show_progress and self.capture.frame_count is not None and self.capture.frame_count > 1:
+        if self.show_progress \
+            and self.capture.frame_count is not None \
+            and self.capture.frame_count > 1:
             progress = tqdm(total=self.capture.frame_count)
         else:
             progress = None
@@ -81,6 +84,7 @@ class ImageProcessor(metaclass=ABCMeta):
             ts, frame_idx, mat = self.capture.capture()
             if mat is None:
                 break
+            self.capture_count += 1
 
             mat = self.process_image(mat, frame_idx, ts)
             wait_millis = 1
@@ -112,9 +116,9 @@ class ImageProcessor(metaclass=ABCMeta):
                         sync_fps = not sync_fps
             
             elapsed = time.time() - started
-            if frame_idx > 10:
+            if self.capture_count > 10:
                 elapsed_avg = elapsed_avg * (1-ImageProcessor.__ALPHA) + elapsed * ImageProcessor.__ALPHA
-            elif frame_idx > 1:
+            elif self.capture_count > 1:
                 elapsed_avg = elapsed_avg * 0.5 + elapsed * 0.5
             else:
                 elapsed_avg = elapsed

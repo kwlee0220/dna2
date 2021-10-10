@@ -12,6 +12,7 @@ from dna.track import DeepSORTTracker, ObjectTrackingProcessor
 from dna.enhancer import TrackEventEnhancer
 from dna.enhancer.types import TrackEvent
 from dna.enhancer.trajectory_uploader import TrajectoryUploader
+from dna.platform import DNAPlatform
 import dna.utils as utils
 
 
@@ -83,13 +84,14 @@ if __name__ == '__main__':
     pubsub = PubSub()
     enhancer = TrackEventEnhancer(pubsub, args.camera_id)
 
-    conn = pg2.connect(host=args.db_host, port=args.db_port,
-                        user=args.db_user, password=args.db_passwd, dbname=args.db_name)
+    platform = DNAPlatform(host=args.db_host, port=args.db_port,
+                            user=args.db_user, password=args.db_passwd, dbname=args.db_name)
+    conn = platform.connect()
 
     thread = Thread(target=store_track_event, args=(conn, enhancer.subscribe(),))
     thread.start()
 
-    trj_upload = TrajectoryUploader(enhancer.subscribe(), conn)
+    trj_upload = TrajectoryUploader(platform, enhancer.subscribe())
     thread = Thread(target=trj_upload.run, args=tuple())
     thread.start()
 

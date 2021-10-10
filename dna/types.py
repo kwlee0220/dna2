@@ -80,6 +80,22 @@ class Size2d:
             return '{:.1f}x{:.1f}'.format(*self.wh)
 
 
+@dataclass(frozen=True, unsafe_hash=True)
+class Size2i:
+    wh: List[int]
+
+    @property
+    def width(self) -> int:
+        return self.wh[0]
+    
+    @property
+    def height(self) -> int:
+        return self.wh[1]
+    
+    def __repr__(self) -> str:
+        return '{}x{}'.format(*self.wh)
+
+
 class BBox:
     def __init__(self, tlwh: np.ndarray) -> None:
         self.__tlwh = tlwh

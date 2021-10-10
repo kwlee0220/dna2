@@ -11,7 +11,9 @@
             "program": "${workspaceFolder}/show_video.py",
             "console": "integratedTerminal",
             "args": [
-                "--input", "C:/Temp/data/channel05_9.avi"
+                "--input", "C:/Temp/data/cam_9.mp4",
+                "--begin", "150",
+                "--end", "300",
             ]
         },
         {
@@ -22,7 +24,7 @@
             "console": "integratedTerminal",
             "args": [
                 "--detector", "yolov4",
-                "--input", "C:/Temp/data/cam_6.mp4",
+                "--input", "C:/Temp/data/cam_9.mp4",
                 // "--output", "C:/Temp/cam_6_det.txt",
                 // "--fps", "30",
                 // "--show_progress",
@@ -68,7 +70,7 @@
             "program": "${workspaceFolder}/dna_node.py",
             "console": "integratedTerminal",
             "args": [
-                "--camera_id", "1",
+                "--camera_id", "aicity:1",
                 "--detector", "file:C:/Temp/data/cam_1_det.txt",
                 "--input", "C:/Temp/data/cam_1.mp4",
                 "--max_age", "20",

@@ -1,23 +1,16 @@
-import psycopg2 as pg2
+from dna.platform import CameraInfo, DNAPlatform
+from dna.types import Size2i
 
-conn = pg2.connect("host=localhost dbname=dna user=postgres password=dna2021 port=5432")
-conn.autocommit = True
+platform = DNAPlatform()
+platform.connect()
 
-cur = conn.cursor()
-cur.execute("select * from track_events")
-rows = cur.fetchall()
-conn.commit()
+# camera_info_rset = platform.get_resource_set('camera_infos')
+# print(camera_info_rset.get_all())
 
-print(rows)
+# info = CameraInfo("other:1", 1, Size2i([1024, 768]))
+# camera_info_rset.insert(info)
+# print(camera_info_rset.get_all())
 
-"""
-create table track_events (
-    camera_id varchar not null,
-    luid varchar not null,
-    bbox box not null,
-    frame_index bigint not null,
-    ts timestamp not null,
-
-    constraint track_events_pkey primary key (camera_id, luid)
-);
-"""
+trajectories = platform.get_resource_set('trajectories')
+for traj in trajectories.get_where("path_count > 50"):
+    print(traj)

@@ -48,7 +48,7 @@ class Track:
         mat = loc.draw(mat, color, line_thickness=line_thickness)
         mat = cv2.circle(mat, loc.center.xy.astype(int), 4, color, thickness=-1, lineType=cv2.LINE_AA)
         if label_color:
-            mat = plot_utils.draw_label(mat, self.id, loc.tl.astype(int), label_color, color, 2)
+            mat = plot_utils.draw_label(mat, str(self.id), loc.tl.astype(int), label_color, color, 2)
 
         return mat
 

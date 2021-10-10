@@ -5,34 +5,22 @@ from threading import Thread
 import psycopg2 as pg2
 from psycopg2.extras import execute_values
 
-from dna import VideoFileCapture
+from dna import VideoFileCapture, Size2i
 from dna.det import DetectorLoader
 from dna.track import DeepSORTTracker, ObjectTrackingProcessor
 from dna.enhancer import TrackEventEnhancer
 from dna.enhancer.types import TrackEvent
 from dna.enhancer.trajectory_uploader import TrajectoryUploader
+from dna.platform import CameraInfo, DNAPlatform
 import dna.utils as utils
 
 _SQL_CREATE_TRACK_EVENTS = """
 create table track_events (
-    camera_id int not null,
+    camera_id varchar not null,
     luid bigint not null,
     bbox box not null,
     frame_index bigint not null,
     ts timestamp not null
-)
-"""
-
-_SQL_CREATE_TRAJECTORIES = """
-create table trajectories (
-    camera_id int not null,
-    luid bigint not null,
-    path path not null,
-    path_ts timestamp[] not null,
-    path_count int not null,
-    path_length real not null,
-    begin_ts timestamp not null,
-    end_ts timestamp not null
 )
 """
 
@@ -53,13 +41,30 @@ if __name__ == '__main__':
     args = parse_args()
 
     dna_home_dir = Path(args.home)
-    conn = pg2.connect(host=args.db_host, port=args.db_port,
-                        user=args.db_user, password=args.db_passwd, dbname=args.db_name)
-    conn.autocommit = True
+    platform = DNAPlatform(host=args.db_host, port=args.db_port,
+                            user=args.db_user, password=args.db_passwd, dbname=args.db_name)
+    conn = platform.connect()
 
     cur = conn.cursor()
     cur.execute('drop table if exists track_events')
-    cur.execute('drop table if exists trajectories')
-    cur.execute(_SQL_CREATE_TRACK_EVENTS)
-    cur.execute(_SQL_CREATE_TRAJECTORIES)
+    conn.commit()
     cur.close()
+
+    for id in platform.get_resource_set_id_all():
+        rset = platform.get_resource_set(id)
+        rset.drop()
+        rset.create()
+
+    camera_infos = platform.get_resource_set("camera_infos")
+    camera_infos.insert(CameraInfo(camera_id='ai_city:1', size=Size2i(wh=[1280, 960])))
+    camera_infos.insert(CameraInfo(camera_id='ai_city:6', size=Size2i(wh=[1280, 960])))
+    camera_infos.insert(CameraInfo(camera_id='ai_city:9', size=Size2i(wh=[1920, 1080])))
+    camera_infos.insert(CameraInfo(camera_id='ai_city:11', size=Size2i(wh=[1920, 1080])))
+    camera_infos.insert(CameraInfo(camera_id='etri:5', size=Size2i(wh=[1920, 1080])))
+    camera_infos.insert(CameraInfo(camera_id='etri:6', size=Size2i(wh=[1920, 1080])))
+
+    cur = conn.cursor()
+    cur.execute(_SQL_CREATE_TRACK_EVENTS)
+    conn.commit()
+    cur.close()
+    conn.close()

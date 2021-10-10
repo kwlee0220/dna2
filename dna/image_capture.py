@@ -57,13 +57,21 @@ class ImageCapture(metaclass=ABCMeta):
                 f"fps={self.fps:.0f}/s")
 
 
+import sys
 class VideoFileCapture(ImageCapture):
-    def __init__(self, file: Path, fps: float=-1) -> None:
+    def __init__(self, file: Path, fps: float=-1, begin_frame=1, end_frame=None) -> None:
         self.__file = file
         self.__fps = fps if fps > 0 else -1
         self.__vid = None     # None on if it is closed
         self.__frame_count = -1
         self.__frame_index = -1
+
+        end_frame = end_frame if end_frame else sys.maxsize*2 + 1
+        if begin_frame <= 0 or end_frame < begin_frame:
+            raise ValueError((f"invalid [begin,end] frame range: "
+                                f"begin={self.__frame_begin}, end={self.__frame_end}"))
+        self.__frame_begin = begin_frame
+        self.__frame_end = end_frame
 
     def is_open(self) -> bool:
         return self.__vid is not None
@@ -75,12 +83,16 @@ class VideoFileCapture(ImageCapture):
         self.__vid = cv2.VideoCapture(str(self.__file))
         if not self.__vid.isOpened():
             self.__vid = None
-            raise IOError(f"fails to open video capture: '{self.target}'")
+            raise IOError(f"fails to open video capture: '{self.__file}'")
 
-        self.__frame_count = self.__vid.get(cv2.CAP_PROP_FRAME_COUNT)
+        self.__frame_end = self.__frame_end if self.__frame_end else self.__vid.get(cv2.CAP_PROP_FRAME_COUNT)
+        self.__frame_count = self.__frame_end - self.__frame_begin + 1
         if self.__fps < 0:
             self.__fps = self.__vid.get(cv2.CAP_PROP_FPS)
-        self.__frame_index = 0
+
+        if self.__frame_begin > 1:
+            self.__vid.set(cv2.CAP_PROP_POS_FRAMES, self.__frame_begin)
+        self.__frame_index = self.__frame_begin-1
 
     def close(self) -> None:
         if self.__vid:
@@ -107,9 +119,13 @@ class VideoFileCapture(ImageCapture):
         if not self.is_open():
             raise ValueError(f"{self.__class__.__name__}: not opened")
 
+        if self.__frame_index >= self.__frame_end:
+            return datetime.now(), -1, None
+
         _, mat = self.__vid.read()
         if mat is not None:
             self.__frame_index += 1
+
         return datetime.now(), self.__frame_index, mat
 
     def __repr__(self) -> str:
