@@ -18,7 +18,7 @@ class TrackerCallback(metaclass=ABCMeta):
     def track_stopped(self, tracker: ObjectTracker) -> None: pass
 
     @abstractmethod
-    def tracked(self, tracker :ObjectTracker, frame, frame_idx: int, tracks: List[Track]) -> None: pass
+    def tracked(self, tracker: ObjectTracker, frame, frame_idx: int, tracks: List[Track]) -> None: pass
 
 
 class DemuxTrackerCallback(TrackerCallback):
@@ -77,16 +77,16 @@ class TrackWriter(TrackerCallback):
         self.track_file = track_file
         self.out_handle = None
 
-    def track_started(self) -> None:
-        super().track_started()
+    def track_started(self, tracker: ObjectTracker) -> None:
+        super().track_started(tracker)
         self.out_handle = open(self.track_file, 'w')
-
-    def track_stopped(self) -> None:
+    
+    def track_stopped(self, tracker: ObjectTracker) -> None:
         if self.out_handle:
             self.out_handle.close()
             self.out_handle = None
-        super().track_stopped()
+        super().track_stopped(tracker)
 
-    def tracked(self, frame, frame_idx: int, tracks: List[Track]) -> None:
+    def tracked(self, tracker: ObjectTracker, frame, frame_idx: int, tracks: List[Track]) -> None:
         for track in tracks:
             self.out_handle.write(track.to_string() + '\n')

@@ -10,7 +10,7 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description="Generating tracking events from a track-file")
     parser.add_argument("--home", help="DNA framework home directory.", default=".")
-    parser.add_argument("--track_file", help="Object detection algorithm.", default="yolov4")
+    parser.add_argument("--track_file", help="Object detection algorithm.")
     parser.add_argument("--video_file", help="input source.", required=True)
     parser.add_argument("--show", help="show detections.", action="store_true")
     return parser.parse_args()

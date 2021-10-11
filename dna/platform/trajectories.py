@@ -15,23 +15,21 @@ from .types import ResourceSet
 class Trajectory:
     camera_id: str
     luid: str
-    path: List[Tuple[Point,datetime]]
+    path: List[Point]
     length: float
     first_frame: int
     last_frame: int
 
     def serialize(self):
-        path_expr =','.join(['({},{})'.format(*tp[0].xy) for tp in self.path])
+        path_expr =','.join(['({},{})'.format(*np.rint(tp.xy).astype(int)) for tp in self.path])
         path_expr = "[{}]".format(path_expr)
-        path_ts_expr = [tp[1] for tp in self.path]
 
         return (self.camera_id, self.luid, len(self.path), self.length,
-                self.first_frame, self.last_frame, path_expr, path_ts_expr, )
+                self.first_frame, self.last_frame, path_expr)
 
     @classmethod
     def deserialize(cls, tup):
-        points = [pt for pt in _parse_point_list(tup[6])]
-        path = [(pt, ts) for pt, ts in zip(points, tup[7])]
+        path = [pt for pt in _parse_point_list(tup[6])]
         return Trajectory(camera_id=tup[0], luid=tup[1], path=path,
                             length=tup[3], first_frame=tup[4], last_frame=tup[5])
 
@@ -52,26 +50,22 @@ def _parse_point_list(path_str):
 
 class TrajectorySet(ResourceSet):
     __SQL_GET = """
-        select camera_id, luid, path_count, path_length, first_frame, last_frame, path, path_ts
+        select camera_id, luid, path_count, path_length, first_frame, last_frame, path
         from trajectories
         where camera_id=%s and luid=%s and first_frame=%s
     """
     __SQL_GET_ALL = """
-        select camera_id, luid, path_count, path_length, first_frame, last_frame, path, path_ts
-        from trajectories {} {}
-    """
-    __SQL_GET_WHERE = """
-        select camera_id, luid, path_count, path_length, first_frame, last_frame, path, path_ts
-        from trajectories where {} {} {}
+        select camera_id, luid, path_count, path_length, first_frame, last_frame, path
+        from trajectories {} {} {}
     """
     __SQL_INSERT = """
         insert into trajectories(camera_id, luid, path_count, path_length,
-                                first_frame, last_frame, path, path_ts)
-                            values (%s, %s, %s, %s, %s, %s, %s, %s)
+                                first_frame, last_frame, path)
+                            values (%s, %s, %s, %s, %s, %s, %s)
     """
     __SQL_INSERT_MANY = """
         insert into trajectories(camera_id, luid, path_count, path_length,
-                                first_frame, last_frame, path, path_ts) values %s
+                                first_frame, last_frame, path) values %s
     """
     __SQL_REMOVE = "delete from trajectories where camera_id=%s and luid=%s and first_frame=%s"
     __SQL_REMOVE_ALL = "delete from trajectories"
@@ -83,8 +77,7 @@ class TrajectorySet(ResourceSet):
             path_length real not null,
             first_frame int not null,
             last_frame int not null,
-            path path not null,
-            path_ts timestamp[] not null
+            path path not null
         )
     """
     __SQL_DROP = "drop table if exists trajectories"
@@ -115,23 +108,11 @@ class TrajectorySet(ResourceSet):
 
             return Trajectory.deserialize(tup) if tup else None
 
-    def get_where(self, cond_expr:str, offset:int=None, limit:int=None) -> List[Trajectory]:
+    def get_all(self, cond_expr:str, offset:int=None, limit:int=None) -> List[Trajectory]:
+        where_clause = f"where {cond_expr}" if cond_expr else ""
         offset_clause = f"offset {offset}" if offset else ""
         limit_clause = f"limit {offset}" if limit else ""
-        sql = TrajectorySet.__SQL_GET_WHERE.format(cond_expr, offset_clause, limit_clause)
-        conn = self.platform.connection
-        with conn.cursor() as cur:
-            cur.execute(sql)
-            trajs = [Trajectory.deserialize(tup) for tup in cur]
-            conn.commit()
-
-            return trajs
-
-    def get_all(self, offset:int=None, limit:int=None) -> List[Trajectory]:
-        offset_clause = f"offset {offset}" if offset else ""
-        limit_clause = f"limit {offset}" if limit else ""
-        sql = TrajectorySet.__SQL_GET_ALL.format(offset_clause, limit_clause)
-
+        sql = TrajectorySet.__SQL_GET_ALL.format(where_clause, offset_clause, limit_clause)
         conn = self.platform.connection
         with conn.cursor() as cur:
             cur.execute(sql)

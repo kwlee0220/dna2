@@ -1,4 +1,5 @@
 from __future__ import annotations
+from os import stat
 from typing import List, Union
 from dataclasses import dataclass
 from enum import Enum
@@ -18,9 +19,33 @@ class Point:
     def y(self):
         return self.xy[1]
 
-    @classmethod
-    def distance(cls, pt1:Point, pt2:Point) -> float:
+    @staticmethod
+    def distance(pt1:Point, pt2:Point) -> float:
         return np.linalg.norm(pt1.xy - pt2.xy)
+
+    @staticmethod
+    def slope(pt1:Point, pt2:Point) -> float:
+        delta = pt2.xy - pt1.xy
+        return (delta[1] / delta[0]) if delta[0] else None
+
+    @staticmethod
+    def y_int(pt1:Point, pt2:Point) -> float:
+        return pt2.y - (Point.slope(pt1, pt2) * pt2.x)
+
+    @staticmethod
+    def line_function(pt1:Point, pt2:Point):
+        slope = Point.slope(pt1, pt2)
+        y_int = Point.y_int(pt1, pt2)
+        def func(x):
+            return (slope * x) + y_int
+        return func
+
+    @staticmethod
+    def split_points(pt1:Point, pt2:Point, npoints:int) -> List[Point]:
+        func = Point.line_function(pt1, pt2)
+        step_x = (pt2.x - pt1.x) / (npoints+1)
+        xs = [pt1.x + (idx * step_x) for idx in range(1, npoints+1)]
+        return [Point(xy = np.array([x, func(x)])) for x in xs]
 
     def __add__(self, rhs) -> Point:
         if isinstance(rhs, Point):

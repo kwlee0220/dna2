@@ -13,6 +13,7 @@ def parse_args():
     parser.add_argument("--detector", help="Object detection algorithm.", default="yolov4")
     parser.add_argument("--match_score", help="Mathing threshold", default=0.55)
     parser.add_argument("--max_iou_distance", help="maximum IoU distance", default=0.99)
+    parser.add_argument("--max_age", type=int, help="max. # of frames to delete", default=20)
     parser.add_argument("--input", help="input source.", required=True)
     parser.add_argument("--output", help="detection output file.", required=False)
     parser.add_argument("--show", help="show detections.", action="store_true")
@@ -23,12 +24,7 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
 
-    # open target video file temporarily to find fps, which will be used
-    # in calculating 'max_age'
     capture = VideoFileCapture(Path(args.input))
-    with capture:
-        max_age = int(capture.fps) * 3
-
     detector = DetectorLoader.load(args.detector)
 
     dna_home_dir = Path(args.home)
@@ -36,7 +32,7 @@ if __name__ == '__main__':
     tracker = DeepSORTTracker(detector, weights_file=model_file.absolute(),
                                 matching_threshold=args.match_score,
                                 max_iou_distance=args.max_iou_distance,
-                                max_age=max_age)
+                                max_age=args.max_age)
     track_writer = TrackWriter(args.output) if args.output else None
 
     display_window_name = "output" if args.show else None

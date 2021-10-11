@@ -15,7 +15,7 @@ class CameraInfo:
 
     @classmethod
     def deserialize(cls, tup: Tuple) -> CameraInfo:
-        size = Size2i(list(tup[2:4]))
+        size = Size2i(list(tup[1:3]))
         return CameraInfo(camera_id=tup[0], size=size)
     
     def __repr__(self) -> str:
@@ -23,9 +23,8 @@ class CameraInfo:
 
 
 class CameraInfoSet(ResourceSet):
-    __SQL_GET_CAMERA = "select camera_id, width, height from cameras where camera_id=%s"
-    __SQL_GET_CAMERA_ALL = "select camera_id, width, height from cameras"
-    __SQL_GET_WHERE = "select camera_id, width, height from cameras where {} {} {}"
+    __SQL_GET = "select camera_id, width, height from cameras where camera_id=%s"
+    __SQL_GET_ALL = "select camera_id, width, height from cameras {} {} {}"
     __SQL_INSERT = "insert into cameras(camera_id, width, height) values (%s, %s, %s)"
     __SQL_REMOVE = "delete from cameras where camera_id=%s"
     __SQL_REMOVE_ALL = "delete from cameras"
@@ -60,25 +59,17 @@ class CameraInfoSet(ResourceSet):
     def get(self, key: Tuple[str]) -> CameraInfo:
         conn = self.platform.connection
         with conn.cursor() as cur:
-            cur.execute(CameraInfoSet.__SQL_GET_CAMERA, key)
+            cur.execute(CameraInfoSet.__SQL_GET, key)
             tup = cur.fetchone()
             conn.commit()
 
             return CameraInfo.deserialize(tup) if tup else None
 
-    def get_all(self) -> List[CameraInfo]:
-        conn = self.platform.connection
-        with conn.cursor() as cur:
-            cur.execute(CameraInfoSet.__SQL_GET_CAMERA_ALL)
-            camera_infos = [CameraInfo.deserialize(tup) for tup in cur]
-            conn.commit()
-
-            return camera_infos
-
-    def get_where(self, cond_expr:str, offset:int=None, limit:int=None) -> List[CameraInfo]:
+    def get_all(self, cond_expr:str=None, offset:int=None, limit:int=None) -> List[CameraInfo]:
+        where_clause = f"where {cond_expr}" if cond_expr else ""
         offset_clause = f"offset {offset}" if offset else ""
         limit_clause = f"limit {offset}" if limit else ""
-        sql = CameraInfoSet.__SQL_GET_WHERE.format(cond_expr, offset_clause, limit_clause)
+        sql = CameraInfoSet.__SQL_GET_ALL.format(where_clause, offset_clause, limit_clause)
         conn = self.platform.connection
         with conn.cursor() as cur:
             cur.execute(sql)

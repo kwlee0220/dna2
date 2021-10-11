@@ -9,12 +9,11 @@ class ResourceSet(metaclass=ABCMeta):
     def get(self, key: Tuple):
         pass
 
-    @abstractmethod
-    def get_all(self) -> List:
-        pass
+    def exists(self, key:Tuple):
+        return self.get(key) is not None
 
     @abstractmethod
-    def get_where(self, cond_expr:str, offset:int=None, limit:int=None) -> List:
+    def get_all(self, cond_expr:str=None, offset:int=None, limit:int=None) -> List:
         pass
 
     @abstractmethod

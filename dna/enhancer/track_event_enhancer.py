@@ -1,13 +1,18 @@
 from typing import List
 from dataclasses import dataclass
 from threading import Thread
+import logging
 
 from pubsub import PubSub, Queue
 
-from dna import BBox
+from dna import BBox, get_logger
 from dna.track import Track, TrackState, ObjectTracker
 from dna.track.track_callbacks import TrackerCallback
 from .types import TrackEvent
+
+
+_CHANNEL = "track_events"
+_logger = get_logger('dna.enhancer')
 
 
 @dataclass(unsafe_hash=True)
@@ -15,7 +20,6 @@ class Session:
     state: TrackState
     pendings: List[Track]
 
-_CHANNEL = "track_events"
 class TrackEventEnhancer(TrackerCallback):
     def __init__(self, pubsub: PubSub, camera_id) -> None:
         super().__init__()
@@ -30,8 +34,8 @@ class TrackEventEnhancer(TrackerCallback):
 
     def track_started(self, tracker: ObjectTracker) -> None: pass
     def track_stopped(self, tracker: ObjectTracker) -> None:
-        self.pubsub.publish(_CHANNEL, TrackEvent(camera_id=None, luid=None,
-                                                location=None, frame_index=None, ts=None))
+        stop = TrackEvent(camera_id=self.camera_id, luid=None, location=None, frame_index=None, ts=None)
+        self.pubsub.publish(_CHANNEL, stop)
         self.sessions.clear()
         self.queue.task_done()
 
@@ -39,7 +43,14 @@ class TrackEventEnhancer(TrackerCallback):
         for track in tracks:
             if track.state == TrackState.Deleted:
                 session = self.sessions.pop(track.id, None)
-                print(f"drop {len(session.pendings)} events")
+                if session.state == TrackState.Tentative:
+                    _logger.debug(f"drop immature track[{track.id}]")
+                else:
+                    self.__publish(track)
+                    count = len(session.pendings)
+                    if count > 0:
+                        _logger.debug(f"drop trailing tracks[{track.id}]: count={count}")
+
                 continue
 
             session = self.sessions.get(track.id, None)
@@ -50,6 +61,7 @@ class TrackEventEnhancer(TrackerCallback):
                     self.sessions[track.id] = Session(track.state, [track])
             elif session.state == TrackState.Tentative:
                 if track.state == TrackState.Confirmed:
+                    # _logger.debug(f"accept tentative tracks: track={track.id}, count={len(session.pendings)}")
                     self.__publish_all_pended_events(session)
                     self.__publish(track)
                     session.state = TrackState.Confirmed
@@ -63,6 +75,8 @@ class TrackEventEnhancer(TrackerCallback):
                     session.state = TrackState.TemporarilyLost
             elif session.state == TrackState.TemporarilyLost:
                 if track.state == TrackState.Confirmed:
+                    _logger.debug(f"accept 'temporarily-lost' tracks[{track.id}]: count={len(session.pendings)}")
+
                     self.__publish_all_pended_events(session)
                     self.__publish(track)
                     session.state = TrackState.Confirmed
@@ -75,9 +89,7 @@ class TrackEventEnhancer(TrackerCallback):
         session.pendings.clear()
 
     def __publish(self, track):
-        self.pubsub.publish(_CHANNEL, self.__to_event(track))
-
-    def __to_event(self, track):
-        location = BBox.from_tlbr(track.location.tlbr.astype(int))
-        return TrackEvent(camera_id=self.camera_id, luid=track.id, location=location,
+        location = None if track.is_deleted() else track.location
+        ev = TrackEvent(camera_id=self.camera_id, luid=track.id, location=location,
                             frame_index=track.frame_index, ts=track.ts)
+        self.pubsub.publish(_CHANNEL, ev)

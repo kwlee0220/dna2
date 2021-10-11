@@ -16,10 +16,6 @@ class TrackEvent:
     location: BBox
     frame_index: int
     ts: datetime
-
-    @classmethod
-    def end(cls, camera_id=camera_id, luid=luid) -> TrackEvent:
-        return TrackEvent(camera_id=camera_id, luid=luid, location=None, frame_index=-1, ts=None)
     
     def __repr__(self) -> str:
         ts_str = utils.datetime2str(self.ts)

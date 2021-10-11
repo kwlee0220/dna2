@@ -31,16 +31,16 @@ class ObjectTrackingProcessor(ImageProcessor):
             self.callback.track_stopped(self.tracker)
 
     def process_image(self, frame: np.ndarray, frame_idx: int, ts: datetime) -> np.ndarray:
-        track_events = self.tracker.track(frame, frame_idx, ts)
+        tracks = self.tracker.track(frame, frame_idx, ts)
         if self.callback:
-            self.callback.tracked(self.tracker, frame, frame_idx, track_events)
+            self.callback.tracked(self.tracker, frame, frame_idx, tracks)
 
         if self.window_name:
             if self.is_detection_based:
                 for det in self.tracker.last_frame_detections():
                     frame = det.draw(frame, color.WHITE, line_thickness=2)
 
-            for track in track_events:
+            for track in tracks:
                 trail = [mark.location for mark in self.trail_collector.get_trail(track.id, [])]
                 if track.is_confirmed():
                     frame = draw_track_trail(frame, track, color.BLUE, label_color=color.WHITE,
