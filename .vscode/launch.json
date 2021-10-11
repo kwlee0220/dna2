@@ -11,7 +11,9 @@
             "program": "${workspaceFolder}/show_video.py",
             "console": "integratedTerminal",
             "args": [
-                "--input", "C:/Temp/data/cam_9.mp4",
+                // "--input", "C:/Temp/data/cam_9.mp4",
+                "--input", "C:/Temp/data/channel05_9.avi",
+                "--fps", "26",
                 // "--begin", "150",
                 // "--end",  "300",
             ]
@@ -23,12 +25,15 @@
             "program": "${workspaceFolder}/detect_video.py",
             "console": "integratedTerminal",
             "args": [
-                "--detector", "yolov4",
-                "--input",  "C:/Temp/data/cam_9.mp4",
-                "--output", "C:/Temp/cam_9_det.txt",
-                // "--fps", "30",
-                "--show_progress",
-                // "--show"
+                // "--detector", "yolov4",
+                "--detector", "file:C:/Temp/data/channel05_9_det.txt",
+                // "--input",  "C:/Temp/data/cam_9.mp4",
+                // "--output", "C:/Temp/cam_9_det.txt",
+                "--input", "C:/Temp/data/channel05_9.mp4",
+                // "--output", "C:/Temp/channel05_9_det.txt",
+                // "--fps", "26",
+                // "--show_progress",
+                "--show"
             ]
         },
         {
@@ -39,10 +44,13 @@
             "console": "integratedTerminal",
             "args": [
                 // "--detector", "yolov4",
-                "--detector", "file:C:/Temp/data/cam_9_det.txt",
-                "--input",  "C:/Temp/data/cam_9.mp4",
-                "--output", "C:/Temp/cam_9_track.txt",
-                "--max_age", "20",
+                // "--detector", "file:C:/Temp/data/cam_9_det.txt",
+                // "--input",  "C:/Temp/data/cam_9.mp4",
+                // "--output", "C:/Temp/cam_9_track.txt",
+                "--detector", "file:C:/Temp/data/channel05_9_det.txt",
+                "--input",  "C:/Temp/data/channel05_9.mp4",
+                "--output", "C:/Temp/channel05_9_track.txt",
+                "--max_age", "30",
                 // "--show",
                 "--show_progress",
             ]
@@ -54,8 +62,8 @@
             "program": "${workspaceFolder}/replay_tracks.py",
             "console": "integratedTerminal",
             "args": [
-                "--track_file", "C:/Temp/data/cam_9_track.txt",
-                "--video_file", "C:/Temp/data/cam_9.mp4",
+                "--track_file", "C:/Temp/data/channel05_9_track.txt",
+                "--video_file", "C:/Temp/data/channel05_9.mp4",
                 "--show",
                 // "--show_progress",
             ]
@@ -67,11 +75,14 @@
             "program": "${workspaceFolder}/dna_node.py",
             "console": "integratedTerminal",
             "args": [
-                "--camera_id", "ai_city:9",
-                "--track_file", "C:/Temp/data/cam_9_track.txt",
+                // "--camera_id", "ai_city:9",
                 // "--detector", "file:C:/Temp/data/cam_9_det.txt",
-                "--input",  "C:/Temp/data/cam_9.mp4",
-                "--max_age", "20",
+                // "--input",  "C:/Temp/data/cam_9.mp4",
+                "--camera_id", "etri:5",
+                "--track_file", "C:/Temp/data/channel05_9_track.txt",
+                "--input",  "C:/Temp/data/channel05_9.mp4",
+                "--max_age", "30",
+                "--fps", "30",
                 "--show",
             ]
         },
@@ -82,9 +93,11 @@
             "program": "${workspaceFolder}/replay_trajectory.py",
             "console": "integratedTerminal",
             "args": [
-                "--camera_id", "ai_city:9",
-                "--luid", "14",
-                "--input", "C:/Temp/data/cam_9.mp4",
+                // "--camera_id", "ai_city:9",
+                // "--input", "C:/Temp/data/cam_9.mp4",
+                "--camera_id", "etri:5",
+                "--input", "C:/Temp/data/channel05_9.mp4",
+                "--luid", "10",
             ]
         },
         {

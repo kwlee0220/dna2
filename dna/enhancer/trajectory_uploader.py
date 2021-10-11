@@ -40,13 +40,23 @@ def _build_trajectory(session: Session) -> Trajectory:
 
 class TrajectoryUploader:
     def __init__(self, platform:DNAPlatform, mqueue: Queue, batch_size=10,
-                    min_path_count=10) -> None:
+                    min_path_count=10, max_pending_sec=5) -> None:
         self.mqueue = mqueue
         self.trajectories = platform.get_resource_set("trajectories")
         self.sessions = dict()
         self.batch_size = batch_size
         self.min_path_count = min_path_count
+        self.max_pending_sec = max_pending_sec
         self.buffer = []
+        self.last_upload_ts = datetime.now()
+
+    def run(self) -> None:
+        for entry in self.mqueue.listen():
+            event = entry['data']
+            if event.luid is None:
+                self.__upload()
+                break
+            self.handle_event(event)
 
     def handle_event(self, ev: TrackEvent) -> None:
         session = self.sessions.get(ev.luid, None)
@@ -61,13 +71,12 @@ class TrajectoryUploader:
             if len(session.points) >= self.min_path_count:
                 traj = _build_trajectory(session)
                 self.buffer.append(traj)
-                if len(self.buffer) > self.batch_size:
-                    self.trajectories.insert_many(self.buffer)
-                    self.buffer.clear()
+                if len(self.buffer) > self.batch_size \
+                    or (datetime.now() - self.last_upload_ts) > timedelta(seconds=self.max_pending_sec):
+                    self.__upload()
 
-    def run(self) -> None:
-        for entry in self.mqueue.listen():
-            event = entry['data']
-            if event.luid is None:
-                break
-            self.handle_event(event)
+    def __upload(self) -> None:
+        if len(self.buffer) > 0:
+            self.trajectories.insert_many(self.buffer)
+            self.buffer.clear()
+            self.last_upload_ts = datetime.now()

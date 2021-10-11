@@ -27,12 +27,15 @@ if __name__ == '__main__':
     capture = VideoFileCapture(Path(args.input))
     detector = DetectorLoader.load(args.detector)
 
+    det_dict = {'car': 'car', 'bus': 'bus', 'truck':'car'}
+
     dna_home_dir = Path(args.home)
     model_file = dna_home_dir / 'dna' / 'track' / 'deepsort' / 'ckpts' / 'model640.pt'
     tracker = DeepSORTTracker(detector, weights_file=model_file.absolute(),
                                 matching_threshold=args.match_score,
                                 max_iou_distance=args.max_iou_distance,
-                                max_age=args.max_age)
+                                max_age=args.max_age,
+                                det_dict = det_dict)
     track_writer = TrackWriter(args.output) if args.output else None
 
     display_window_name = "output" if args.show else None

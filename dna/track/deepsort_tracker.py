@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import List, Union
 from pathlib import Path
 
 import numpy as np
@@ -21,12 +21,14 @@ from .deepsort.track import Track as DSTrack
 from .deepsort.track import TrackState as DSTrackState
 
 
+
 class DeepSORTTracker(DetectionBasedObjectTracker):
-    def __init__(self, detector: ObjectDetector, weights_file,
+    def __init__(self, detector: ObjectDetector, weights_file, det_dict = None,
                     matching_threshold=0.5, max_iou_distance=0.7, max_age=30) -> None:
         super().__init__()
 
         self.__detector = detector
+        self.det_dict = det_dict
         self.deepsort = deepsort_rbc(wt_path=weights_file.absolute(),
                                     matching_threshold=matching_threshold,
                                     max_iou_distance=max_iou_distance,
@@ -40,8 +42,24 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
     def last_frame_detections(self) -> List[Detection]:
         return self.__last_frame_detections
 
+    def __replace_detection_label(self, det) -> Union[Detection,None]:
+        label = self.det_dict.get(det.label, None)
+        if label:
+            return Detection(det.bbox, label, det.score)
+        else:
+            return None
+
     def track(self, frame, frame_idx:int, ts:datetime) -> List[Track]:
         self.__last_frame_detections = self.detector.detect(frame, frame_index=frame_idx)
+        if self.det_dict:
+            dets = []
+            for det in self.__last_frame_detections:
+                label = self.det_dict.get(det.label, None)
+                if label:
+                    dets.append(Detection(det.bbox, label, det.score))
+                # else:
+                #     print(f"drop detection: {det.label}")
+            self.__last_frame_detections = dets
         boxes, scores = self.split_boxes_scores(self.__last_frame_detections)
 
         tracker, deleted_tracks = self.deepsort.run_deep_sort(frame.astype(np.uint8), boxes, scores)

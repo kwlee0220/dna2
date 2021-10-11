@@ -59,15 +59,15 @@ class ImageCapture(metaclass=ABCMeta):
 
 import sys
 class VideoFileCapture(ImageCapture):
-    def __init__(self, file: Path, fps: float=-1, begin_frame=1, end_frame=None) -> None:
+    def __init__(self, file: Path, fps: float=None, begin_frame: int=1, end_frame: int=None) -> None:
         self.__file = file
-        self.__fps = fps if fps > 0 else -1
+        self.__fps = fps
         self.__vid = None     # None on if it is closed
         self.__frame_count = -1
         self.__frame_index = -1
 
-        end_frame = end_frame if end_frame else sys.maxsize*2 + 1
-        if begin_frame <= 0 or end_frame < begin_frame:
+        # end_frame = end_frame if end_frame else sys.maxsize*2 + 1
+        if begin_frame <= 0 or (end_frame and (end_frame < begin_frame)):
             raise ValueError((f"invalid [begin,end] frame range: "
                                 f"begin={self.__frame_begin}, end={self.__frame_end}"))
         self.__frame_begin = begin_frame
@@ -85,9 +85,9 @@ class VideoFileCapture(ImageCapture):
             self.__vid = None
             raise IOError(f"fails to open video capture: '{self.__file}'")
 
-        self.__frame_end = self.__frame_end if self.__frame_end else self.__vid.get(cv2.CAP_PROP_FRAME_COUNT)
+        self.__frame_end = self.__frame_end if self.__frame_end else int(self.__vid.get(cv2.CAP_PROP_FRAME_COUNT))
         self.__frame_count = self.__frame_end - self.__frame_begin + 1
-        if self.__fps < 0:
+        if self.__fps is None:
             self.__fps = self.__vid.get(cv2.CAP_PROP_FPS)
 
         if self.__frame_begin > 1:
