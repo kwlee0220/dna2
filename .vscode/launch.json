@@ -19,34 +19,43 @@
             ]
         },
         {
-            "name": "Detect Video",
+            "name": "Detect Video (ETRI:05)",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/detect_video.py",
             "console": "integratedTerminal",
             "args": [
-                // "--detector", "yolov4",
-                "--detector", "file:C:/Temp/data/channel05_9_det.txt",
-                // "--input",  "C:/Temp/data/cam_9.mp4",
-                // "--output", "C:/Temp/cam_9_det.txt",
+                "--detector", "yolov4",
+                // "--detector", "file:C:/Temp/data/channel05_9_det.txt",
                 "--input", "C:/Temp/data/channel05_9.mp4",
-                // "--output", "C:/Temp/channel05_9_det.txt",
-                // "--fps", "26",
+                "--output", "C:/Temp/channel05_9_det.txt",
                 // "--show_progress",
                 "--show"
             ]
         },
         {
-            "name": "Track Video",
+            "name": "Detect Video (ETRI:06)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/detect_video.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--detector", "yolov4",
+                // "--detector", "file:C:/Temp/data/channel06_9_det.txt",
+                "--input", "C:/Temp/data/channel06_9.mp4",
+                "--output", "C:/Temp/channel06_9_det.txt",
+                "--show_progress",
+                // "--show"
+            ]
+        },
+        {
+            "name": "Track Video (ETRI:05)",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/track_video.py",
             "console": "integratedTerminal",
             "args": [
                 // "--detector", "yolov4",
-                // "--detector", "file:C:/Temp/data/cam_9_det.txt",
-                // "--input",  "C:/Temp/data/cam_9.mp4",
-                // "--output", "C:/Temp/cam_9_track.txt",
                 "--detector", "file:C:/Temp/data/channel05_9_det.txt",
                 "--input",  "C:/Temp/data/channel05_9.mp4",
                 "--output", "C:/Temp/channel05_9_track.txt",
@@ -56,7 +65,23 @@
             ]
         },
         {
-            "name": "Replay tracks",
+            "name": "Track Video (ETRI:06)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/track_video.py",
+            "console": "integratedTerminal",
+            "args": [
+                // "--detector", "yolov4",
+                "--detector", "file:C:/Temp/data/channel06_9_det.txt",
+                "--input",  "C:/Temp/data/channel06_9.mp4",
+                "--output", "C:/Temp/channel06_9_track.txt",
+                "--max_age", "30",
+                // "--show",
+                "--show_progress",
+            ]
+        },
+        {
+            "name": "Replay tracks (ETRI:05)",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/replay_tracks.py",
@@ -69,18 +94,47 @@
             ]
         },
         {
-            "name": "DNA Node",
+            "name": "Replay tracks (ETRI:06)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/replay_tracks.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--track_file", "C:/Temp/data/channel06_9_track.txt",
+                "--video_file", "C:/Temp/data/channel06_9.mp4",
+                "--show",
+                // "--show_progress",
+            ]
+        },
+        {
+            "name": "DNA Node (ETRI:05)",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/dna_node.py",
             "console": "integratedTerminal",
             "args": [
-                // "--camera_id", "ai_city:9",
-                // "--detector", "file:C:/Temp/data/cam_9_det.txt",
-                // "--input",  "C:/Temp/data/cam_9.mp4",
                 "--camera_id", "etri:5",
-                "--track_file", "C:/Temp/data/channel05_9_track.txt",
                 "--input",  "C:/Temp/data/channel05_9.mp4",
+                // "--detector", "yolov4",
+                // "--detector", "file:C:/Temp/data/channel05_9_det.txt",
+                "--track_file", "C:/Temp/data/channel05_9_track.txt",
+                "--max_age", "30",
+                "--fps", "30",
+                "--show",
+            ]
+        },
+        {
+            "name": "DNA Node (ETRI:06)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/dna_node.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--camera_id", "etri:6",
+                "--input",  "C:/Temp/data/channel06_9.mp4",
+                // "--detector", "yolov4",
+                // "--detector", "file:C:/Temp/data/channel06_9_det.txt",
+                "--track_file", "C:/Temp/data/channel06_9_track.txt",
                 "--max_age", "30",
                 "--fps", "30",
                 "--show",
@@ -97,7 +151,7 @@
                 // "--input", "C:/Temp/data/cam_9.mp4",
                 "--camera_id", "etri:5",
                 "--input", "C:/Temp/data/channel05_9.mp4",
-                "--luid", "10",
+                "--luid", "149",
             ]
         },
         {
