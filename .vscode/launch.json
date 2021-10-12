@@ -12,8 +12,7 @@
             "console": "integratedTerminal",
             "args": [
                 // "--input", "C:/Temp/data/cam_9.mp4",
-                "--input", "C:/Temp/data/channel05_9.avi",
-                "--fps", "26",
+                "--input", "C:/Temp/data/channel05_9.mp4",
                 // "--begin", "150",
                 // "--end",  "300",
             ]
@@ -29,8 +28,8 @@
                 // "--detector", "file:C:/Temp/data/channel05_9_det.txt",
                 "--input", "C:/Temp/data/channel05_9.mp4",
                 "--output", "C:/Temp/channel05_9_det.txt",
-                // "--show_progress",
-                "--show"
+                "--show_progress",
+                // "--show"
             ]
         },
         {

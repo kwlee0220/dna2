@@ -14,29 +14,30 @@ from dna import color
 
 class ImageProcessor(metaclass=ABCMeta):
     __ALPHA = 0.05
+    __OS_OVERHEAD = 100 / 1000  # MAGIC NUMBER
 
-    def __init__(self, capture, window_name: str=None, show_progress: bool=False) -> None:
+    def __init__(self, capture, sync: bool=False, window_name: str=None, show_progress: bool=False) -> None:
         self.capture = capture
+        self.__sync = sync
         self.window_name = window_name
         self.show = window_name is not None
         self.show_progress = show_progress
-        self.capture_count = 0
 
-    @abstractmethod
+    # @abstractmethod
     def on_started(self) -> None:
         pass
 
-    @abstractmethod
+    # @abstractmethod
     def on_stopped(self) -> None:
         pass
 
-    @abstractmethod
+    # @abstractmethod
     def process_image(self, frame: np.ndarray, frame_idx: int, ts: datetime) -> np.ndarray:
-        pass
+        return frame
 
-    @abstractmethod
+    # @abstractmethod
     def set_control(self, key: int) -> int:
-        pass
+        return key
 
     def __enter__(self):
         self.capture.open()
@@ -49,9 +50,10 @@ class ImageProcessor(metaclass=ABCMeta):
         return self
 
     def __exit__(self, exc_type, exc_value, exc_tb):
-        # with suppress(Exception): self.on_stopped()
-        self.on_stopped()
-        self.capture.close()
+        try:
+            self.on_stopped()
+        finally:
+            self.capture.close()
 
     @property
     def frame_count(self) -> int:
@@ -66,12 +68,15 @@ class ImageProcessor(metaclass=ABCMeta):
         return self.capture.frame_index
 
     def run(self) -> int:
+        capture_count = 0
         elapsed_avg = None
+        fps_measured = 0
+        overhead = 0
+        fps = self.capture.fps
         show_fps = True
-        sync_fps = True
-        fps = 0
+        sync_fps = self.__sync
+        frame_interval = (1 - ImageProcessor.__OS_OVERHEAD) / fps
 
-        video_interval = 1000 / self.capture.fps
         if self.show_progress \
             and self.capture.frame_count is not None \
             and self.capture.frame_count > 1:
@@ -79,54 +84,54 @@ class ImageProcessor(metaclass=ABCMeta):
         else:
             progress = None
 
+        wait_ts = 0
         while self.capture.is_open():
             started = time.time()
             ts, frame_idx, mat = self.capture.capture()
             if mat is None:
                 break
-            self.capture_count += 1
+            capture_count += 1
 
             mat = self.process_image(mat, frame_idx, ts)
-            wait_millis = 1
             if self.window_name and self.show:
                 if show_fps:
-                    image = cv2.putText(mat, f'FPS={fps:.2f}, frames={frame_idx}', (20, 20),
+                    image = cv2.putText(mat, f'FPS={fps_measured:.2f}, frames={frame_idx}', (20, 20),
                                         cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, color.RED, 2)
                 cv2.imshow(self.window_name, mat)
-
-                if  sync_fps:
-                    wait_millis = int(video_interval - (time.time() - started)*1000) - 7
-                    wait_millis = max(1, wait_millis)
-                key = cv2.waitKey(wait_millis) & 0xFF
-                if key == ord('q'):
-                    self.capture.close()
-                    break
-                elif key == ord(' '):
-                    while True:
-                        key = cv2.waitKey(1000 * 60 * 60) & 0xFF
-                        if key == ord(' '):
-                            break
-                else:
-                    key = self.set_control(key)
-                    if key == ord('v'):
-                        self.show = not self.show
-                    elif key == ord('f'):
-                        show_fps = not show_fps
-                    elif key == ord('y'):
-                        sync_fps = not sync_fps
+            
+            elapsed = (time.time() - started)
+            wait_millis = max((frame_interval - elapsed - overhead) * 1000, 1) if self.__sync and sync_fps else 1
+            key = cv2.waitKey(int(wait_millis)) & 0xFF
+            if key == ord('q'):
+                self.capture.close()
+                break
+            elif key == ord(' '):
+                while True:
+                    key = cv2.waitKey(1000 * 60 * 60) & 0xFF
+                    if key == ord(' '):
+                        break
+            else:
+                key = self.set_control(key)
+                if key == ord('v'):
+                    self.show = not self.show
+                elif key == ord('f'):
+                    show_fps = not show_fps
+                elif key == ord('y'):
+                    sync_fps = not sync_fps
             
             elapsed = time.time() - started
-            if self.capture_count > 10:
+            if capture_count > 10:
                 elapsed_avg = elapsed_avg * (1-ImageProcessor.__ALPHA) + elapsed * ImageProcessor.__ALPHA
-            elif self.capture_count > 1:
+            elif capture_count > 1:
                 elapsed_avg = elapsed_avg * 0.5 + elapsed * 0.5
             else:
                 elapsed_avg = elapsed
-            fps = 1 / elapsed_avg
+            overhead = elapsed_avg - frame_interval
+            fps_measured = 1 / elapsed_avg
+            # print(f"fps={fps_measured:.3f}, overhead={overhead*1000:.0f}, wait_millis={wait_ts*1000:.0f}")
 
             if progress is not None:
                 progress.update(1)
-            # print('-----------------------------------------------------------------')
 
         cv2.destroyAllWindows()
         if progress:

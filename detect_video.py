@@ -67,7 +67,7 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
     
-    capture = VideoFileCapture(Path(args.input), fps=args.fps)
+    capture = VideoFileCapture(Path(args.input))
     detector = DetectorLoader.load(args.detector)
 
     window_name = "output" if args.show else None

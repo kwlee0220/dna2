@@ -10,7 +10,7 @@ from dna import plot_utils, VideoFileCapture, ImageProcessor
 
 class VideoFileDisplayer(ImageProcessor):
     def __init__(self, capture, window_name: str="video_output") -> None:
-        super().__init__(capture, window_name=window_name, show_progress=False)
+        super().__init__(capture, sync=True, window_name=window_name, show_progress=False)
 
     def process_image(self, frame: np.ndarray, frame_idx: int, ts: datetime) -> np.ndarray:
         return frame
@@ -30,7 +30,6 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Display a video file")
     parser.add_argument("--home", help="DNA framework home directory.", default=".")
     parser.add_argument("--input", help="input source.", required=True)
-    parser.add_argument("--fps", help="input source fps.", default=-1, type=int, required=False)
     parser.add_argument("--begin", type=int, help="the first frame index (from 1)", default=1)
     parser.add_argument("--end", type=int, help="the last frame index", default=None)
     return parser.parse_args()
@@ -38,7 +37,7 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
 
-    capture = VideoFileCapture(Path(args.input), fps=args.fps, begin_frame=args.begin, end_frame=args.end)
+    capture = VideoFileCapture(Path(args.input), begin_frame=args.begin, end_frame=args.end)
     dna_home_dir = Path(args.home)
 
     with VideoFileDisplayer(capture) as processor:

@@ -1,11 +1,13 @@
 from typing import Tuple
 from abc import ABCMeta, abstractmethod
 from datetime import datetime, timedelta
+import time
 from pathlib import Path
 
 import numpy as np
 import cv2
 
+from dna import Size2i
 import dna.utils as utils
 
 class ImageCapture(metaclass=ABCMeta):
@@ -23,6 +25,10 @@ class ImageCapture(metaclass=ABCMeta):
 
     @abstractmethod
     def capture(self) -> Tuple[datetime, int, np.ndarray]:
+        pass
+
+    @abstractmethod
+    def size(self) -> Size2i:
         pass
 
     @property
@@ -59,10 +65,10 @@ class ImageCapture(metaclass=ABCMeta):
 
 import sys
 class VideoFileCapture(ImageCapture):
-    def __init__(self, file: Path, fps: float=None, begin_frame: int=1, end_frame: int=None) -> None:
+    def __init__(self, file: Path, begin_frame: int=1, end_frame: int=None) -> None:
         self.__file = file
-        self.__fps = fps
         self.__vid = None     # None on if it is closed
+        self.__fps = None
         self.__frame_count = -1
         self.__frame_index = -1
 
@@ -72,6 +78,8 @@ class VideoFileCapture(ImageCapture):
                                 f"begin={self.__frame_begin}, end={self.__frame_end}"))
         self.__frame_begin = begin_frame
         self.__frame_end = end_frame
+
+        self.__size = None
 
     def is_open(self) -> bool:
         return self.__vid is not None
@@ -87,12 +95,15 @@ class VideoFileCapture(ImageCapture):
 
         self.__frame_end = self.__frame_end if self.__frame_end else int(self.__vid.get(cv2.CAP_PROP_FRAME_COUNT))
         self.__frame_count = self.__frame_end - self.__frame_begin + 1
-        if self.__fps is None:
-            self.__fps = self.__vid.get(cv2.CAP_PROP_FPS)
+        self.__fps = self.__vid.get(cv2.CAP_PROP_FPS)
 
         if self.__frame_begin > 1:
             self.__vid.set(cv2.CAP_PROP_POS_FRAMES, self.__frame_begin)
         self.__frame_index = self.__frame_begin-1
+
+        width = int(self.__vid.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(self.__vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.__size = Size2i([width, height])
 
     def close(self) -> None:
         if self.__vid:
@@ -102,6 +113,10 @@ class VideoFileCapture(ImageCapture):
     @property
     def file(self) -> Path:
         return self.__file
+
+    @property
+    def size(self) -> Size2i:
+        return self.__size
 
     @property
     def fps(self) -> float:
@@ -131,3 +146,37 @@ class VideoFileCapture(ImageCapture):
     def __repr__(self) -> str:
         repr = super().__repr__()
         return repr + f", file={self.file}"
+
+
+from threading import Condition
+from .image_processor import ImageProcessor
+class ImageCaptureLoop(ImageProcessor):
+    def __init__(self, capture, cond: Condition) -> None:
+        super().__init__(capture, window_name=None, show_progress=False)
+        self.cond = cond
+
+    def capture(self, target_frame_idx: int) -> Tuple[datetime, int, np.ndarray]:
+        with self.cond:
+            while self.frame_idx < target_frame_idx:
+                self.cond.wait()
+            return self.frame_ts, self.frame_idx, self.frame
+
+    def process_image(self, frame: np.ndarray, frame_idx: int, ts: datetime) -> np.ndarray:
+        with self.cond:
+            self.frame = frame
+            self.frame_idx = frame_idx
+            self.frame_ts = ts
+            self.cond.notifyAll()
+
+        return frame
+
+    def on_started(self) -> None:
+        pass
+
+    def on_stopped(self) -> None:
+        with self.cond:
+            self.frame_idx = -1
+
+    def set_control(self, key: int) -> int:
+        return key
+
