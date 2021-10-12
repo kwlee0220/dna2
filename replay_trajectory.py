@@ -12,7 +12,7 @@ from dna.types import Size2i
 
 class TrajectoryDisplayProcessor(ImageProcessor):
     def __init__(self, capture: ImageCapture, traj: Trajectory) -> None:
-        super().__init__(capture, window_name='output', show_progress=False)
+        super().__init__(capture, sync=True, window_name='output', show_progress=False)
 
         self.traj = traj
         self.path = traj.path
@@ -25,13 +25,17 @@ class TrajectoryDisplayProcessor(ImageProcessor):
     def on_stopped(self) -> None:
         pass
 
-    def process_image(self, frame, frame_idx: int, ts: datetime):
+    def process_image(self, convas, frame_idx: int, ts: datetime):
+        convas = plot_utils.draw_line_string(convas, self.path[self.index:], color.GREEN)
+
         pt = self.path[self.index]
-        frame = cv2.circle(frame, pt.xy.astype(int), 7, color.RED, thickness=-1, lineType=cv2.LINE_AA)
-        frame = plot_utils.draw_label(frame, str(self.traj.luid), pt.xy.astype(int), color.RED, color.WHITE, 2)
+        convas = cv2.circle(convas, pt.xy.astype(int), 7, color.RED, thickness=-1, lineType=cv2.LINE_AA)
+        convas = plot_utils.draw_label(convas, str(self.traj.luid), pt.xy.astype(int), color.BLACK, color.RED, 4)
+
+        convas = plot_utils.draw_line_string(convas, self.path[0:self.index], color.RED, 3)
         self.index += 1
 
-        return frame
+        return convas
 
     def set_control(self, key: int) -> int:
         if key == ord('l'):

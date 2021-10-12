@@ -30,7 +30,6 @@ def parse_args():
     parser.add_argument("--max_iou_distance", help="maximum IoU distance", default=0.99)
     parser.add_argument("--max_age", type=int, help="max. # of frames to delete", default=20)
     parser.add_argument("--input", help="input source.", required=True)
-    parser.add_argument("--fps", help="input source fps.", default=-1, type=int, required=False)
     parser.add_argument("--show", help="show detections.", action="store_true")
 
     parser.add_argument("--db_host", help="host name of DNA data platform", default="localhost")
@@ -46,7 +45,7 @@ import dna.utils as utils
 if __name__ == '__main__':
     args = parse_args()
 
-    capture = VideoFileCapture(Path(args.input), fps=args.fps)
+    capture = VideoFileCapture(Path(args.input))
     detector = DetectorLoader.load(args.detector)
 
     platform = DNAPlatform(host=args.db_host, port=args.db_port,
