@@ -45,9 +45,6 @@ import dna.utils as utils
 if __name__ == '__main__':
     args = parse_args()
 
-    capture = VideoFileCapture(Path(args.input))
-    detector = DetectorLoader.load(args.detector)
-
     platform = DNAPlatform(host=args.db_host, port=args.db_port,
                             user=args.db_user, password=args.db_passwd, dbname=args.db_name)
     conn = platform.connect()
@@ -65,6 +62,7 @@ if __name__ == '__main__':
         tracker = LogFileBasedObjectTracker(args.track_file)
     else:
         dna_home_dir = Path(args.home)
+        detector = DetectorLoader.load(args.detector)
         model_file = dna_home_dir / 'dna' / 'track' / 'deepsort' / 'ckpts' / 'model640.pt'
         tracker = DeepSORTTracker(detector, weights_file=model_file.absolute(),
                                     matching_threshold=args.match_score,
@@ -79,6 +77,7 @@ if __name__ == '__main__':
     thread = Thread(target=trj_upload.run, args=tuple())
     thread.start()
 
+    capture = VideoFileCapture(Path(args.input))
     win_name = "output" if args.show else None
     with ObjectTrackingProcessor(capture, tracker, enhancer, window_name=win_name) as processor:
         from timeit import default_timer as timer

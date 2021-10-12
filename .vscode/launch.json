@@ -18,6 +18,66 @@
             ]
         },
         {
+            "name": "Detect Video (AI_CITY:01)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/detect_video.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--detector", "yolov4",
+                // "--detector", "file:C:/Temp/data/cam_1.txt",
+                "--input", "C:/Temp/data/cam_1.mp4",
+                "--output", "C:/Temp/cam_1_det.txt",
+                "--show_progress",
+                // "--show"
+            ]
+        },
+        {
+            "name": "Detect Video (AI_CITY:06)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/detect_video.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--detector", "yolov4",
+                // "--detector", "file:C:/Temp/data/cam_6.txt",
+                "--input", "C:/Temp/data/cam_6.mp4",
+                "--output", "C:/Temp/cam_6_det.txt",
+                "--show_progress",
+                // "--show"
+            ]
+        },
+        {
+            "name": "Detect Video (AI_CITY:09)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/detect_video.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--detector", "yolov4",
+                // "--detector", "file:C:/Temp/data/cam_9.txt",
+                "--input", "C:/Temp/data/cam_9.mp4",
+                "--output", "C:/Temp/cam_9_det.txt",
+                "--show_progress",
+                // "--show"
+            ]
+        },
+        {
+            "name": "Detect Video (AI_CITY:11)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/detect_video.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--detector", "yolov4",
+                // "--detector", "file:C:/Temp/data/cam_11.txt",
+                "--input", "C:/Temp/data/cam_11.mp4",
+                "--output", "C:/Temp/cam_11_det.txt",
+                "--show_progress",
+                // "--show"
+            ]
+        },
+        {
             "name": "Detect Video (ETRI:05)",
             "type": "python",
             "request": "launch",
@@ -45,6 +105,70 @@
                 "--output", "C:/Temp/channel06_9_det.txt",
                 "--show_progress",
                 // "--show"
+            ]
+        },
+        {
+            "name": "Track Video (AI_CITY:01)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/track_video.py",
+            "console": "integratedTerminal",
+            "args": [
+                // "--detector", "yolov4",
+                "--detector", "file:C:/Temp/data/cam_1_det.txt",
+                "--input",  "C:/Temp/data/cam_1.mp4",
+                "--output", "C:/Temp/cam_1_track.txt",
+                "--max_age", "10",
+                // "--show",
+                "--show_progress",
+            ]
+        },
+        {
+            "name": "Track Video (AI_CITY:06)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/track_video.py",
+            "console": "integratedTerminal",
+            "args": [
+                // "--detector", "yolov4",
+                "--detector", "file:C:/Temp/data/cam_6_det.txt",
+                "--input",  "C:/Temp/data/cam_6.mp4",
+                "--output", "C:/Temp/cam_6_track.txt",
+                "--max_age", "10",
+                // "--show",
+                "--show_progress",
+            ]
+        },
+        {
+            "name": "Track Video (AI_CITY:09)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/track_video.py",
+            "console": "integratedTerminal",
+            "args": [
+                // "--detector", "yolov4",
+                "--detector", "file:C:/Temp/data/cam_9_det.txt",
+                "--input",  "C:/Temp/data/cam_9.mp4",
+                "--output", "C:/Temp/cam_9_track.txt",
+                "--max_age", "10",
+                // "--show",
+                "--show_progress",
+            ]
+        },
+        {
+            "name": "Track Video (AI_CITY:11)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/track_video.py",
+            "console": "integratedTerminal",
+            "args": [
+                // "--detector", "yolov4",
+                "--detector", "file:C:/Temp/data/cam_11_det.txt",
+                "--input",  "C:/Temp/data/cam_11.mp4",
+                "--output", "C:/Temp/cam_11_track.txt",
+                "--max_age", "10",
+                // "--show",
+                "--show_progress",
             ]
         },
         {
@@ -80,7 +204,59 @@
             ]
         },
         {
-            "name": "Replay tracks (ETRI:05)",
+            "name": "Replay Tracks (AI_CITY:01)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/replay_tracks.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--track_file", "C:/Temp/data/cam_1_track.txt",
+                "--video_file", "C:/Temp/data/cam_1.mp4",
+                "--show",
+                // "--show_progress",
+            ]
+        },
+        {
+            "name": "Replay Tracks (AI_CITY:06)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/replay_tracks.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--track_file", "C:/Temp/data/cam_6_track.txt",
+                "--video_file", "C:/Temp/data/cam_6.mp4",
+                "--show",
+                // "--show_progress",
+            ]
+        },
+        {
+            "name": "Replay Tracks (AI_CITY:09)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/replay_tracks.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--track_file", "C:/Temp/data/cam_9_track.txt",
+                "--video_file", "C:/Temp/data/cam_9.mp4",
+                "--show",
+                // "--show_progress",
+            ]
+        },
+        {
+            "name": "Replay Tracks (AI_CITY:11)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/replay_tracks.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--track_file", "C:/Temp/data/cam_11_track.txt",
+                "--video_file", "C:/Temp/data/cam_11.mp4",
+                "--show",
+                // "--show_progress",
+            ]
+        },
+        {
+            "name": "Replay Tracks (ETRI:05)",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/replay_tracks.py",
@@ -93,7 +269,7 @@
             ]
         },
         {
-            "name": "Replay tracks (ETRI:06)",
+            "name": "Replay Tracks (ETRI:06)",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/replay_tracks.py",
@@ -103,6 +279,70 @@
                 "--video_file", "C:/Temp/data/channel06_9.mp4",
                 "--show",
                 // "--show_progress",
+            ]
+        },
+        {
+            "name": "DNA Node (AI_CITY:01)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/dna_node.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--camera_id", "ai_city:1",
+                "--input",  "C:/Temp/data/cam_1.mp4",
+                // "--detector", "yolov4",
+                // "--detector", "file:C:/Temp/data/cam_1_det.txt",
+                "--track_file", "C:/Temp/data/cam_1_track.txt",
+                "--max_age", "10",
+                "--show",
+            ]
+        },
+        {
+            "name": "DNA Node (AI_CITY:06)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/dna_node.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--camera_id", "ai_city:6",
+                "--input",  "C:/Temp/data/cam_6.mp4",
+                // "--detector", "yolov4",
+                // "--detector", "file:C:/Temp/data/cam_6_det.txt",
+                "--track_file", "C:/Temp/data/cam_6_track.txt",
+                "--max_age", "10",
+                "--show",
+            ]
+        },
+        {
+            "name": "DNA Node (AI_CITY:09)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/dna_node.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--camera_id", "ai_city:9",
+                "--input",  "C:/Temp/data/cam_9.mp4",
+                // "--detector", "yolov4",
+                // "--detector", "file:C:/Temp/data/cam_9_det.txt",
+                "--track_file", "C:/Temp/data/cam_9_track.txt",
+                "--max_age", "10",
+                "--show",
+            ]
+        },
+        {
+            "name": "DNA Node (AI_CITY:11)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/dna_node.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--camera_id", "ai_city:11",
+                "--input",  "C:/Temp/data/cam_11.mp4",
+                // "--detector", "yolov4",
+                // "--detector", "file:C:/Temp/data/cam_11_det.txt",
+                "--track_file", "C:/Temp/data/cam_11_track.txt",
+                "--max_age", "10",
+                "--show",
             ]
         },
         {
@@ -117,7 +357,7 @@
                 // "--detector", "yolov4",
                 // "--detector", "file:C:/Temp/data/channel05_9_det.txt",
                 "--track_file", "C:/Temp/data/channel05_9_track.txt",
-                "--max_age", "20",
+                "--max_age", "10",
                 "--show",
             ]
         },
@@ -133,7 +373,7 @@
                 // "--detector", "yolov4",
                 // "--detector", "file:C:/Temp/data/channel06_9_det.txt",
                 "--track_file", "C:/Temp/data/channel06_9_track.txt",
-                "--max_age", "20",
+                "--max_age", "10",
                 "--show",
             ]
         },
