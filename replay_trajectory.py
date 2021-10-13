@@ -75,11 +75,10 @@ if __name__ == '__main__':
         exit(-1)
 
     trajectories = platform.get_resource_set('trajectories')
-    trajs = trajectories.get_all(cond_expr=f"camera_id='{args.camera_id}' and luid={args.luid}")
-    if len(trajs) != 1:
+    traj = trajectories.get((args.camera_id, args.luid))
+    if traj is None:
         print(f"invalid track object: camera_id='{args.camera_id}', luid='{args.luid}'", file=sys.stderr)
         exit(-1)
-    traj = trajs[0]
 
     margin = int(camera_info.fps / 2)
     begin_frame = max(traj.first_frame - margin, 1)
