@@ -59,6 +59,7 @@ class TrajectoryUploader:
                 for session in self.sessions.values():
                     traj = _build_trajectory(session)
                     self.buffer.append(traj)
+                self.sessions.clear()
 
                 self.upload(True)
                 break
