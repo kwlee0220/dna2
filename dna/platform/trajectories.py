@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import List, Tuple
 
 import itertools
+import functools
 from datetime import datetime
 import numpy as np
 from psycopg2.extras import execute_values
@@ -36,17 +37,21 @@ class Trajectory:
                             first_frame=tup[4], last_frame=tup[5], continuation=tup[6])
 
     @staticmethod
-    def merge(trajs: List[Trajectory]) -> Trajectory:
-        if trajs and len(trajs) > 0:
+    def concat(trajs: List[Trajectory]) -> Trajectory:
+        if trajs is None or len(trajs) == 0:
+            return None
+        elif len(trajs) == 1:
+            return trajs[0]
+        else:
             first = trajs[0]
             last = trajs[-1]
-            length = sum([trj.length for trj in trajs], 0)
-            path = list(itertools.chain.from_iterable([trj.path for trj in trajs]))
-            print(len(path))
-            return Trajectory(first.camera_id, first.luid, length, first.first_frame, last.last_frame,
-                                last.continuation, path)
-        else:
-            return None
+
+            path = []
+            for traj in trajs:
+                path.extend(traj.path)
+            length = sum([Point.distance(pt1, pt2) for pt1, pt2 in zip(path, path[1:])], 0)
+
+            return Trajectory(first.camera_id, first.luid, length, first.first_frame, last.last_frame, False, path)
 
     def __repr__(self) -> str:
         return (f"Trajectory(camera_id={self.camera_id}, luid={self.luid}, "
@@ -122,7 +127,7 @@ class TrajectorySet(ResourceSet):
         conn = self.platform.connection
         with conn.cursor() as cur:
             cur.execute(TrajectorySet.__SQL_GET, key)
-            traj = Trajectory.merge([Trajectory.deserialize(tup) for tup in cur])
+            traj = Trajectory.concat([Trajectory.deserialize(tup) for tup in cur])
             conn.commit()
 
             return traj
@@ -139,14 +144,14 @@ class TrajectorySet(ResourceSet):
             traj_parts = [Trajectory.deserialize(tup) for tup in cur]
             conn.commit()
             groups = itertools.groupby(traj_parts, lambda t: t.luid)
-            trajs = [Trajectory.merge(parts) for parts in groups.values()]
+            trajs = [Trajectory.concat(list(parts)) for luid, parts in groups]
 
             return trajs
 
     def insert(self, traj:Trajectory) -> None:
         conn = self.platform.connection
         with conn.cursor() as cur:
-            cur.execute(TrajectorySet.__SQL_INSERT, camera_info.serialize())
+            cur.execute(TrajectorySet.__SQL_INSERT, traj.serialize())
             conn.commit()
 
     def insert_many(self, trajs:List[Trajectory]) -> None:
