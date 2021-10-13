@@ -1,74 +1,24 @@
 from typing import Tuple
-from abc import ABCMeta, abstractmethod
 from datetime import datetime, timedelta
-import time
 from pathlib import Path
 
 import numpy as np
 import cv2
 
 from dna import Size2i
-import dna.utils as utils
+from .image_capture import ImageCapture
 
-class ImageCapture(metaclass=ABCMeta):
-    @abstractmethod
-    def is_open(self) -> bool:
-        pass
-
-    @abstractmethod
-    def open(self) -> None:
-        pass
-
-    @abstractmethod
-    def close(self) -> None:
-        pass
-
-    @abstractmethod
-    def capture(self) -> Tuple[datetime, int, np.ndarray]:
-        pass
-
-    @abstractmethod
-    def size(self) -> Size2i:
-        pass
-
-    @property
-    @abstractmethod
-    def frame_count(self) -> int:
-        pass
-
-    @property
-    @abstractmethod
-    def frame_index(self) -> int:
-        pass
-
-    @property
-    @abstractmethod
-    def fps(self) -> float:
-        pass
-
-    def __enter__(self):
-        if self.is_open():
-            raise ValueError(f"{self.__class__.__name__}: invalid state (opened already)")
-        self.open()
-
-        return self
-
-    def __exit__(self, exc_type, exc_value, exc_tb):
-        if self.is_open():
-            self.close()
-
-    def __repr__(self) -> str:
-        state = 'opened' if self.is_open() else 'closed'
-        return (f"{__class__.__name__}[{state}]: frames={self.frame_index}/{self.frame_count}, "
-                f"fps={self.fps:.0f}/s")
-
+_INIT_SIZE = Size2i(-1, -1)
 
 import sys
 class VideoFileCapture(ImageCapture):
-    def __init__(self, file: Path, begin_frame: int=1, end_frame: int=None) -> None:
+    def __init__(self, file: Path, target_size :Size2i=None,
+                begin_frame: int=1, end_frame: int=None) -> None:
         self.__file = file
         self.__vid = None     # None on if it is closed
-        self.__fps = None
+        self.__size = target_size if target_size else _INIT_SIZE
+        self.interpolation = None
+        self.__fps = -1
         self.__frame_count = -1
         self.__frame_index = -1
 
@@ -78,8 +28,6 @@ class VideoFileCapture(ImageCapture):
                                 f"begin={self.__frame_begin}, end={self.__frame_end}"))
         self.__frame_begin = begin_frame
         self.__frame_end = end_frame
-
-        self.__size = None
 
     def is_open(self) -> bool:
         return self.__vid is not None
@@ -103,7 +51,16 @@ class VideoFileCapture(ImageCapture):
 
         width = int(self.__vid.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(self.__vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        self.__size = Size2i([width, height])
+        src_size = Size2i(width, height)
+        if self.__size == _INIT_SIZE:
+            self.__size = src_size
+        elif self.__size.area() < src_size.area():
+            # self.interpolation = cv2.INTER_AREA
+            self.interpolation = cv2.INTER_LINEAR
+        elif self.__size.area > src_size.area:
+            self.interpolation = cv2.INTER_LINEAR
+        else:
+            self.__size = src_size
 
     def close(self) -> None:
         if self.__vid:
@@ -139,44 +96,28 @@ class VideoFileCapture(ImageCapture):
 
         _, mat = self.__vid.read()
         if mat is not None:
+            if self.interpolation:
+                mat = cv2.resize(mat, self.size.as_tuple(), interpolation=self.interpolation)
             self.__frame_index += 1
 
         return datetime.now(), self.__frame_index, mat
 
+    @staticmethod
+    def load_camera_info(file: Path) -> Tuple[Size2i, float]:
+        cap = cv2.VideoCapture(str(file))
+        if not cap.isOpened():
+            raise IOError(f"fails to open video capture: '{file}'")
+
+        try:
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            size = Size2i(width, height)
+            
+            return size, fps
+        finally:
+            cap.release()
+
     def __repr__(self) -> str:
         repr = super().__repr__()
         return repr + f", file={self.file}"
-
-
-from threading import Condition
-from .image_processor import ImageProcessor
-class ImageCaptureLoop(ImageProcessor):
-    def __init__(self, capture, cond: Condition) -> None:
-        super().__init__(capture, window_name=None, show_progress=False)
-        self.cond = cond
-
-    def capture(self, target_frame_idx: int) -> Tuple[datetime, int, np.ndarray]:
-        with self.cond:
-            while self.frame_idx < target_frame_idx:
-                self.cond.wait()
-            return self.frame_ts, self.frame_idx, self.frame
-
-    def process_image(self, frame: np.ndarray, frame_idx: int, ts: datetime) -> np.ndarray:
-        with self.cond:
-            self.frame = frame
-            self.frame_idx = frame_idx
-            self.frame_ts = ts
-            self.cond.notifyAll()
-
-        return frame
-
-    def on_started(self) -> None:
-        pass
-
-    def on_stopped(self) -> None:
-        with self.cond:
-            self.frame_idx = -1
-
-    def set_control(self, key: int) -> int:
-        return key
-

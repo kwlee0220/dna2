@@ -2,9 +2,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Tuple
 
+import itertools
 from datetime import datetime
-from psycopg2.extras import execute_values
 import numpy as np
+from psycopg2.extras import execute_values
 
 from dna import Point, BBox
 from dna.enhancer.types import TrackEvent
@@ -13,25 +14,39 @@ from .types import ResourceSet
 
 @dataclass(frozen=True, unsafe_hash=True)
 class Trajectory:
-    camera_id: str
-    luid: str
-    path: List[Point]
-    length: float
-    first_frame: int
-    last_frame: int
+    camera_id: str      # 0
+    luid: str           # 1
+    length: float       # 2
+    first_frame: int    # 3
+    last_frame: int     # 4
+    continuation: bool  # 5, true if this is not the last block. false if this is the last block
+    path: List[Point]   # 6
 
     def serialize(self):
         path_expr =','.join(['({},{})'.format(*np.rint(tp.xy).astype(int)) for tp in self.path])
         path_expr = "[{}]".format(path_expr)
 
         return (self.camera_id, self.luid, len(self.path), self.length,
-                self.first_frame, self.last_frame, path_expr)
+                self.first_frame, self.last_frame, self.continuation, path_expr)
 
     @classmethod
     def deserialize(cls, tup):
-        path = [pt for pt in _parse_point_list(tup[6])]
-        return Trajectory(camera_id=tup[0], luid=tup[1], path=path,
-                            length=tup[3], first_frame=tup[4], last_frame=tup[5])
+        path = [pt for pt in _parse_point_list(tup[7])]
+        return Trajectory(camera_id=tup[0], luid=tup[1], path=path, length=tup[3],
+                            first_frame=tup[4], last_frame=tup[5], continuation=tup[6])
+
+    @staticmethod
+    def merge(trajs: List[Trajectory]) -> Trajectory:
+        if trajs and len(trajs) > 0:
+            first = trajs[0]
+            last = trajs[-1]
+            length = sum([trj.length for trj in trajs], 0)
+            path = list(itertools.chain.from_iterable([trj.path for trj in trajs]))
+            print(len(path))
+            return Trajectory(first.camera_id, first.luid, length, first.first_frame, last.last_frame,
+                                last.continuation, path)
+        else:
+            return None
 
     def __repr__(self) -> str:
         return (f"Trajectory(camera_id={self.camera_id}, luid={self.luid}, "
@@ -50,24 +65,25 @@ def _parse_point_list(path_str):
 
 class TrajectorySet(ResourceSet):
     __SQL_GET = """
-        select camera_id, luid, path_count, path_length, first_frame, last_frame, path
+        select camera_id, luid, path_count, path_length, first_frame, last_frame, continuation, path
         from trajectories
-        where camera_id=%s and luid=%s and first_frame=%s
+        where camera_id=%s and luid=%s
+        order by first_frame
     """
     __SQL_GET_ALL = """
-        select camera_id, luid, path_count, path_length, first_frame, last_frame, path
+        select camera_id, luid, path_count, path_length, first_frame, last_frame, continuation, path
         from trajectories {} {} {}
     """
     __SQL_INSERT = """
         insert into trajectories(camera_id, luid, path_count, path_length,
-                                first_frame, last_frame, path)
-                            values (%s, %s, %s, %s, %s, %s, %s)
+                                first_frame, last_frame, continuation, path)
+                            values (%s, %s, %s, %s, %s, %s, %s, %s)
     """
     __SQL_INSERT_MANY = """
         insert into trajectories(camera_id, luid, path_count, path_length,
-                                first_frame, last_frame, path) values %s
+                                first_frame, last_frame, continuation, path) values %s
     """
-    __SQL_REMOVE = "delete from trajectories where camera_id=%s and luid=%s and first_frame=%s"
+    __SQL_REMOVE = "delete from trajectories where camera_id=%s and luid=%s"
     __SQL_REMOVE_ALL = "delete from trajectories"
     __SQL_CREATE = """
         create table trajectories (
@@ -77,9 +93,11 @@ class TrajectorySet(ResourceSet):
             path_length real not null,
             first_frame int not null,
             last_frame int not null,
+            continuation boolean not null,
             path path not null
         )
     """
+    __SQL_CREATE_INDEX = "create index traj_idx on trajectories(camera_id, luid)"
     __SQL_DROP = "drop table if exists trajectories"
 
     def __init__(self, platform) -> None:
@@ -91,6 +109,7 @@ class TrajectorySet(ResourceSet):
         conn = self.platform.connection
         with conn.cursor() as cur:
             cur.execute(TrajectorySet.__SQL_CREATE)
+            cur.execute(TrajectorySet.__SQL_CREATE_INDEX)
             conn.commit()
 
     def drop(self) -> None:
@@ -103,21 +122,24 @@ class TrajectorySet(ResourceSet):
         conn = self.platform.connection
         with conn.cursor() as cur:
             cur.execute(TrajectorySet.__SQL_GET, key)
-            tup = cur.fetchone()
+            traj = Trajectory.merge([Trajectory.deserialize(tup) for tup in cur])
             conn.commit()
 
-            return Trajectory.deserialize(tup) if tup else None
+            return traj
 
     def get_all(self, cond_expr:str, offset:int=None, limit:int=None) -> List[Trajectory]:
         where_clause = f"where {cond_expr}" if cond_expr else ""
         offset_clause = f"offset {offset}" if offset else ""
         limit_clause = f"limit {offset}" if limit else ""
         sql = TrajectorySet.__SQL_GET_ALL.format(where_clause, offset_clause, limit_clause)
+
         conn = self.platform.connection
         with conn.cursor() as cur:
             cur.execute(sql)
-            trajs = [Trajectory.deserialize(tup) for tup in cur]
+            traj_parts = [Trajectory.deserialize(tup) for tup in cur]
             conn.commit()
+            groups = itertools.groupby(traj_parts, lambda t: t.luid)
+            trajs = [Trajectory.merge(parts) for parts in groups.values()]
 
             return trajs
 

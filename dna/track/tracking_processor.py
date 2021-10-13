@@ -3,7 +3,8 @@ from abc import ABCMeta, abstractmethod
 from datetime import datetime
 import numpy as np
 
-from dna import ImageProcessor, ImageCapture, color
+from dna import color
+from dna.camera import ImageProcessor, ImageCapture
 from . import ObjectTracker, DetectionBasedObjectTracker
 from .track_callbacks import TrackerCallback, TrailCollector, DemuxTrackerCallback
 from .utils import draw_track_trail
@@ -12,7 +13,8 @@ from .utils import draw_track_trail
 class ObjectTrackingProcessor(ImageProcessor):
     def __init__(self, capture: ImageCapture, tracker: ObjectTracker, callback: TrackerCallback=None,
                 window_name:str=None, show_progress=False) -> None:
-        super().__init__(capture, sync=(window_name is not None), window_name=window_name, show_progress=show_progress)
+        super().__init__(capture, sync=False, window_name=window_name, show_progress=show_progress)
+        # super().__init__(capture, sync=(window_name is not None), window_name=window_name, show_progress=show_progress)
 
         self.tracker = tracker
         self.is_detection_based = isinstance(self.tracker, DetectionBasedObjectTracker)

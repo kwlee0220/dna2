@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from dna import VideoFileCapture
+from dna.camera import VideoFileCapture
 from dna.det import DetectorLoader
 from dna.track import DeepSORTTracker, ObjectTrackingProcessor
 from dna.track.track_callbacks import TrackWriter

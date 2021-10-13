@@ -5,27 +5,29 @@ from typing import List, Tuple
 from dna import Size2i
 from dna.platform import ResourceSet
 
+
 @dataclass(frozen=True, unsafe_hash=True)
 class CameraInfo:
     camera_id: str
     size: Size2i
+    fps: int
 
     def serialize(self) -> Tuple:
-        return (self.camera_id, self.size.width, self.size.height)
+        return (self.camera_id, self.size.width, self.size.height, self.fps)
 
     @classmethod
     def deserialize(cls, tup: Tuple) -> CameraInfo:
-        size = Size2i(list(tup[1:3]))
-        return CameraInfo(camera_id=tup[0], size=size)
+        size = Size2i(*tup[1:3])
+        return CameraInfo(camera_id=tup[0], size=size, fps=tup[3])
     
     def __repr__(self) -> str:
-        return f"{self.camera_id}({self.size})"
+        return f"{self.camera_id}({self.size}), fps={self.fps}"
 
 
 class CameraInfoSet(ResourceSet):
-    __SQL_GET = "select camera_id, width, height from cameras where camera_id=%s"
-    __SQL_GET_ALL = "select camera_id, width, height from cameras {} {} {}"
-    __SQL_INSERT = "insert into cameras(camera_id, width, height) values (%s, %s, %s)"
+    __SQL_GET = "select camera_id, width, height, fps from cameras where camera_id=%s"
+    __SQL_GET_ALL = "select camera_id, width, height, fps from cameras {} {} {}"
+    __SQL_INSERT = "insert into cameras(camera_id, width, height, fps) values (%s, %s, %s, %s)"
     __SQL_REMOVE = "delete from cameras where camera_id=%s"
     __SQL_REMOVE_ALL = "delete from cameras"
     __SQL_CREATE = """
@@ -33,6 +35,7 @@ class CameraInfoSet(ResourceSet):
             camera_id varchar not null,
             width int not null,
             height int not null,
+            fps int not null,
 
             constraint cameras_pkey primary key (camera_id)
         )

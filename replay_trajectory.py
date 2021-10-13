@@ -4,15 +4,16 @@ from pathlib import Path
 
 import cv2
 
-from dna import ImageProcessor, ImageCapture, color, plot_utils
-from dna.image_capture import VideoFileCapture
+from dna import color, plot_utils
+from dna.camera import ImageCapture, VideoFileCapture, ImageProcessor
 from dna.platform import CameraInfo, DNAPlatform, Trajectory
 from dna.types import Size2i
 
 
 class TrajectoryDisplayProcessor(ImageProcessor):
     def __init__(self, capture: ImageCapture, traj: Trajectory) -> None:
-        super().__init__(capture, sync=True, window_name='output', show_progress=False)
+        super().__init__(capture, sync=True, window_name='output', show_progress=False,
+                            stop_at_the_last=True)
 
         self.traj = traj
         self.path = traj.path
@@ -26,14 +27,15 @@ class TrajectoryDisplayProcessor(ImageProcessor):
         pass
 
     def process_image(self, convas, frame_idx: int, ts: datetime):
-        convas = plot_utils.draw_line_string(convas, self.path[self.index:], color.GREEN)
+        if self.show_label:
+            convas = plot_utils.draw_line_string(convas, self.path[self.index:], color.GREEN)
+            if frame_idx >= self.traj.first_frame and frame_idx <= self.traj.last_frame:
+                pt = self.path[self.index]
+                convas = cv2.circle(convas, pt.xy.astype(int), 7, color.RED, thickness=-1, lineType=cv2.LINE_AA)
+                convas = plot_utils.draw_label(convas, str(self.traj.luid), pt.xy.astype(int), color.BLACK, color.RED, 4)
 
-        pt = self.path[self.index]
-        convas = cv2.circle(convas, pt.xy.astype(int), 7, color.RED, thickness=-1, lineType=cv2.LINE_AA)
-        convas = plot_utils.draw_label(convas, str(self.traj.luid), pt.xy.astype(int), color.BLACK, color.RED, 4)
-
-        convas = plot_utils.draw_line_string(convas, self.path[0:self.index], color.RED, 3)
-        self.index += 1
+                convas = plot_utils.draw_line_string(convas, self.path[0:self.index+1], color.RED, 3)
+                self.index += 1
 
         return convas
 
@@ -79,15 +81,18 @@ if __name__ == '__main__':
         exit(-1)
     traj = trajs[0]
 
-    capture = VideoFileCapture(Path(args.input),
-                                begin_frame=traj.first_frame, end_frame=traj.last_frame)
-    with TrajectoryDisplayProcessor(capture, traj) as processor:
-            from timeit import default_timer as timer
-            from datetime import timedelta
+    margin = int(camera_info.fps / 2)
+    begin_frame = max(traj.first_frame - margin, 1)
+    end_frame = traj.last_frame
 
-            started = timer()
-            frame_count = processor.run()
-            elapsed = timer() - started
-            fps = frame_count / elapsed
+    capture = VideoFileCapture(Path(args.input),  begin_frame=begin_frame, end_frame=end_frame)
+    with TrajectoryDisplayProcessor(capture, traj) as processor:
+        from timeit import default_timer as timer
+        from datetime import timedelta
+
+        started = timer()
+        frame_count = processor.run()
+        elapsed = timer() - started
+        fps = frame_count / elapsed
 
     print(f"elapsed_time={timedelta(seconds=elapsed)}, fps={fps:.1f}" )

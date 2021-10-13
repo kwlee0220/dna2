@@ -8,7 +8,7 @@ from pubsub import PubSub, Queue
 import psycopg2 as pg2
 from psycopg2.extras import execute_values
 
-from dna import VideoFileCapture
+from dna.camera import VideoFileCapture
 from dna.det import DetectorLoader
 from dna.track import DeepSORTTracker, LogFileBasedObjectTracker, ObjectTrackingProcessor
 from dna.enhancer import TrackEventEnhancer

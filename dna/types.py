@@ -1,6 +1,6 @@
 from __future__ import annotations
 from os import stat
-from typing import List, Union
+from typing import List, Union, Tuple
 from dataclasses import dataclass
 from enum import Enum
 
@@ -90,6 +90,17 @@ class Point:
 class Size2d:
     wh: np.ndarray
 
+    def to_size2i(self):
+        return Size2i(np.rint(self.wh).astype(int))
+
+    def __mul__(self, rhs) -> Size2d:
+        if isinstance(rhs, Size2d):
+            return Size2d(wh = self.wh * rhs.wh)
+        elif isinstance(rhs, int) or isinstance(rhs, float):
+            return Size2d(wh = self.wh * np.array([rhs, rhs]))
+        else:
+            raise ValueError('invalid right-hand-side:', rhs)
+
     def __truediv__(self, rhs) -> Size2d:
         if isinstance(rhs, Size2d):
             return Size2d(wh = self.wh / rhs.wh)
@@ -105,20 +116,52 @@ class Size2d:
             return '{:.1f}x{:.1f}'.format(*self.wh)
 
 
-@dataclass(frozen=True, unsafe_hash=True)
 class Size2i:
-    wh: List[int]
+    def __init__(self, width: int, height: int) -> None:
+        self.__wh = np.array([width, height])
+
+    @classmethod
+    def from_np(cls, wh: np.ndarray) -> Size2i:
+        return Size2i(int(wh[0]), int(wh[1]))
+
+    @property
+    def wh(self) -> np.ndarray:
+        return self.__wh
 
     @property
     def width(self) -> int:
-        return self.wh[0]
+        return int(self.__wh[0])
     
     @property
     def height(self) -> int:
-        return self.wh[1]
+        return int(self.__wh[1])
+
+    def area(self) -> int:
+        return self.__wh[0] * self.__wh[1]
+
+    def as_tuple(self) -> Tuple[int,int]:
+        return tuple(self.__wh)
+
+    def __mul__(self, rhs) -> Size2i:
+        if isinstance(rhs, Size2i):
+            return Size2i.from_np(self.__wh / rhs.wh)
+        elif isinstance(rhs, int):
+            return Size2i(self.width*rhs, self.height*rhs)
+        elif isinstance(rhs, float):
+            return Size2i.from_np(self.__wh * rhs)
+        else:
+            raise ValueError('invalid right-hand-side:', rhs)
+
+    def __truediv__(self, rhs) -> Size2d:
+        if isinstance(rhs, Size2i) or isinstance(rhs, Size2d):
+            return Size2d(wh = self.__wh / rhs.wh)
+        elif isinstance(rhs, int) or isinstance(rhs, float):
+            return Size2d(wh = self.__wh / np.array([rhs, rhs]))
+        else:
+            raise ValueError('invalid right-hand-side:', rhs)
     
     def __repr__(self) -> str:
-        return '{}x{}'.format(*self.wh)
+        return '{}x{}'.format(*self.__wh)
 
 
 class BBox:

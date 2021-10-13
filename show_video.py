@@ -5,7 +5,8 @@ import sys
 import cv2
 import numpy as np
 
-from dna import plot_utils, VideoFileCapture, ImageProcessor
+from dna import plot_utils
+from dna.camera import VideoFileCapture, ImageProcessor
 
 
 class VideoFileDisplayer(ImageProcessor):
@@ -29,17 +30,23 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description="Display a video file")
     parser.add_argument("--home", help="DNA framework home directory.", default=".")
+    parser.add_argument("--resize_ratio", type=float, help="image resizing ratio", default=None)
     parser.add_argument("--input", help="input source.", required=True)
-    parser.add_argument("--begin", type=int, help="the first frame index (from 1)", default=1)
-    parser.add_argument("--end", type=int, help="the last frame index", default=None)
+    parser.add_argument("--begin_frame", type=int, help="the first frame index (from 1)", default=1)
+    parser.add_argument("--end_frame", type=int, help="the last frame index", default=None)
     return parser.parse_args()
 
 if __name__ == '__main__':
     args = parse_args()
 
-    capture = VideoFileCapture(Path(args.input), begin_frame=args.begin, end_frame=args.end)
-    dna_home_dir = Path(args.home)
+    target_size = None
+    if args.resize_ratio:
+        size, fps = VideoFileCapture.load_camera_info(Path(args.input))
+        target_size = size * args.resize_ratio
+    capture = VideoFileCapture(Path(args.input), target_size=target_size,
+                                begin_frame=args.begin_frame, end_frame=args.end_frame)
 
+    dna_home_dir = Path(args.home)
     with VideoFileDisplayer(capture) as processor:
         from timeit import default_timer as timer
         from datetime import timedelta

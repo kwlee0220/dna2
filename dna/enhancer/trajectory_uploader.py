@@ -12,6 +12,7 @@ import dna.utils as utils
 from .types import TrackEvent
 from dna.platform import DNAPlatform, Trajectory
 
+_MAX_BLOCK_SIZE = 1000
 
 class Session:
     def __init__(self, camera_id, luid) -> None:
@@ -33,10 +34,11 @@ class Session:
         self.points.append(pt)
         self.last_frame = ev.frame_index
 
-def _build_trajectory(session: Session) -> Trajectory:
+def _build_trajectory(session: Session, cont: bool=False) -> Trajectory:
     return Trajectory(camera_id=session.camera_id, luid=session.luid,
                         path=session.points, length=session.length,
-                        first_frame=session.first_frame, last_frame=session.last_frame)
+                        first_frame=session.first_frame, last_frame=session.last_frame,
+                        continuation=cont)
 
 class TrajectoryUploader:
     def __init__(self, platform:DNAPlatform, mqueue: Queue, batch_size=10,
@@ -54,8 +56,13 @@ class TrajectoryUploader:
         for entry in self.mqueue.listen():
             event = entry['data']
             if event.luid is None:
-                self.__upload()
+                for session in self.sessions.values():
+                    traj = _build_trajectory(session)
+                    self.buffer.append(traj)
+
+                self.upload(True)
                 break
+
             self.handle_event(event)
 
     def handle_event(self, ev: TrackEvent) -> None:
@@ -65,18 +72,29 @@ class TrajectoryUploader:
             self.sessions[ev.luid] = session
 
         if ev.location:
-            session.append(ev)
-        else:
-            session = self.sessions.pop(ev.luid, None)
-            if len(session.points) >= self.min_path_count:
-                traj = _build_trajectory(session)
-                self.buffer.append(traj)
-                if len(self.buffer) > self.batch_size \
-                    or (datetime.now() - self.last_upload_ts) > timedelta(seconds=self.max_pending_sec):
-                    self.__upload()
+            if len(session.points) >= _MAX_BLOCK_SIZE:
+                session.length += Point.distance(session.points[-1], ev.location.center)
+                self.add_trajectory(session, True)
+                self.upload()
 
-    def __upload(self) -> None:
-        if len(self.buffer) > 0:
+                session = Session(ev.camera_id, ev.luid)
+                self.sessions[ev.luid] = session
+            session.append(ev)
+        else:   # end of track
+            self.add_trajectory(self.sessions.pop(ev.luid, None))
+            self.upload()
+
+    def add_trajectory(self, session: Session, cont: bool=False):
+        if len(session.points) >= self.min_path_count:
+            traj = _build_trajectory(session, cont)
+            self.buffer.append(traj)
+
+    def upload(self, force: bool=False):
+        npendings = len(self.buffer)
+        if npendings > 0 \
+            and (force \
+                or npendings > self.batch_size \
+                or (datetime.now() - self.last_upload_ts) > timedelta(seconds=self.max_pending_sec)):
             self.trajectories.insert_many(self.buffer)
             self.buffer.clear()
             self.last_upload_ts = datetime.now()

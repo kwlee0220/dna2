@@ -1,8 +1,8 @@
 from pathlib import Path
 import numpy as np
 
-from dna import  VideoFileCapture
 from dna import color
+from dna.camera import  VideoFileCapture
 from dna.track import LogFileBasedObjectTracker, ObjectTrackingProcessor
 
 

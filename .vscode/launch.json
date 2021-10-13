@@ -29,7 +29,7 @@
                 "--input", "C:/Temp/data/cam_1.mp4",
                 "--output", "C:/Temp/cam_1_det.txt",
                 "--show_progress",
-                // "--show"
+                "--show"
             ]
         },
         {
@@ -42,6 +42,7 @@
                 "--detector", "yolov4",
                 // "--detector", "file:C:/Temp/data/cam_6.txt",
                 "--input", "C:/Temp/data/cam_6.mp4",
+                // "--resize_ratio", "0.3333",
                 "--output", "C:/Temp/cam_6_det.txt",
                 "--show_progress",
                 // "--show"
@@ -87,6 +88,7 @@
                 "--detector", "yolov4",
                 // "--detector", "file:C:/Temp/data/channel05_9_det.txt",
                 "--input", "C:/Temp/data/channel05_9.mp4",
+                // "--resize_ratio", "0.5",
                 "--output", "C:/Temp/channel05_9_det.txt",
                 "--show_progress",
                 // "--show"
@@ -326,7 +328,7 @@
                 // "--detector", "file:C:/Temp/data/cam_9_det.txt",
                 "--track_file", "C:/Temp/data/cam_9_track.txt",
                 "--max_age", "10",
-                "--show",
+                // "--show",
             ]
         },
         {
@@ -384,11 +386,11 @@
             "program": "${workspaceFolder}/replay_trajectory.py",
             "console": "integratedTerminal",
             "args": [
-                // "--camera_id", "ai_city:9",
-                // "--input", "C:/Temp/data/cam_9.mp4",
-                "--camera_id", "etri:5",
-                "--input", "C:/Temp/data/channel05_9.mp4",
-                "--luid", "116",
+                "--camera_id", "ai_city:9",
+                "--input", "C:/Temp/data/cam_9.mp4",
+                // "--camera_id", "etri:5",
+                // "--input", "C:/Temp/data/channel05_9.mp4",
+                "--luid", "1",
             ]
         },
         {

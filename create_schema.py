@@ -5,14 +5,8 @@ from threading import Thread
 import psycopg2 as pg2
 from psycopg2.extras import execute_values
 
-from dna import VideoFileCapture, Size2i
-from dna.det import DetectorLoader
-from dna.track import DeepSORTTracker, ObjectTrackingProcessor
-from dna.enhancer import TrackEventEnhancer
-from dna.enhancer.types import TrackEvent
-from dna.enhancer.trajectory_uploader import TrajectoryUploader
+from dna import  Size2i
 from dna.platform import CameraInfo, DNAPlatform
-import dna.utils as utils
 
 _SQL_CREATE_TRACK_EVENTS = """
 create table track_events (
@@ -56,12 +50,12 @@ if __name__ == '__main__':
         rset.create()
 
     camera_infos = platform.get_resource_set("camera_infos")
-    camera_infos.insert(CameraInfo(camera_id='ai_city:1', size=Size2i(wh=[1280, 960])))
-    camera_infos.insert(CameraInfo(camera_id='ai_city:6', size=Size2i(wh=[1280, 960])))
-    camera_infos.insert(CameraInfo(camera_id='ai_city:9', size=Size2i(wh=[1920, 1080])))
-    camera_infos.insert(CameraInfo(camera_id='ai_city:11', size=Size2i(wh=[1920, 1080])))
-    camera_infos.insert(CameraInfo(camera_id='etri:5', size=Size2i(wh=[1920, 1080])))
-    camera_infos.insert(CameraInfo(camera_id='etri:6', size=Size2i(wh=[1920, 1080])))
+    camera_infos.insert(CameraInfo(camera_id='ai_city:1', size=Size2i(1280, 960), fps=10))
+    camera_infos.insert(CameraInfo(camera_id='ai_city:6', size=Size2i(1280, 960), fps=10))
+    camera_infos.insert(CameraInfo(camera_id='ai_city:9', size=Size2i(1920, 1080), fps=10))
+    camera_infos.insert(CameraInfo(camera_id='ai_city:11', size=Size2i(1920, 1080), fps=10))
+    camera_infos.insert(CameraInfo(camera_id='etri:5', size=Size2i(1920, 1080), fps=10))
+    camera_infos.insert(CameraInfo(camera_id='etri:6', size=Size2i(1920, 1080), fps=10))
 
     cur = conn.cursor()
     cur.execute(_SQL_CREATE_TRACK_EVENTS)

@@ -16,12 +16,14 @@ class ImageProcessor(metaclass=ABCMeta):
     __ALPHA = 0.05
     __OS_OVERHEAD = 100 / 1000  # MAGIC NUMBER
 
-    def __init__(self, capture, sync: bool=False, window_name: str=None, show_progress: bool=False) -> None:
+    def __init__(self, capture, sync: bool=False, window_name: str=None,
+                show_progress: bool=False, stop_at_the_last=False) -> None:
         self.capture = capture
         self.__sync = sync
         self.window_name = window_name
         self.show = window_name is not None
         self.show_progress = show_progress
+        self.stop_at_the_last = stop_at_the_last
 
     # @abstractmethod
     def on_started(self) -> None:
@@ -84,6 +86,7 @@ class ImageProcessor(metaclass=ABCMeta):
         else:
             progress = None
 
+        key = ''
         wait_ts = 0
         while self.capture.is_open():
             started = time.time()
@@ -100,24 +103,31 @@ class ImageProcessor(metaclass=ABCMeta):
                 cv2.imshow(self.window_name, mat)
             
             elapsed = (time.time() - started)
-            wait_millis = max((frame_interval - elapsed - overhead) * 1000, 1) if self.__sync and sync_fps else 1
-            key = cv2.waitKey(int(wait_millis)) & 0xFF
-            if key == ord('q'):
-                self.capture.close()
-                break
-            elif key == ord(' '):
-                while True:
-                    key = cv2.waitKey(1000 * 60 * 60) & 0xFF
-                    if key == ord(' '):
-                        break
+            if not self.__sync and not self.window_name:
+                wait_millis = -1
+            elif sync_fps:
+                wait_millis = max((frame_interval - elapsed - overhead) * 1000, 1)
             else:
-                key = self.set_control(key)
-                if key == ord('v'):
-                    self.show = not self.show
-                elif key == ord('f'):
-                    show_fps = not show_fps
-                elif key == ord('y'):
-                    sync_fps = not sync_fps
+                wait_millis = 1 # 화면에 이미지를 출력하고, key input을 받아야 하므로 1로 세팅
+                
+            if wait_millis > 0:
+                key = cv2.waitKey(int(wait_millis)) & 0xFF
+                if key == ord('q'):
+                    self.capture.close()
+                    break
+                elif key == ord(' '):
+                    while True:
+                        key = cv2.waitKey(1000 * 60 * 60) & 0xFF
+                        if key == ord(' '):
+                            break
+                else:
+                    key = self.set_control(key)
+                    if key == ord('v'):
+                        self.show = not self.show
+                    elif key == ord('f'):
+                        show_fps = not show_fps
+                    elif key == ord('y'):
+                        sync_fps = not sync_fps
             
             elapsed = time.time() - started
             if capture_count > 10:
@@ -132,6 +142,9 @@ class ImageProcessor(metaclass=ABCMeta):
 
             if progress is not None:
                 progress.update(1)
+
+        if key != ord('q') and self.stop_at_the_last:
+            cv2.waitKey(-1)
 
         cv2.destroyAllWindows()
         if progress:

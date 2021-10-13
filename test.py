@@ -6,25 +6,15 @@ import cv2
 
 import numpy as np
 
-from dna import VideoFileCapture, ImageProcessor
+from dna.platform import CameraInfo, DNAPlatform, Trajectory
 
-cap = VideoFileCapture(Path("C:/Temp/data/channel05_9.mp4"))
-cap.open()
+platform = DNAPlatform()
+platform.connect()
 
-fourcc = cv2.VideoWriter_fourcc(*'MP4V')
-size = (cap.size.width, cap.size.height)
-out = cv2.VideoWriter('C:/Temp/channel05_9.mp4', fourcc, 10.0, size)
+camera_info_rset = platform.get_resource_set('camera_infos')
+camera_info = camera_info_rset.get(("ai_city:9",))
 
-while cap.is_open():
-    _, idx, mat = cap.capture()
-    if mat is None:
-        break
-
-    if (idx % 6) == 1:
-        out.write(mat)
-        # cv2.imshow("output", mat)
-        # c = cv2.waitKey(1) & 0xFF
-        # if c == ord('q'):
-        #     break
-out.release()
-cap.close()
+trajectories = platform.get_resource_set('trajectories')
+# trajs = trajectories.get_all(cond_expr=f"camera_id='ai_city:9' and luid=1")
+traj = trajectories.get(('ai_city:9', 1))
+print(traj)

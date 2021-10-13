@@ -5,14 +5,18 @@ import logging
 
 import numpy as np
 
-from dna import ImageProcessor, VideoFileCapture, color
+from dna import color
+from dna.camera import ImageProcessor, VideoFileCapture
 from dna.det import DetectorLoader, ObjectDetector, Detection
 
 
 class ObjectDetectingProcessor(ImageProcessor):
     def __init__(self, capture, detector: ObjectDetector,
                     window_name: str=None, output: Path=None, show_progress=False) -> None:
-        super().__init__(capture, window_name=window_name, show_progress=show_progress)
+        super().__init__(capture, window_name=window_name,
+                            show_progress=show_progress)
+        # super().__init__(capture, sync=window_name is not None, window_name=window_name,
+        #                     show_progress=show_progress)
         self.detector = detector
         self.label_color = color.WHITE
         self.show_score = True
@@ -56,20 +60,27 @@ class ObjectDetectingProcessor(ImageProcessor):
 import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description="Detect Objects in an input video file")
-    parser.add_argument("--detector", help="Object detection algorithm.", default="yolov4")
     parser.add_argument("--input", help="input source.", required=True)
+    parser.add_argument("--resize_ratio", type=float, help="image resizing ratio", default=None)
+    parser.add_argument("--begin_frame", type=int, help="the first frame index (from 1)", default=1)
+    parser.add_argument("--end_frame", type=int, help="the last frame index", default=None)
+    parser.add_argument("--detector", help="Object detection algorithm.", default="yolov4")
     parser.add_argument("--output", help="detection output file.", required=False)
-    parser.add_argument("--fps", help="input source fps.", default=-1, type=int, required=False)
     parser.add_argument("--show_progress", help="show progress bar.", action="store_true")
     parser.add_argument("--show", help="show detections.", action="store_true")
     return parser.parse_args()
 
 if __name__ == '__main__':
     args = parse_args()
-    
-    capture = VideoFileCapture(Path(args.input))
-    detector = DetectorLoader.load(args.detector)
 
+    target_size = None
+    if args.resize_ratio:
+        size, fps = VideoFileCapture.load_camera_info(Path(args.input))
+        target_size = size * args.resize_ratio
+    capture = VideoFileCapture(Path(args.input), target_size=target_size,
+                                begin_frame=args.begin_frame, end_frame=args.end_frame)
+    
+    detector = DetectorLoader.load(args.detector)
     window_name = "output" if args.show else None
     with ObjectDetectingProcessor(capture, detector, window_name=window_name, output=args.output,
                                     show_progress=args.show_progress) as processor:
