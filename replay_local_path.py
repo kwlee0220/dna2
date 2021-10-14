@@ -12,7 +12,7 @@ from dna import Size2i
 
 class LocalPathDisplayProcessor(ImageProcessor):
     def __init__(self, capture: DefaultImageCapture, path: LocalPath) -> None:
-        super().__init__(capture, sync=True, window_name='output', show_progress=False,
+        super().__init__(capture, window_name='output', show_progress=False,
                             stop_at_the_last=True)
 
         self.traj = path

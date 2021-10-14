@@ -9,6 +9,7 @@ from dna import Size2i
 from .default_image_capture import DefaultImageCapture
 
 
+_ALPHA = 0.3
 class VideoFileCapture(DefaultImageCapture):
     def __init__(self, file: Path, sync :bool=True, target_size :Size2i=None,
                 begin_frame: int=1, end_frame: int=None) -> None:
@@ -27,7 +28,7 @@ class VideoFileCapture(DefaultImageCapture):
         super().__init__(str(file.resolve()), target_size=target_size)
         self.file = file
         self.sync = sync
-        self.frame_count = -1
+        self.__frame_count = -1
 
         if begin_frame <= 0 or (end_frame and (end_frame < begin_frame)):
             raise ValueError((f"invalid [begin,end] frame range: "
@@ -39,8 +40,9 @@ class VideoFileCapture(DefaultImageCapture):
     def open(self) -> None:
         super().open()
 
-        self.end_frame = self.end_frame if self.end_frame else int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        self.frame_count = self.end_frame - self.begin_frame + 1
+        if not self.end_frame:
+            self.end_frame = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        self.__frame_count = self.end_frame - self.begin_frame + 1
         self.__fps = self.cap.get(cv2.CAP_PROP_FPS)
         self.interval = 1 / self.__fps
 
@@ -48,23 +50,28 @@ class VideoFileCapture(DefaultImageCapture):
             self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.begin_frame)
         self.__frame_index = self.begin_frame-1
 
+    @property
+    def frame_count(self) -> int:
+        return self.__frame_count
+
     def capture(self) -> Tuple[float, int, np.ndarray]:
         started = time.time()
 
         if self.frame_index >= self.end_frame:
-            return started, -1, None
+            return None, -1, None
 
         ts, frame_idx, frame = super().capture()
         if self.sync:
             remains = self.interval - (ts - started) - self.delta
             if remains > 0:
                 time.sleep(remains)
+
                 ts = time.time()
                 delta = (ts - started) - self.interval
-                if self.delta == 0:
+                if self.delta == 0: # for the initial frame
                     self.delta = delta
                 else:
-                    self.delta += (0.3 * delta)
+                    self.delta += (_ALPHA * delta)
 
         return ts, frame_idx, frame
 
@@ -72,7 +79,7 @@ class VideoFileCapture(DefaultImageCapture):
     def __repr__(self) -> str:
         state = 'opened' if self.is_open() else 'closed'
         return (f"{__class__.__name__}[{state}]: uri={self.uri}, size={self.size}, "
-                f"frames={self.frame_index}/{self.frame_count}, fps={self.fps:.0f}/s")
+                f"frames={self.frame_index}/{self.__frame_count}, fps={self.fps:.0f}/s")
 
     @staticmethod
     def load_camera_info(file: Path) -> Tuple[Size2i, float]:

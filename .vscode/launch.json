@@ -380,17 +380,17 @@
             ]
         },
         {
-            "name": "Replay Trajectory",
+            "name": "Replay Local Path",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/replay_trajectory.py",
+            "program": "${workspaceFolder}/replay_local_path.py",
             "console": "integratedTerminal",
             "args": [
-                "--camera_id", "ai_city:9",
-                "--input", "C:/Temp/data/cam_9.mp4",
+                "--camera_id", "etri:6",
+                "--input", "C:/Temp/data/channel06_9.mp4",
                 // "--camera_id", "etri:5",
                 // "--input", "C:/Temp/data/channel05_9.mp4",
-                "--luid", "228",
+                "--luid", "1",
             ]
         },
         {
