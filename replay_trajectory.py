@@ -5,18 +5,18 @@ from pathlib import Path
 import cv2
 
 from dna import color, plot_utils
-from dna.camera import ImageCapture, VideoFileCapture, ImageProcessor
-from dna.platform import CameraInfo, DNAPlatform, Trajectory
-from dna.types import Size2i
+from dna.camera import DefaultImageCapture, VideoFileCapture, ImageProcessor
+from dna.platform import DNAPlatform, LocalPath
+from dna import Size2i
 
 
-class TrajectoryDisplayProcessor(ImageProcessor):
-    def __init__(self, capture: ImageCapture, traj: Trajectory) -> None:
+class LocalPathDisplayProcessor(ImageProcessor):
+    def __init__(self, capture: DefaultImageCapture, path: LocalPath) -> None:
         super().__init__(capture, sync=True, window_name='output', show_progress=False,
                             stop_at_the_last=True)
 
-        self.traj = traj
-        self.path = traj.path
+        self.traj = path
+        self.points = path.points
         self.index = 0
         self.show_label = True
 
@@ -28,13 +28,13 @@ class TrajectoryDisplayProcessor(ImageProcessor):
 
     def process_image(self, convas, frame_idx: int, ts: datetime):
         if self.show_label:
-            convas = plot_utils.draw_line_string(convas, self.path[self.index:], color.GREEN)
+            convas = plot_utils.draw_line_string(convas, self.points[self.index:], color.GREEN)
             if frame_idx >= self.traj.first_frame and frame_idx <= self.traj.last_frame:
-                pt = self.path[self.index]
+                pt = self.points[self.index]
                 convas = cv2.circle(convas, pt.xy.astype(int), 7, color.RED, thickness=-1, lineType=cv2.LINE_AA)
                 convas = plot_utils.draw_label(convas, str(self.traj.luid), pt.xy.astype(int), color.BLACK, color.RED, 4)
 
-                convas = plot_utils.draw_line_string(convas, self.path[0:self.index+1], color.RED, 3)
+                convas = plot_utils.draw_line_string(convas, self.points[0:self.index+1], color.RED, 3)
                 self.index += 1
 
         return convas
@@ -49,7 +49,7 @@ class TrajectoryDisplayProcessor(ImageProcessor):
 import sys
 import argparse
 def parse_args():
-    parser = argparse.ArgumentParser(description="Replay a trajectory on the screen")
+    parser = argparse.ArgumentParser(description="Replay a localpath on the screen")
     parser.add_argument("--home", help="DNA framework home directory.", default=".")
     parser.add_argument("--camera_id", help="camera id")
     parser.add_argument("--luid", type=int, help="target object id")
@@ -74,7 +74,7 @@ if __name__ == '__main__':
         print(f"unknown camera_id: '{args.camera_id}'", file=sys.stderr)
         exit(-1)
 
-    trajectories = platform.get_resource_set('trajectories')
+    trajectories = platform.get_resource_set('local_paths')
     traj = trajectories.get((args.camera_id, args.luid))
     if traj is None:
         print(f"invalid track object: camera_id='{args.camera_id}', luid='{args.luid}'", file=sys.stderr)
@@ -85,7 +85,7 @@ if __name__ == '__main__':
     end_frame = traj.last_frame
 
     capture = VideoFileCapture(Path(args.input),  begin_frame=begin_frame, end_frame=end_frame)
-    with TrajectoryDisplayProcessor(capture, traj) as processor:
+    with LocalPathDisplayProcessor(capture, traj) as processor:
         from timeit import default_timer as timer
         from datetime import timedelta
 

@@ -19,6 +19,9 @@ class Point:
     def y(self):
         return self.xy[1]
 
+    def distance(self, pt:Point) -> float:
+        return np.linalg.norm(self.xy - pt.xy)
+
     @staticmethod
     def distance(pt1:Point, pt2:Point) -> float:
         return np.linalg.norm(pt1.xy - pt2.xy)
@@ -61,13 +64,23 @@ class Point:
 
     def __sub__(self, rhs) -> Union[Point,Size2d]:
         if isinstance(rhs, Point):
-            return Size2d(xy = self.xy - rhs.xy)
-        elif isinstance(rhs, Size2d):
-            return Point(xy = self.xy - rhs.xy)
+            return Size2d(wh = (self.xy - rhs.xy))
+        elif isinstance(rhs, Size2d) or isinstance(rhs, Size2i):
+            return Point(xy = self.xy - rhs.wh)
         elif isinstance(rhs, tuple) and len(rhs) >= 2:
             return Point(xy = self.xy - np.array(rhs[0:2]))
         elif isinstance(rhs, int) or isinstance(rhs, float):
             return Point(xy = self.xy - np.array([rhs, rhs]))
+        else:
+            raise ValueError(f"invalid rhs: rhs={rhs}")
+
+    def __mul__(self, rhs) -> Point:
+        if isinstance(rhs, int) or isinstance(rhs, float):
+            return Point(xy = self.xy * np.array([rhs, rhs]))
+        elif isinstance(rhs, Size2d) or isinstance(rhs, Size2i):
+            return Point(xy = self.xy * rhs.wh)
+        elif isinstance(rhs, tuple) and len(rhs) >= 2:
+            return Point(xy = self.xy * np.array(rhs[0:2]))
         else:
             raise ValueError(f"invalid rhs: rhs={rhs}")
 
@@ -90,8 +103,30 @@ class Point:
 class Size2d:
     wh: np.ndarray
 
+    @property
+    def width(self) -> float:
+        return self.wh[0]
+    
+    @property
+    def height(self) -> float:
+        return self.wh[1]
+
+    def area(self) -> float:
+        return self.wh[0] * self.wh[1]
+
+    def abs(self) -> Size2d:
+        return Size2d(wh = np.abs(self.wh))
+
     def to_size2i(self):
         return Size2i(np.rint(self.wh).astype(int))
+
+    def __sub__(self, rhs) -> Size2d:
+        if isinstance(rhs, Size2d) or isinstance(rhs, Size2i):
+            return Size2d(wh = self.wh - rhs.wh)
+        elif isinstance(rhs, int) or isinstance(rhs, float):
+            return Size2d(wh = self.wh - np.array([rhs, rhs]))
+        else:
+            raise ValueError('invalid right-hand-side:', rhs)
 
     def __mul__(self, rhs) -> Size2d:
         if isinstance(rhs, Size2d):

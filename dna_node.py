@@ -14,7 +14,7 @@ from dna.track import DeepSORTTracker, LogFileBasedObjectTracker, ObjectTracking
 from dna.enhancer import TrackEventEnhancer
 from dna.enhancer.types import TrackEvent
 from dna.enhancer.track_event_uploader import TrackEventUploader
-from dna.enhancer.trajectory_uploader import TrajectoryUploader
+from dna.enhancer.local_path_uploader import LocalPathUploader
 from dna.platform import DNAPlatform
 import dna.utils as utils
 
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     thread = Thread(target=te_upload.run, args=tuple())
     thread.start()
 
-    trj_upload = TrajectoryUploader(platform, enhancer.subscribe())
+    trj_upload = LocalPathUploader(platform, enhancer.subscribe())
     thread = Thread(target=trj_upload.run, args=tuple())
     thread.start()
 

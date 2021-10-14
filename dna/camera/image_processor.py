@@ -10,16 +10,17 @@ import numpy as np
 import cv2
 
 from dna import color
+from .image_capture import ImageCapture
 
 
 class ImageProcessor(metaclass=ABCMeta):
     __ALPHA = 0.05
     __OS_OVERHEAD = 100 / 1000  # MAGIC NUMBER
 
-    def __init__(self, capture, sync: bool=False, window_name: str=None,
+    def __init__(self, capture: ImageCapture, sync: bool=False, window_name: str=None,
                 show_progress: bool=False, stop_at_the_last=False) -> None:
-        self.capture = capture
-        self.__sync = sync
+        self.__capture = capture
+        self.sync = sync
         self.window_name = window_name
         self.show = window_name is not None
         self.show_progress = show_progress
@@ -42,11 +43,11 @@ class ImageProcessor(metaclass=ABCMeta):
         return key
 
     def __enter__(self):
-        self.capture.open()
+        self.__capture.open()
         try:
             self.on_started()
         except Exception as e:
-            self.capture.close()
+            self.__capture.close()
             raise e
 
         return self
@@ -55,42 +56,42 @@ class ImageProcessor(metaclass=ABCMeta):
         try:
             self.on_stopped()
         finally:
-            self.capture.close()
+            self.__capture.close()
 
     @property
     def frame_count(self) -> int:
-        return self.capture.frame_count
+        return self.__capture.frame_count
 
     @property
     def fps(self) -> int:
-        return self.capture.fps
+        return self.__capture.fps
 
     @property
     def frame_index(self) -> int:
-        return self.capture.frame_index
+        return self.__capture.frame_index
 
     def run(self) -> int:
         capture_count = 0
         elapsed_avg = None
         fps_measured = 0
         overhead = 0
-        fps = self.capture.fps
+        fps = self.__capture.fps
         show_fps = True
-        sync_fps = self.__sync
+        sync_fps = self.sync
         frame_interval = (1 - ImageProcessor.__OS_OVERHEAD) / fps
 
         if self.show_progress \
-            and self.capture.frame_count is not None \
-            and self.capture.frame_count > 1:
-            progress = tqdm(total=self.capture.frame_count)
+            and self.__capture.frame_count is not None \
+            and self.__capture.frame_count > 1:
+            progress = tqdm(total=self.__capture.frame_count)
         else:
             progress = None
 
         key = ''
         wait_ts = 0
-        while self.capture.is_open():
+        while self.__capture.is_open():
             started = time.time()
-            ts, frame_idx, mat = self.capture.capture()
+            ts, frame_idx, mat = self.__capture.capture()
             if mat is None:
                 break
             capture_count += 1
@@ -103,7 +104,7 @@ class ImageProcessor(metaclass=ABCMeta):
                 cv2.imshow(self.window_name, mat)
             
             elapsed = (time.time() - started)
-            if not self.__sync and not self.window_name:
+            if not self.sync and not self.window_name:
                 wait_millis = -1
             elif sync_fps:
                 wait_millis = max((frame_interval - elapsed - overhead) * 1000, 1)
@@ -113,7 +114,7 @@ class ImageProcessor(metaclass=ABCMeta):
             if wait_millis > 0:
                 key = cv2.waitKey(int(wait_millis)) & 0xFF
                 if key == ord('q'):
-                    self.capture.close()
+                    self.__capture.close()
                     break
                 elif key == ord(' '):
                     while True:
@@ -150,4 +151,4 @@ class ImageProcessor(metaclass=ABCMeta):
         if progress:
             progress.close()
 
-        return self.capture.frame_count
+        return self.__capture.frame_count

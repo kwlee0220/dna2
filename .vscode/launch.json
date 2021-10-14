@@ -390,7 +390,7 @@
                 "--input", "C:/Temp/data/cam_9.mp4",
                 // "--camera_id", "etri:5",
                 // "--input", "C:/Temp/data/channel05_9.mp4",
-                "--luid", "1",
+                "--luid", "228",
             ]
         },
         {

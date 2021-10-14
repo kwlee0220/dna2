@@ -5,7 +5,7 @@ from psycopg2.extras import execute_values
 
 from .types import ResourceSet
 from .camera_info import CameraInfoSet
-from .trajectories import TrajectorySet
+from .local_path import LocalPathSet
 
 
 class DNAPlatform:
@@ -14,7 +14,7 @@ class DNAPlatform:
         self.conn_parms = {'host': host, 'port': port, 'user': user,
                             'password': password, 'dbname': dbname}
         self.conn = None
-        self.resource_set_dict = {'camera_infos': CameraInfoSet(self), 'trajectories': TrajectorySet(self)}
+        self.resource_set_dict = {'camera_infos': CameraInfoSet(self), 'local_paths': LocalPathSet(self)}
 
     @property
     def connection(self):
