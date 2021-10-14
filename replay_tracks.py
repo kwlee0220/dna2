@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     # open target video file temporarily to find fps, which will be used
     # in calculating 'max_age'
-    capture = VideoFileCapture(Path(args.video_file))
+    capture = VideoFileCapture(Path(args.video_file), sync=False)
 
     dna_home_dir = Path(args.home)
     tracker = LogFileBasedObjectTracker(args.track_file)

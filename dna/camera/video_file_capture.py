@@ -1,5 +1,5 @@
 from typing import Tuple
-from datetime import datetime, timedelta
+import time
 from pathlib import Path
 
 import numpy as np
@@ -10,10 +10,23 @@ from .default_image_capture import DefaultImageCapture
 
 
 class VideoFileCapture(DefaultImageCapture):
-    def __init__(self, file: Path, target_size :Size2i=None,
+    def __init__(self, file: Path, sync :bool=True, target_size :Size2i=None,
                 begin_frame: int=1, end_frame: int=None) -> None:
+        """Create a VideoFile ImageCapture object.
+
+        Args:
+            file (Path): A video file path
+            sync (bool, optional): Sync to the fps. Defaults to False.
+            target_size (Size2i, optional): Output image size. Defaults to None.
+            begin_frame (int, optional): The index of the first frame. Defaults to 1.
+            end_frame (int, optional): The index of the last frame. Defaults to None.
+
+        Raises:
+            ValueError: 'begin_frame' or 'end_frame' are invalid.
+        """
         super().__init__(str(file.resolve()), target_size=target_size)
         self.file = file
+        self.sync = sync
         self.frame_count = -1
 
         if begin_frame <= 0 or (end_frame and (end_frame < begin_frame)):
@@ -21,6 +34,7 @@ class VideoFileCapture(DefaultImageCapture):
                                 f"begin={self.begin_frame}, end={self.end_frame}"))
         self.begin_frame = begin_frame
         self.end_frame = end_frame
+        self.delta = 0
 
     def open(self) -> None:
         super().open()
@@ -28,17 +42,32 @@ class VideoFileCapture(DefaultImageCapture):
         self.end_frame = self.end_frame if self.end_frame else int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
         self.frame_count = self.end_frame - self.begin_frame + 1
         self.__fps = self.cap.get(cv2.CAP_PROP_FPS)
+        self.interval = 1 / self.__fps
 
         if self.begin_frame > 1:
             self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.begin_frame)
         self.__frame_index = self.begin_frame-1
 
-    def capture(self) -> Tuple[datetime, int, np.ndarray]:
-        if self.frame_index >= self.end_frame:
-            return datetime.now(), -1, None
+    def capture(self) -> Tuple[float, int, np.ndarray]:
+        started = time.time()
 
-        print(self)
-        return super().capture()
+        if self.frame_index >= self.end_frame:
+            return started, -1, None
+
+        ts, frame_idx, frame = super().capture()
+        if self.sync:
+            remains = self.interval - (ts - started) - self.delta
+            if remains > 0:
+                time.sleep(remains)
+                ts = time.time()
+                delta = (ts - started) - self.interval
+                if self.delta == 0:
+                    self.delta = delta
+                else:
+                    self.delta += (0.3 * delta)
+
+        return ts, frame_idx, frame
+
 
     def __repr__(self) -> str:
         state = 'opened' if self.is_open() else 'closed'

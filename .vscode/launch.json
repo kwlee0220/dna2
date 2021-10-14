@@ -29,7 +29,7 @@
                 "--input", "C:/Temp/data/cam_1.mp4",
                 "--output", "C:/Temp/cam_1_det.txt",
                 "--show_progress",
-                "--show"
+                // "--show"
             ]
         },
         {
@@ -296,7 +296,7 @@
                 // "--detector", "file:C:/Temp/data/cam_1_det.txt",
                 "--track_file", "C:/Temp/data/cam_1_track.txt",
                 "--max_age", "10",
-                "--show",
+                // "--show",
             ]
         },
         {

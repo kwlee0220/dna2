@@ -13,8 +13,7 @@ from .utils import draw_track_trail
 class ObjectTrackingProcessor(ImageProcessor):
     def __init__(self, capture: DefaultImageCapture, tracker: ObjectTracker, callback: TrackerCallback=None,
                 window_name:str=None, show_progress=False) -> None:
-        super().__init__(capture, sync=False, window_name=window_name, show_progress=show_progress)
-        # super().__init__(capture, sync=(window_name is not None), window_name=window_name, show_progress=show_progress)
+        super().__init__(capture, window_name=window_name, show_progress=show_progress)
 
         self.tracker = tracker
         self.is_detection_based = isinstance(self.tracker, DetectionBasedObjectTracker)

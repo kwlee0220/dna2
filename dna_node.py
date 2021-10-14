@@ -30,6 +30,7 @@ def parse_args():
     parser.add_argument("--max_iou_distance", help="maximum IoU distance", default=0.99)
     parser.add_argument("--max_age", type=int, help="max. # of frames to delete", default=20)
     parser.add_argument("--input", help="input source.", required=True)
+    parser.add_argument("--show_progress", help="show progress bar.", action="store_true")
     parser.add_argument("--show", help="show detections.", action="store_true")
 
     parser.add_argument("--db_host", help="host name of DNA data platform", default="localhost")
@@ -77,9 +78,10 @@ if __name__ == '__main__':
     thread = Thread(target=trj_upload.run, args=tuple())
     thread.start()
 
-    capture = VideoFileCapture(Path(args.input))
+    capture = VideoFileCapture(Path(args.input), sync=False)
     win_name = "output" if args.show else None
-    with ObjectTrackingProcessor(capture, tracker, enhancer, window_name=win_name) as processor:
+    with ObjectTrackingProcessor(capture, tracker, enhancer, window_name=win_name,
+                                show_progress=args.show_progress) as processor:
         from timeit import default_timer as timer
         from datetime import timedelta
 

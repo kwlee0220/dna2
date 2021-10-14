@@ -25,16 +25,18 @@ from dna.camera import DefaultImageCapture, ImageProcessor, VideoFileCapture, Sy
 
 # cap = DefaultImageCapture("rtsp://admin:dnabased24@129.254.82.33:558/LiveChannel/3/media.smp",
 #                     target_size=Size2i(800,600))
-cap = VideoFileCapture(Path("C:/Temp/data/cam_9.mp4"), begin_frame=1000, end_frame=1500)
+cap = VideoFileCapture(Path("C:/Temp/data/cam_9.mp4"), sync=True)
+# cap = VideoFileCapture(Path("C:/Temp/xxx.mp4"), sync=True)
 cap = SyncImageCapture(cap)
 # with ImageProcessor(cap, window_name="output") as proc:
 #     proc.run()
 cap.open()
 while cap.is_open():
     _, frame_idx, frame = cap.capture()
+    print(frame_idx)
 
     cv2.imshow("output", frame)
-    key = cv2.waitKey(1) & 0xFF
+    key = cv2.waitKey(1000) & 0xFF
     if key == ord('q'):
         break
 cap.close()

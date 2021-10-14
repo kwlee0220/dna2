@@ -1,7 +1,5 @@
 from typing import Tuple
-from datetime import datetime, timedelta
-from pathlib import Path
-import sys
+import time
 
 import numpy as np
 import cv2
@@ -14,6 +12,12 @@ _INIT_SIZE = Size2i(-1, -1)
 
 class DefaultImageCapture(ImageCapture):
     def __init__(self, uri:str, target_size :Size2i=None) -> None:
+        """Create a DefaultImageCapture object.
+
+        Args:
+            uri (str): Resource identifier to the ImageCapture.
+            target_size (Size2i, optional): Output image size. Defaults to None.
+        """
         self.uri = uri
         self.cap = None     # None on if it is closed
         self.__fps = -1
@@ -65,7 +69,7 @@ class DefaultImageCapture(ImageCapture):
     def frame_index(self) -> int:
         return self.__frame_index
 
-    def capture(self) -> Tuple[datetime, int, np.ndarray]:
+    def capture(self) -> Tuple[float, int, np.ndarray]:
         if not self.is_open():
             raise ValueError(f"{self.__class__.__name__}: not opened")
 
@@ -75,7 +79,7 @@ class DefaultImageCapture(ImageCapture):
                 mat = cv2.resize(mat, self.size.as_tuple(), interpolation=self.interpolation)
             self.__frame_index += 1
 
-        return datetime.now(), self.__frame_index, mat
+        return time.time(), self.__frame_index, mat
 
     def __repr__(self) -> str:
         state = 'opened' if self.is_open() else 'closed'

@@ -22,21 +22,22 @@ class CapturingProcessor(ImageProcessor):
     def __init__(self, capture: ImageCapture) -> None:
         super().__init__(capture)
 
+        self.cap = capture
+        self.state = State.STOPPED
+
         self.cond = Condition()
         self.frame = None
         self.frame_idx = -1
         self.ts = None
-        self.state = State.STOPPED
 
     def start(self) -> None:
         with self.cond:
             self.state = State.STARTING
-            thread = Thread(target=self.run, args=tuple())
-            thread.start()
+            self.thread = Thread(target=self.run, args=tuple())
+            self.thread.start()
 
             while self.state == State.STARTING:
                 self.cond.wait()
-
 
     def stop(self) -> None:
         with self.cond:
@@ -50,11 +51,12 @@ class CapturingProcessor(ImageProcessor):
 
             while self.state != State.STOPPED:
                 self.cond.wait()
+        self.thread.join()  
 
     def process_image(self, frame: np.ndarray, frame_idx: int, ts: datetime) -> np.ndarray:
         with self.cond:
             if self.state == State.STOPPING:
-                self.capture.close()
+                self.cap.close()
                 self.state = State.STOPPED
             elif self.state == State.STARTING:
                 self.state = State.RUNNING
@@ -63,8 +65,6 @@ class CapturingProcessor(ImageProcessor):
             self.frame_idx = frame_idx
             self.ts = ts
             self.cond.notifyAll()
-
-            print(f"frame_index=f{self.frame_idx}")
 
         return frame
 
@@ -75,26 +75,25 @@ class CapturingProcessor(ImageProcessor):
                     self.cond.wait()
                 if self.state == State.RUNNING:
                     if self.frame_idx >= min_frame_idx:
-                        return self.frame, self.frame_idx, self.ts
+                        return self.ts, self.frame_idx, self.frame
                     else:
                         self.cond.wait()
                 else:
                     return None, None, None
 
+
 class SyncImageCapture(ImageCapture):
     def __init__(self, capture: ImageCapture) -> None:
-        super().__init__()
-
         self.__cap: ImageCapture = capture
-        self.proc = CapturingProcessor(capture)
+        self.__proc = CapturingProcessor(capture)
         self.last_frame = -1
 
     def open(self) -> None:
         self.__cap.open()
-        self.proc.start()
+        self.__proc.start()
 
     def close(self) -> None:
-        self.proc.stop()
+        self.__proc.stop()
 
     def is_open(self) -> bool:
         return self.__cap.is_open()
@@ -112,5 +111,4 @@ class SyncImageCapture(ImageCapture):
         return self.last_frame
 
     def capture(self) -> Tuple[datetime, int, np.ndarray]:
-        ts, self.last_frame, frame = self.proc.capture(self.last_frame+1)
-        return ts, self.last_frame, frame
+        return self.__proc.capture(self.last_frame + 1)

@@ -11,7 +11,7 @@ from dna.camera import VideoFileCapture, ImageProcessor
 
 class VideoFileDisplayer(ImageProcessor):
     def __init__(self, capture, window_name: str="video_output") -> None:
-        super().__init__(capture, sync=True, window_name=window_name, show_progress=False)
+        super().__init__(capture, window_name=window_name, show_progress=False)
 
     def process_image(self, frame: np.ndarray, frame_idx: int, ts: datetime) -> np.ndarray:
         return frame
@@ -43,11 +43,11 @@ if __name__ == '__main__':
     if args.resize_ratio:
         size, fps = VideoFileCapture.load_camera_info(Path(args.input))
         target_size = size * args.resize_ratio
-    capture = VideoFileCapture(Path(args.input), target_size=target_size,
-                                begin_frame=args.begin_frame, end_frame=args.end_frame)
+    cap = VideoFileCapture(Path(args.input), target_size=target_size,
+                            begin_frame=args.begin_frame, end_frame=args.end_frame)
 
     dna_home_dir = Path(args.home)
-    with VideoFileDisplayer(capture) as processor:
+    with ImageProcessor(cap, window_name="output") as processor:
         from timeit import default_timer as timer
         from datetime import timedelta
         started = timer()

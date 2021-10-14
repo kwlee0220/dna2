@@ -77,7 +77,7 @@ if __name__ == '__main__':
     if args.resize_ratio:
         size, fps = VideoFileCapture.load_camera_info(Path(args.input))
         target_size = size * args.resize_ratio
-    capture = VideoFileCapture(Path(args.input), target_size=target_size,
+    capture = VideoFileCapture(Path(args.input), sync=False, target_size=target_size,
                                 begin_frame=args.begin_frame, end_frame=args.end_frame)
     
     detector = DetectorLoader.load(args.detector)
