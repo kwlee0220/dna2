@@ -61,9 +61,10 @@ class LocalPathUploader:
             if event.luid is None:
                 # build local paths from the unfinished sessions and upload them
                 for session in self.sessions.values():
-                    path = session.build_local_path()
-                    self.upload(path)
-                self.upload(True)
+                    if len(session.points) >= self.min_path_count:
+                        path = session.build_local_path()
+                        self.upload(path)
+                self.flush()
 
                 self.sessions.clear()
                 break
@@ -101,6 +102,9 @@ class LocalPathUploader:
             and (datetime.now() - self.last_upload_ts) < self.max_pending_sec:
             return
 
+        self.flush()
+
+    def flush(self):
         self.local_paths.insert_many(self.local_path_buffer)
         self.local_path_buffer.clear()
         self.last_upload_ts = datetime.now()

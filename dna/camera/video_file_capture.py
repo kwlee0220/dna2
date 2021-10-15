@@ -6,11 +6,12 @@ import numpy as np
 import cv2
 
 from dna import Size2i
-from .default_image_capture import DefaultImageCapture
+from dna.camera.image_capture import ImageCapture
+from dna.camera.video_capture_handle import VideoCaptureHandle
 
 
 _ALPHA = 0.3
-class VideoFileCapture(DefaultImageCapture):
+class VideoFileCapture(ImageCapture):
     def __init__(self, file: Path, sync :bool=True, target_size :Size2i=None,
                 begin_frame: int=1, end_frame: int=None) -> None:
         """Create a VideoFile ImageCapture object.
@@ -25,9 +26,10 @@ class VideoFileCapture(DefaultImageCapture):
         Raises:
             ValueError: 'begin_frame' or 'end_frame' are invalid.
         """
-        super().__init__(str(file.resolve()), target_size=target_size)
+        self.__vch = VideoCaptureHandle(str(file.resolve()), target_size=target_size)
         self.file = file
         self.sync = sync
+        self.__frame_index = -1
         self.__frame_count = -1
 
         if begin_frame <= 0 or (end_frame and (end_frame < begin_frame)):
@@ -37,18 +39,35 @@ class VideoFileCapture(DefaultImageCapture):
         self.end_frame = end_frame
         self.delta = 0
 
+    def is_open(self) -> bool:
+        return self.__vch.is_open()
+
     def open(self) -> None:
-        super().open()
+        cap, _, fps = self.__vch.open()
 
         if not self.end_frame:
-            self.end_frame = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            self.end_frame = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         self.__frame_count = self.end_frame - self.begin_frame + 1
-        self.__fps = self.cap.get(cv2.CAP_PROP_FPS)
-        self.interval = 1 / self.__fps
+        self.interval = 1 / fps
 
         if self.begin_frame > 1:
-            self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.begin_frame)
+            cap.set(cv2.CAP_PROP_POS_FRAMES, self.begin_frame)
         self.__frame_index = self.begin_frame-1
+
+    def close(self) -> None:
+        self.__vch.close()
+
+    @property
+    def size(self) -> Size2i:
+        return self.__vch.size
+
+    @property
+    def fps(self) -> int:
+        return self.__vch.fps
+
+    @property
+    def frame_index(self) -> int:
+        return self.__frame_index
 
     @property
     def frame_count(self) -> int:
@@ -60,7 +79,7 @@ class VideoFileCapture(DefaultImageCapture):
         if self.frame_index >= self.end_frame:
             return None, -1, None
 
-        ts, frame_idx, frame = super().capture()
+        ts, _, frame = self.__vch.capture()
         if self.sync:
             remains = self.interval - (ts - started) - self.delta
             if remains > 0:
@@ -72,8 +91,9 @@ class VideoFileCapture(DefaultImageCapture):
                     self.delta = delta
                 else:
                     self.delta += (_ALPHA * delta)
+        self.__frame_index += 1
 
-        return ts, frame_idx, frame
+        return ts, self.__frame_index, frame
 
 
     def __repr__(self) -> str:
@@ -82,17 +102,9 @@ class VideoFileCapture(DefaultImageCapture):
                 f"frames={self.frame_index}/{self.__frame_count}, fps={self.fps:.0f}/s")
 
     @staticmethod
-    def load_camera_info(file: Path) -> Tuple[Size2i, float]:
-        cap = cv2.VideoCapture(str(file))
-        if not cap.isOpened():
-            raise IOError(f"fails to open video capture: '{file}'")
+    def load_camera_info(file: Path) -> Tuple[Size2i, int]:
+        vch = VideoCaptureHandle(str(file.resolve()))
+        cap, size, fps = vch.open()
+        vch.close()
 
-        try:
-            fps = cap.get(cv2.CAP_PROP_FPS)
-            width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-            height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-            size = Size2i(width, height)
-            
-            return size, fps
-        finally:
-            cap.release()
+        return size, fps

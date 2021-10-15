@@ -15,7 +15,6 @@ from .image_capture import ImageCapture
 
 _ALPHA = 0.05
 class ImageProcessor(metaclass=ABCMeta):
-
     def __init__(self, capture: ImageCapture, window_name: str=None,
                 show_progress: bool=False, stop_at_the_last=False) -> None:
         self.__cap = capture

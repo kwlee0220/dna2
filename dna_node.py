@@ -24,12 +24,15 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Detect Objects in a video file")
     parser.add_argument("--home", help="DNA framework home directory.", default=".")
     parser.add_argument("--camera_id", help="camera id")
+    parser.add_argument("--input", help="input source.", required=True)
     parser.add_argument("--detector", help="Object detection algorithm.", default="yolov4")
     parser.add_argument("--track_file", help="Object track log file.", default=None)
     parser.add_argument("--match_score", help="Mathing threshold", default=0.55)
     parser.add_argument("--max_iou_distance", help="maximum IoU distance", default=0.99)
     parser.add_argument("--max_age", type=int, help="max. # of frames to delete", default=20)
-    parser.add_argument("--input", help="input source.", required=True)
+
+    parser.add_argument("--min_path_count", type=int, help="min. # of points for a path", default=20)
+    
     parser.add_argument("--show_progress", help="show progress bar.", action="store_true")
     parser.add_argument("--show", help="show detections.", action="store_true")
 
@@ -74,7 +77,7 @@ if __name__ == '__main__':
     thread = Thread(target=te_upload.run, args=tuple())
     thread.start()
 
-    trj_upload = LocalPathUploader(platform, enhancer.subscribe())
+    trj_upload = LocalPathUploader(platform, enhancer.subscribe(), min_path_count=args.min_path_count)
     thread = Thread(target=trj_upload.run, args=tuple())
     thread.start()
 

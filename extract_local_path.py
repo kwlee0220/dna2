@@ -10,42 +10,30 @@ from dna.platform import DNAPlatform, LocalPath
 from dna import Size2i
 
 
-class LocalPathDisplayProcessor(ImageProcessor):
-    def __init__(self, capture: ImageCapture, path: LocalPath) -> None:
+class LocalPathExtractor(ImageProcessor):
+    def __init__(self, capture: ImageCapture, path: LocalPath, out_file: Path) -> None:
         super().__init__(capture, window_name='output', show_progress=False,
-                            stop_at_the_last=True)
+                            stop_at_the_last=False)
 
+        self.cap = capture
         self.traj = path
         self.points = path.points
         self.index = 0
         self.show_label = True
+        self.out_file = out_file
+        self.writer :cv2.VideoWriter = None
 
     def on_started(self) -> None:
-        pass
+        fourcc = cv2.VideoWriter_fourcc(*'MP4V')
+        self.writer = cv2.VideoWriter(str(self.out_file.resolve()), fourcc,
+                                        self.cap.fps, self.cap.size.as_tuple())
 
     def on_stopped(self) -> None:
-        pass
+        self.writer.release()
 
     def process_image(self, convas, frame_idx: int, ts: datetime):
-        if self.show_label:
-            convas = plot_utils.draw_line_string(convas, self.points[self.index:], color.GREEN)
-            if frame_idx >= self.traj.first_frame and frame_idx <= self.traj.last_frame:
-                convas = plot_utils.draw_line_string(convas, self.points[0:self.index+1], color.RED, 3)
-                
-                pt = self.points[self.index]
-                convas = cv2.circle(convas, pt.xy.astype(int), 7, color.RED, thickness=-1, lineType=cv2.LINE_AA)
-                convas = plot_utils.draw_label(convas, str(self.traj.luid), pt.xy.astype(int), color.BLACK, color.RED, 4)
-
-                self.index += 1
-
+        self.writer.write(convas)
         return convas
-
-    def set_control(self, key: int) -> int:
-        if key == ord('l'):
-            self.show_label = not self.show_label
-        
-        return key
-
 
 import sys
 import argparse
@@ -55,6 +43,7 @@ def parse_args():
     parser.add_argument("--camera_id", help="camera id")
     parser.add_argument("--luid", type=int, help="target object id")
     parser.add_argument("--input", help="input source.", required=True)
+    parser.add_argument("--output", help="output video file", required=True)
 
     parser.add_argument("--db_host", help="host name of DNA data platform", default="localhost")
     parser.add_argument("--db_port", type=int, help="port number of DNA data platform", default=5432)
@@ -85,10 +74,10 @@ if __name__ == '__main__':
 
     margin = int(camera_info.fps / 2)
     begin_frame = max(traj.first_frame - margin, 1)
-    end_frame = traj.last_frame
+    end_frame = traj.last_frame + margin
 
     capture = VideoFileCapture(Path(args.input),  begin_frame=begin_frame, end_frame=end_frame)
-    with LocalPathDisplayProcessor(capture, traj) as processor:
+    with LocalPathExtractor(capture, traj, out_file=Path(args.output)) as processor:
         from timeit import default_timer as timer
         from datetime import timedelta
 

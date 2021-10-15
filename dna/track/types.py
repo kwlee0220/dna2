@@ -24,7 +24,7 @@ class Track:
     state: TrackState
     location: BBox
     frame_index: int
-    ts: datetime
+    ts: float
 
     def is_tentative(self) -> bool:
         return self.state == TrackState.Tentative
@@ -39,7 +39,7 @@ class Track:
         return self.state == TrackState.Deleted
     
     def __repr__(self) -> str:
-        epoch = utils.datetime2utc(self.ts) if self.ts else None
+        epoch = int(round(self.ts * 1000))
         return f"{self.state.name}[{self.id}]={self.location}, frame={self.frame_index}, ts={epoch}"
 
     def draw(self, mat, color, label_color=None, line_thickness=2) -> np.ndarray:
@@ -54,9 +54,9 @@ class Track:
 
     def to_string(self) -> str:
         tlbr = self.location.tlbr
-        utc_epoch = utils.datetime2utc(self.ts)
+        epoch = int(round(self.ts * 1000))
         return (f"{self.frame_index},{self.id},{tlbr[0]:.3f},{tlbr[1]:.3f},{tlbr[2]:.3f},{tlbr[3]:.3f},"
-                f"{self.state.value},{utc_epoch}")
+                f"{self.state.value},{epoch}")
     
     @staticmethod
     def from_string(csv) -> Track:
@@ -67,6 +67,6 @@ class Track:
         tlbr = np.array(parts[2:6]).astype(float)
         bbox = BBox.from_tlbr(tlbr)
         state = TrackState(int(parts[6]))
-        ts = utils.utc2datetime(int(parts[7]))
+        ts = int(parts[7]) / 1000
         
         return Track(id=track_id, state=state, location=bbox, frame_index=frame_idx, ts=ts)

@@ -19,29 +19,29 @@ class DefaultImageCapture(ImageCapture):
             target_size (Size2i, optional): Output image size. Defaults to None.
         """
         self.uri = uri
-        self.cap = None     # None on if it is closed
+        self.__cap = None     # None on if it is closed
         self.__fps = -1
         self.__size = target_size if target_size else _INIT_SIZE
         self.interpolation = None
         self.__frame_index = -1
 
     def is_open(self) -> bool:
-        return self.cap is not None
+        return self.__cap is not None
 
     def open(self) -> None:
         if self.is_open():
             raise ValueError(f"{self.__class__.__name__}: invalid state (opened already)")
 
-        self.cap = cv2.VideoCapture(self.uri)
-        if not self.cap.isOpened():
-            self.cap = None
+        self.__cap = cv2.VideoCapture(self.uri)
+        if not self.__cap.isOpened():
+            self.__cap = None
             raise IOError(f"fails to open video capture: '{self.uri}'")
 
         self.__frame_index = 0
-        self.__fps = self.cap.get(cv2.CAP_PROP_FPS)
+        self.__fps = self.__cap.get(cv2.CAP_PROP_FPS)
 
-        width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        width = int(self.__cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(self.__cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         src_size = Size2i(width, height)
         if self.__size == _INIT_SIZE:
             self.__size = src_size
@@ -53,9 +53,13 @@ class DefaultImageCapture(ImageCapture):
             self.__size = src_size
 
     def close(self) -> None:
-        if self.cap:
-            self.cap.release()
-            self.cap = None
+        if self.__cap:
+            self.__cap.release()
+            self.__cap = None
+
+    @property
+    def video_capture(self):
+        return self.__cap
 
     @property
     def size(self) -> Size2i:
@@ -73,7 +77,7 @@ class DefaultImageCapture(ImageCapture):
         if not self.is_open():
             raise ValueError(f"{self.__class__.__name__}: not opened")
 
-        _, mat = self.cap.read()
+        _, mat = self.__cap.read()
         if mat is not None:
             if self.interpolation:
                 mat = cv2.resize(mat, self.size.as_tuple(), interpolation=self.interpolation)
