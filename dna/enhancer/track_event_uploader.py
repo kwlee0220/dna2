@@ -1,4 +1,6 @@
 
+import time
+from datetime import datetime
 import numpy as np
 from psycopg2.extras import execute_values
 from queue import Queue
@@ -7,7 +9,7 @@ from dna.platform import DNAPlatform
 from .types import TrackEvent
 
 
-_INSERT_SQL = "insert into track_events(camera_id,luid,bbox,frame_index,ts) values %s"
+_INSERT_SQL = "insert into track_events(camera_id, luid, bbox, frame_index, ts) values %s"
 class TrackEventUploader:
     def __init__(self, platform:DNAPlatform, mqueue: Queue, bulk_size:int=100) -> None:
         self.mqueue = mqueue
@@ -39,4 +41,4 @@ class TrackEventUploader:
 
     def __serialize(self, ev: TrackEvent):
         box_expr = '({},{}),({},{})'.format(*np.rint(ev.location.tlbr).astype(int))
-        return (ev.camera_id, ev.luid, box_expr, ev.frame_index, ev.ts)
+        return (ev.camera_id, ev.luid, box_expr, ev.frame_index, datetime.fromtimestamp(ev.ts))

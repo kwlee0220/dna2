@@ -199,6 +199,7 @@ class Size2i:
         return '{}x{}'.format(*self.__wh)
 
 
+_ONExONE = np.array([1, 1])
 class BBox:
     def __init__(self, tlwh: np.ndarray) -> None:
         self.__tlwh = tlwh
@@ -212,14 +213,14 @@ class BBox:
     def tlbr(self) -> np.ndarray:
         if self.__tlbr is None:
             tl = self.tlwh[0:2]
-            br = tl + self.tlwh[2:4]
+            br = tl + self.tlwh[2:4] - _ONExONE
             self.__tlbr = np.hstack([tl, br])
         return self.__tlbr
 
     @classmethod
     def from_tlbr(cls, tlbr: np.ndarray) -> BBox:
         tl = tlbr[0:2]
-        wh = tlbr[2:4] - tl
+        wh = tlbr[2:4] - tl + _ONExONE
         return BBox(np.hstack([tl, wh]))
 
     @property
@@ -250,6 +251,9 @@ class BBox:
     def size(self) -> Size2d:
         return Size2d(wh = self.tlwh[2:4])
 
+    def area(self) -> int:
+        return self.size.area()
+
     @property
     def width(self) -> Union[int,float]:
         return self.tlwh[2]
@@ -269,6 +273,17 @@ class BBox:
         v = np.max(np.array([np.zeros(len(delta2)), delta2]), axis=0)
         dist = np.linalg.norm(np.concatenate([u, v]))
         return dist
+
+    def intersection(self, bbox: BBox) -> Union[BBox, None]:
+        x1 = max(self.tl[0], bbox.tl[0])
+        y1 = max(self.tl[1], bbox.tl[1])
+        x2 = min(self.br[0], bbox.br[0])
+        y2 = min(self.br[1], bbox.br[1])
+        
+        if x1 >= x2 or y1 >= y2:
+            return None
+        else:
+            return BBox.from_tlbr(np.array([x1, y1, x2, y2]))
 
     def draw(self, mat, color, line_thickness=2):
         import cv2

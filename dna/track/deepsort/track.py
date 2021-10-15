@@ -150,6 +150,11 @@ class Track:
             self.state = TrackState.Deleted
         self.last_detection = None
 
+    # kwlee
+    def mark_deleted(self):
+        self.state = TrackState.Deleted
+        self.last_detection = None
+
     def is_tentative(self):
         """Returns True if this track is tentative (unconfirmed).
         """

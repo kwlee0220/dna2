@@ -13,6 +13,8 @@ import torch
 import torchvision
 from scipy.stats import multivariate_normal
 
+from dna import BBox
+
 WHITE = (255,255,255)
 YELLOW = (0,255,255)
 RED = (0,0,255)
@@ -37,7 +39,9 @@ def get_gaussian_mask():
 
 
 class deepsort_rbc():
-	def __init__(self, wt_path=None, matching_threshold=0.5, max_iou_distance=0.7, max_age=40):
+	def __init__(self, domain: BBox, wt_path, matching_threshold=0.5, max_iou_distance=0.7, max_age=40):
+		self.domain = domain
+
 		#loading this encoder is slow, should be done only once.
 		#self.encoder = generate_detections.create_box_encoder("deep_sort/resources/networks/mars-small128.ckpt-68577")		
 		self.encoder = torch.load(wt_path)			
@@ -47,7 +51,7 @@ class deepsort_rbc():
 		print("Deep sort model loaded from path: ", wt_path)
 
 		self.metric = nn_matching.NearestNeighborDistanceMetric("cosine", matching_threshold , 100)
-		self.tracker= Tracker(self.metric, max_iou_distance=max_iou_distance, max_age=max_age)
+		self.tracker= Tracker(domain, self.metric, max_iou_distance=max_iou_distance, max_age=max_age)
 
 		self.gaussian_mask = get_gaussian_mask().cuda()
 

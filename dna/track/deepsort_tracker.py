@@ -23,13 +23,13 @@ from .deepsort.track import TrackState as DSTrackState
 
 
 class DeepSORTTracker(DetectionBasedObjectTracker):
-    def __init__(self, detector: ObjectDetector, weights_file, det_dict = None,
+    def __init__(self, domain: BBox, detector: ObjectDetector, weights_file, det_dict = None,
                     matching_threshold=0.5, max_iou_distance=0.7, max_age=30) -> None:
         super().__init__()
 
         self.__detector = detector
         self.det_dict = det_dict
-        self.deepsort = deepsort_rbc(wt_path=weights_file.absolute(),
+        self.deepsort = deepsort_rbc(domain = domain, wt_path=weights_file.absolute(),
                                     matching_threshold=matching_threshold,
                                     max_iou_distance=max_iou_distance,
                                     max_age=max_age)

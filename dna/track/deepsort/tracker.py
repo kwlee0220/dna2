@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 from dna.track.deepsort.detection import Detection
 import numpy as np
+from dna.types import BBox
 import kalman_filter
 import linear_assignment
 import iou_matching
@@ -38,7 +39,8 @@ class Tracker:
 
     """
 
-    def __init__(self, metric, max_iou_distance=0.7, max_age=40, n_init=3):
+    def __init__(self, domain, metric, max_iou_distance=0.7, max_age=40, n_init=3):
+        self.domain = domain
         self.metric = metric
         self.max_iou_distance = max_iou_distance
         self.max_age = max_age
@@ -74,7 +76,17 @@ class Tracker:
             track.update(self.kf, detections[detection_idx])
 
         for track_idx in unmatched_tracks:
-            self.tracks[track_idx].mark_missed()
+            # kwlee
+            # track 영역이 image 전체의 영역에서 1/3 이상 벗어난 경우에는
+            # 더 이상 추적하지 않는다.
+            track = self.tracks[track_idx]
+            bbox = BBox(track.to_tlwh())
+            intersection = self.domain.intersection(bbox)
+            inter_area = intersection.area() if intersection else 0
+            if (inter_area / bbox.area()) < 2/3:
+                track.mark_deleted()
+            else:
+                self.tracks[track_idx].mark_missed()
 
         for detection_idx in unmatched_detections:
             track = self._initiate_track(detections[detection_idx])
