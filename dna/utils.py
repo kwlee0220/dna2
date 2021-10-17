@@ -75,13 +75,14 @@ def draw_boxes(convas, boxes, box_color, label_color=None, line_thickness=2):
             mat = plot_utils.draw_label(convas, msg, box.tl.astype(int), label_color, box_color, 2)
     return convas
 
-def draw_ds_tracks(convas, tracks, box_color, label_color=None, line_thickness=2):
+def draw_ds_tracks(convas, tracks, box_color, label_color=None, line_thickness=2, track_indices=None):
     for idx, track in enumerate(tracks):
-        box = BBox.from_tlbr(track.to_tlbr())
-        box.draw(convas, box_color)
-        if label_color:
-            msg = f"{track.track_id}[{track.state}]"
-            mat = plot_utils.draw_label(convas, msg, box.br.astype(int), label_color, box_color, 2)
+        if track_indices and track.track_id in track_indices:
+            box = BBox.from_tlbr(track.to_tlbr())
+            box.draw(convas, box_color)
+            if label_color:
+                msg = f"{track.track_id}[{track.state}]"
+                mat = plot_utils.draw_label(convas, msg, box.br.astype(int), label_color, box_color, 2)
     return convas
 
 def draw_ds_detections(convas, dets, box_color, label_color=None, line_thickness=2):
@@ -93,8 +94,5 @@ def draw_ds_detections(convas, dets, box_color, label_color=None, line_thickness
             mat = plot_utils.draw_label(convas, msg, box.tl.astype(int), label_color, box_color, 2)
     return convas
 
-def find_track_index(track_id, tracks, track_indices):
-    for idx, tidx in enumerate(track_indices):
-        if tracks[tidx].track_id == track_id:
-            return idx
-    return -1
+def find_track_index(track_id, tracks):
+    return next((idx for idx, track in enumerate(tracks) if track[idx].track_id == track_id), None)

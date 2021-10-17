@@ -190,7 +190,8 @@ class deepsort_rbc():
 		if dna.DEBUG_SHOW_IMAGE:
 			import cv2
 			from dna import color
-			convas = draw_ds_tracks(frame.copy(), self.tracker.tracks, color.RED, color.BLACK, 1)
+			convas = draw_ds_tracks(frame.copy(), self.tracker.tracks, color.RED, color.BLACK, 1,
+									dna.DEBUG_TARGET_TRACKS)
 			cv2.imshow("predictions", convas)
 			cv2.waitKey(1)
 		##################################################################################

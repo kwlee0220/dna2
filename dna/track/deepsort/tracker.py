@@ -50,9 +50,6 @@ class Tracker:
         self.tracks = []
         self._next_id = 1
 
-        #kwlee
-        dna.DEBUG_KF = self.kf
-
     def predict(self):
         """Propagate track state distributions one time step forward.
 
@@ -136,7 +133,7 @@ class Tracker:
         # # kwlee
         dist_cost = self.distance_cost(self.tracks, detections)
         if dna.DEBUG_PRINT_COST:
-              self.print_dist_cost(dist_cost)
+              self.print_dist_cost(dist_cost, 999)
 
         matches_z, unmatched_tracks, unmatched_detections \
             = linear_assignment.matching_distance(dist_cost, self.tracks, detections, confirmed_tracks)
@@ -202,11 +199,15 @@ class Tracker:
             cost_str = ', '.join([f"({v1:6d}, {v2:.3f})" for v1, v2 in zip(dists, metrics)])
             print(f"{track_str}: {cost_str}")
 
-    def print_dist_cost(self, dist_cost):
+    def print_dist_cost(self, dist_cost, trim_overflow=None):
+        if trim_overflow:
+            dist_cost = dist_cost.copy()
+            dist_cost[dist_cost > trim_overflow] = trim_overflow
+
         for tidx, track in enumerate(self.tracks):
             dists = [int(round(v)) for v in dist_cost[tidx]]
-            track_str = f"[{tidx:02d}]{track.track_id:03d}({track.state},{track.time_since_update})"
-            dist_str = ', '.join([f"{v:6d}" for v in dists])
+            track_str = f"{tidx:02d}: {track.track_id:03d}({track.state},{track.time_since_update})"
+            dist_str = ', '.join([f"{v:3d}" for v in dists])
             print(f"{track_str}: {dist_str}")
 
     def print_metrix_cost(self, metric_cost):

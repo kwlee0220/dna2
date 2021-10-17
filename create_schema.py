@@ -2,11 +2,13 @@ from typing import List
 from pathlib import Path
 from threading import Thread
 
+import numpy as np
 import psycopg2 as pg2
 from psycopg2.extras import execute_values
 
 from dna import  Size2i
 from dna.platform import CameraInfo, DNAPlatform
+from dna.types import BBox
 
 _SQL_CREATE_TRACK_EVENTS = """
 create table track_events (
@@ -50,13 +52,20 @@ if __name__ == '__main__':
         rset.create()
 
     camera_infos = platform.get_resource_set("camera_infos")
-    camera_infos.insert(CameraInfo(camera_id='ai_city:1', size=Size2i(1280, 960), fps=10))
-    camera_infos.insert(CameraInfo(camera_id='ai_city:6', size=Size2i(1280, 960), fps=10))
-    camera_infos.insert(CameraInfo(camera_id='ai_city:9', size=Size2i(1920, 1080), fps=10))
-    camera_infos.insert(CameraInfo(camera_id='ai_city:11', size=Size2i(1920, 1080), fps=10))
-    camera_infos.insert(CameraInfo(camera_id='etri:5', size=Size2i(1920, 1080), fps=10))
-    camera_infos.insert(CameraInfo(camera_id='etri:6', size=Size2i(1920, 1080), fps=10))
-    camera_infos.insert(CameraInfo(camera_id='test:1', size=Size2i(1920, 1080), fps=10))
+    camera_infos.insert(CameraInfo(camera_id='ai_city:1', uri="C:/Temp/data/cam_1.mp4",
+                                    size=Size2i(1280, 960), fps=10))
+    camera_infos.insert(CameraInfo(camera_id='ai_city:6', uri="C:/Temp/data/cam_6.mp4",
+                                    size=Size2i(1280, 960), fps=10))
+    camera_infos.insert(CameraInfo(camera_id='ai_city:9', uri="C:/Temp/data/cam_9.mp4",
+                                    size=Size2i(1920, 1080), fps=10))
+    camera_infos.insert(CameraInfo(camera_id='ai_city:11', uri="C:/Temp/data/cam_11.mp4",
+                                    size=Size2i(1920, 1080), fps=10))
+    camera_infos.insert(CameraInfo(camera_id='etri:5', uri="C:/Temp/data/channel05_9.mp4",
+                                    size=Size2i(1920, 1080), fps=10))
+    etri_6_9 = CameraInfo(camera_id='etri:6', uri="C:/Temp/data/channel06_9.mp4",
+                                    size=Size2i(1920, 1080), fps=10)
+    etri_6_9.add_blind_region(BBox.from_tlbr(np.array([1309, 223, 1908, 488])))
+    camera_infos.insert(etri_6_9)
 
     cur = conn.cursor()
     cur.execute(_SQL_CREATE_TRACK_EVENTS)

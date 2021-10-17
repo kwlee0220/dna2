@@ -26,7 +26,11 @@ class VideoFileCapture(ImageCapture):
         Raises:
             ValueError: 'begin_frame' or 'end_frame' are invalid.
         """
-        self.__vch = VideoCaptureHandle(str(file.resolve()), target_size=target_size)
+        if isinstance(file, Path):
+            file = str(file.resolve())
+        else:
+            file = str(file)
+        self.__vch = VideoCaptureHandle(file, target_size=target_size)
         self.file = file
         self.sync = sync
         self.__frame_index = -1
