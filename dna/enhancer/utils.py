@@ -10,7 +10,7 @@ from dna import Point
 
 
 if __name__ == '__main__':
-    pt1 = Point(np.array([2, 2]))
-    pt2 = Point(np.array([4, 3]))
+    pt1 = Point(2, 2)
+    pt2 = Point(4, 3)
 
     print(Point.split_points(pt1, pt2, 1))

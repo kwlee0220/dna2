@@ -9,6 +9,7 @@ from tqdm import tqdm
 import numpy as np
 import cv2
 
+import dna
 from dna import color
 from .image_capture import ImageCapture
 
@@ -72,7 +73,11 @@ class ImageProcessor(metaclass=ABCMeta):
                 break
             capture_count += 1
 
+            dna.DEBUG_FRAME_IDX = frame_idx
             frame = self.process_image(frame, frame_idx, ts)
+            if dna.DEBUG_PRINT_COST:
+                print("------------------------------------------")
+                
             if self.window_name and self.show:
                 if show_fps:
                     image = cv2.putText(frame, f'FPS={fps_measured:.2f}, frames={frame_idx}', (20, 20),

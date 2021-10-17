@@ -1,13 +1,13 @@
 # vim: expandtab:ts=4:sw=4
 from __future__ import absolute_import
 from dna.track.deepsort.detection import Detection
+import dna
 import numpy as np
 from dna.types import BBox
 import kalman_filter
 import linear_assignment
 import iou_matching
 from track import Track
-
 
 class Tracker:
     """
@@ -50,6 +50,9 @@ class Tracker:
         self.tracks = []
         self._next_id = 1
 
+        #kwlee
+        dna.DEBUG_KF = self.kf
+
     def predict(self):
         """Propagate track state distributions one time step forward.
 
@@ -80,7 +83,7 @@ class Tracker:
             # track 영역이 image 전체의 영역에서 1/3 이상 벗어난 경우에는
             # 더 이상 추적하지 않는다.
             track = self.tracks[track_idx]
-            bbox = BBox(track.to_tlwh())
+            bbox = BBox.from_tlbr(track.to_tlbr())
             intersection = self.domain.intersection(bbox)
             inter_area = intersection.area() if intersection else 0
             if (inter_area / bbox.area()) < 2/3:
@@ -111,7 +114,7 @@ class Tracker:
         self.metric.partial_fit(np.asarray(features), np.asarray(targets), active_targets)
 
         return delete_tracks
-
+        
     def _match(self, detections):
         def gated_metric(tracks, dets, track_indices, detection_indices):
             features = np.array([dets[i].feature for i in detection_indices])
@@ -129,11 +132,28 @@ class Tracker:
         confirmed_tracks = [i for i, t in enumerate(self.tracks) if t.is_confirmed()]
         unconfirmed_tracks = [i for i, t in enumerate(self.tracks) if not t.is_confirmed()]
 
-        # Associate confirmed tracks using appearance features.
+        # ##############################################################################################
+        # # kwlee
+        dist_cost = self.distance_cost(self.tracks, detections)
+        if dna.DEBUG_PRINT_COST:
+              self.print_dist_cost(dist_cost)
+
+        matches_z, unmatched_tracks, unmatched_detections \
+            = linear_assignment.matching_distance(dist_cost, self.tracks, detections, confirmed_tracks)
+
         matches_a, unmatched_tracks, unmatched_detections = \
             linear_assignment.matching_cascade(gated_metric, self.metric.matching_threshold, self.max_age,
-                                                self.tracks, detections,
-                                                confirmed_tracks)
+                                                self.tracks, detections, \
+                                                unmatched_tracks, unmatched_detections)
+        matches_a = matches_z + matches_a
+        # ##############################################################################################
+
+        # # kwlee: 임시로 comment-out 됨
+        # # Associate confirmed tracks using appearance features.
+        # matches_a, unmatched_tracks, unmatched_detections = \
+        #     linear_assignment.matching_cascade(gated_metric, self.metric.matching_threshold, self.max_age,
+        #                                         self.tracks, detections,
+        #                                         confirmed_tracks)
 
         # Confirmed track들 중에서 appearance metric으로 assign되지 못한 track들에서 대해서만
         # IoU 거리를 통한 association을 시도한다.
@@ -155,3 +175,44 @@ class Tracker:
     def _initiate_track(self, detection: Detection):
         mean, covariance = self.kf.initiate(detection.to_xyah())
         return Track(mean, covariance, self._next_id, self.n_init, self.max_age, detection)
+
+    ###############################################################################################################
+    # kwlee
+    def metric_cost(self, tracks, detections):
+        features = np.array([det.feature for det in detections])
+        targets = np.array([track.track_id for track in tracks])
+        return self.metric.distance(features, targets)
+
+    # kwlee
+    import math
+    def distance_cost(self, tracks, detections, only_position=False):
+        measurements = np.asarray([det.to_xyah() for det in detections])
+        dist_matrix = np.zeros((len(tracks), len(detections)))
+        for row, track in enumerate(tracks):
+            dist_matrix[row, :] = self.kf.gating_distance(track.mean, track.covariance,
+                                                            measurements, only_position)
+        return dist_matrix
+
+    # kwlee
+    def print_cost(self, metric_cost, dist_cost):
+        for tidx, track in enumerate(self.tracks):
+            dists = [int(round(v)) for v in dist_cost[tidx]]
+            metrics = [round(v, 3) for v in metric_cost[tidx]]
+            track_str = f"[{tidx:02d}]{track.track_id:03d}({track.state},{track.time_since_update})"
+            cost_str = ', '.join([f"({v1:6d}, {v2:.3f})" for v1, v2 in zip(dists, metrics)])
+            print(f"{track_str}: {cost_str}")
+
+    def print_dist_cost(self, dist_cost):
+        for tidx, track in enumerate(self.tracks):
+            dists = [int(round(v)) for v in dist_cost[tidx]]
+            track_str = f"[{tidx:02d}]{track.track_id:03d}({track.state},{track.time_since_update})"
+            dist_str = ', '.join([f"{v:6d}" for v in dists])
+            print(f"{track_str}: {dist_str}")
+
+    def print_metrix_cost(self, metric_cost):
+        for tidx, track in enumerate(self.tracks):
+            costs = [round(v, 3) for v in metric_cost[tidx]]
+            track_str = f"[{tidx:02d}]{track.track_id:03d}({track.state},{track.time_since_update})"
+            dist_str = ', '.join([f"{v:.3f}" for v in costs])
+            print(f"{track_str}: {dist_str}")
+    ###############################################################################################################

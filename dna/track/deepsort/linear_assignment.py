@@ -6,6 +6,8 @@ import numpy as np
 from scipy.optimize import linear_sum_assignment
 
 import kalman_filter
+import dna
+import dna.utils as du
 
 
 INFTY_COST = 1e+5
@@ -55,7 +57,6 @@ def min_cost_matching(distance_metric, max_distance, tracks, detections, track_i
         return [], track_indices, detection_indices  # Nothing to match.
 
     cost_matrix = distance_metric(tracks, detections, track_indices, detection_indices)
-    # cost_matrix_copy = cost_matrix.copy()
     cost_matrix[cost_matrix > max_distance] = max_distance + 1e-5
     indices = linear_sum_assignment(cost_matrix)
     indices = np.asarray(indices)
@@ -76,16 +77,6 @@ def min_cost_matching(distance_metric, max_distance, tracks, detections, track_i
             unmatched_detections.append(detection_idx)
         else:
             matches.append((track_idx, detection_idx))
-
-    # # kwlee
-    # track, row = find_track_info_from_matches(matches, tracks, {1,3}, track_indices, detection_indices, cost_matrix_copy)
-    # if track is not None:
-    #     print('matched', track_str(track), '  :', row_str(row), 'max_dist=', max_distance)
-        
-    # # kwlee
-    # track, row = find_from_unmatched_tracks(unmatched_tracks, tracks, {1,3}, track_indices, detection_indices, cost_matrix_copy)
-    # if track is not None:
-    #     print('unmatched', track_str(track), ':', row_str(row))
 
     return matches, unmatched_tracks, unmatched_detections
 
@@ -188,7 +179,6 @@ def matching_cascade(distance_metric, max_distance, cascade_depth, tracks, detec
 
     return matches, unmatched_tracks, unmatched_detections
 
-
 def gate_cost_matrix(kf, cost_matrix, tracks, detections, track_indices, detection_indices,
                     gated_cost=INFTY_COST, only_position=False):
     """Invalidate infeasible entries in cost matrix based on the state
@@ -234,18 +224,41 @@ def gate_cost_matrix(kf, cost_matrix, tracks, detections, track_indices, detecti
         track = tracks[track_idx]
         gating_distance = kf.gating_distance(track.mean, track.covariance, measurements, only_position)
 
-        # # kwlee
-        # if track.track_id in {1,3}:
-        #     cost_row = [round(v,3) for v in cost_matrix[row]]
-        #     print(f'cost      {track.track_id:2d}     : {cost_row}')
-        #     gate_dist = list(gating_distance.astype(int))
-        #     print(f'gate_dist {track.track_id:2d}     : {gate_dist}, threshold={gating_threshold}')
-
-        #     from dna import BBox
-        #     track_box = BBox.from_tlbr(track.to_tlbr())
-        #     mea_boxes = [BBox.from_tlbr(detections[i].to_tlbr()) for i in detection_indices]
-        #     box_dists = [int(BBox.distance(track_box, mb)) for mb in mea_boxes]
-        #     print(f'gate_dist2 {track.track_id:2d}    : {box_dists}')
-
         cost_matrix[row, gating_distance > gating_threshold] = gated_cost
     return cost_matrix
+
+
+
+    # kwlee
+_DIST_THRESHOLD = 20
+def matching_distance(dist_matrix, tracks, detections, track_indices):
+    matches = []
+    unmatched_tracks = []
+    unmatched_detections = list(range(len(detections)))
+
+    ndets = len(detections)
+    if ndets <= 1:
+        return matches, track_indices, unmatched_detections
+
+    for tidx in track_indices:
+        track = tracks[tidx]
+        if track.is_confirmed() and track.time_since_update <= 1:
+            dists = dist_matrix[tidx,:]
+            if ndets > 2:
+                idxes = np.argpartition(dists, 2)[:2]
+            else:
+                idxes = [0, 1] if dists[0] <= dists[1] else [1, 0]
+
+            v1, v2 = tuple(dists[idxes])
+            if v1 < _DIST_THRESHOLD and v1*2 < v2:
+                det_idx = idxes[0]
+                dists2 = dist_matrix[track_indices,det_idx]
+                # dists2 = dist_matrix[:,det_idx]
+                cnt = len(dists2[np.where(dists2 < _DIST_THRESHOLD)])
+                if cnt <= 1:
+                    matches.append((tidx, idxes[0]))
+                    unmatched_detections.remove(idxes[0])
+                    continue
+        unmatched_tracks.append(tidx)
+    
+    return matches, unmatched_tracks, unmatched_detections

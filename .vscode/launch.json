@@ -315,6 +315,19 @@
             ]
         },
         {
+            "name": "Replay Tracks (Test)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/replay_tracks.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--track_file", "C:/Temp/local_path_track.txt",
+                "--video_file", "C:/Temp/local_path.mp4",
+                "--show",
+                // "--show_progress",
+            ]
+        },
+        {
             "name": "DNA Node (AI_CITY:01)",
             "type": "python",
             "request": "launch",
@@ -411,6 +424,22 @@
             ]
         },
         {
+            "name": "DNA Node (Test)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/dna_node.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--camera_id", "test:1",
+                "--input",  "C:/Temp/local_path.mp4",
+                // "--detector", "yolov4",
+                // "--detector", "file:C:/Temp/data/channel06_9_det.txt",
+                "--track_file", "C:/Temp/local_path_track.txt",
+                "--max_age", "10",
+                // "--show",
+            ]
+        },
+        {
             "name": "Replay Local Path",
             "type": "python",
             "request": "launch",
@@ -419,9 +448,11 @@
             "args": [
                 // "--camera_id", "etri:6",
                 // "--input", "C:/Temp/data/channel06_9.mp4",
-                "--camera_id", "ai_city:9",
-                "--input", "C:/Temp/data/cam_9.mp4",
-                "--luid", "26",
+                // "--camera_id", "ai_city:9",
+                // "--input", "C:/Temp/data/cam_9.mp4",
+                "--camera_id", "test:1",
+                "--input", "C:/Temp/local_path.mp4",
+                "--luid", "1",
             ]
         },
         {
@@ -431,11 +462,11 @@
             "program": "${workspaceFolder}/extract_local_path.py",
             "console": "integratedTerminal",
             "args": [
-                "--camera_id", "etri:6",
-                "--input", "C:/Temp/data/channel06_9.mp4",
-                // "--camera_id", "ai_city:9",
-                // "--input", "C:/Temp/data/cam_9.mp4",
-                "--luid", "97",
+                // "--camera_id", "etri:5",
+                // "--input", "C:/Temp/data/channel05_9.mp4",
+                "--camera_id", "ai_city:9",
+                "--input", "C:/Temp/data/cam_9.mp4",
+                "--luid", "29",
                 "--output", "C:/Temp/local_path.mp4"
             ]
         },

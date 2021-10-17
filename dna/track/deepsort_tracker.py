@@ -7,7 +7,6 @@ import cv2
 
 import sys
 
-from dna.det.detector import ObjectDetector
 FILE = Path(__file__).absolute()
 DEEPSORT_DIR = str(FILE.parents[0] / 'deepsort')
 if not DEEPSORT_DIR in sys.path:
@@ -24,11 +23,12 @@ from .deepsort.track import TrackState as DSTrackState
 
 class DeepSORTTracker(DetectionBasedObjectTracker):
     def __init__(self, domain: BBox, detector: ObjectDetector, weights_file, det_dict = None,
-                    matching_threshold=0.5, max_iou_distance=0.7, max_age=30) -> None:
+                    min_detection_score=0, matching_threshold=0.5, max_iou_distance=0.7, max_age=30) -> None:
         super().__init__()
 
         self.__detector = detector
         self.det_dict = det_dict
+        self.min_detection_score = min_detection_score
         self.deepsort = deepsort_rbc(domain = domain, wt_path=weights_file.absolute(),
                                     matching_threshold=matching_threshold,
                                     max_iou_distance=max_iou_distance,
@@ -50,7 +50,8 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
             return None
 
     def track(self, frame, frame_idx:int, ts:datetime) -> List[Track]:
-        self.__last_frame_detections = self.detector.detect(frame, frame_index=frame_idx)
+        dets = self.detector.detect(frame, frame_index=frame_idx)
+        self.__last_frame_detections = [det for det in dets if det.score >= self.min_detection_score]
         if self.det_dict:
             dets = []
             for det in self.__last_frame_detections:
@@ -76,7 +77,7 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
         elif ds_track.state == DSTrackState.Deleted:
             state = TrackState.Deleted
 
-        return Track(id=ds_track.track_id, state=state, location=BBox(ds_track.to_tlwh()),
+        return Track(id=ds_track.track_id, state=state, location=BBox.from_tlbr(ds_track.to_tlbr()),
                     frame_index=frame_idx, ts=ts)
 
     def split_boxes_scores(self, det_list):

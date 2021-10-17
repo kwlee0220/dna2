@@ -28,12 +28,12 @@ class Session:
         return len(self.points) >= _MAX_BLOCK_SIZE
 
     def append(self, ev: TrackEvent) -> None:
-        pt = ev.location.center
+        pt = ev.location.center()
 
         if self.first_frame < 0:
             self.first_frame = ev.frame_index
         else:
-            self.length += Point.distance(self.points[-1], pt)
+            self.length += pt.distance_to(self.points[-1])
         self.points.append(pt)
         self.last_frame = ev.frame_index
 

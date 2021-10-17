@@ -48,7 +48,7 @@ class LocalPath:
             concated = []
             for traj in paths:
                 concated.extend(traj.points)
-            length = sum([Point.distance(pt, next_pt) for pt, next_pt in zip(concated, concated[1:])], 0)
+            length = sum([pt.distance_to(next_pt) for pt, next_pt in zip(concated, concated[1:])], 0)
 
             return LocalPath(first.camera_id, first.luid, length,
                                 first.first_frame, last.last_frame, False, concated)
@@ -66,7 +66,7 @@ def _parse_point_list(path_str):
             parts = path_str[begin+1:i].split(',')
             v = np.array(parts)
             v2 = v.astype(float)
-            yield Point(v2)
+            yield Point.from_np(v2)
 
 class LocalPathSet(ResourceSet):
     __SQL_GET = """

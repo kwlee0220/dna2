@@ -41,7 +41,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Replay a localpath on the screen")
     parser.add_argument("--home", help="DNA framework home directory.", default=".")
     parser.add_argument("--camera_id", help="camera id")
-    parser.add_argument("--luid", type=int, help="target object id")
+    parser.add_argument("--luid", help="target object id")
     parser.add_argument("--input", help="input source.", required=True)
     parser.add_argument("--output", help="output video file", required=True)
 
@@ -64,17 +64,22 @@ if __name__ == '__main__':
         print(f"unknown camera_id: '{args.camera_id}'", file=sys.stderr)
         exit(-1)
 
+    first_frame = sys.maxsize*2 + 1
+    last_frame = 0
     trajectories = platform.get_resource_set('local_paths')
-    traj = trajectories.get((args.camera_id, args.luid))
-    if traj is None:
-        print(f"invalid track object: camera_id='{args.camera_id}', luid='{args.luid}'", file=sys.stderr)
-        exit(-1)
-
-    print(f"path: {traj.first_frame} -> {traj.last_frame}")
+    parts = list(map(int, args.luid.split(',')))
+    for luid in parts:
+        traj = trajectories.get((args.camera_id, luid))
+        if traj is None:
+            print(f"invalid track object: camera_id='{args.camera_id}', luid='{luid}'", file=sys.stderr)
+            exit(-1)
+        first_frame = min(first_frame, traj.first_frame)
+        last_frame = max(last_frame, traj.last_frame)
+    print(f"path: {first_frame} -> {last_frame}")
 
     margin = int(camera_info.fps / 2)
-    begin_frame = max(traj.first_frame - margin, 1)
-    end_frame = traj.last_frame + margin
+    begin_frame = max(first_frame - margin, 1)
+    end_frame = last_frame + margin
 
     capture = VideoFileCapture(Path(args.input),  begin_frame=begin_frame, end_frame=end_frame)
     with LocalPathExtractor(capture, traj, out_file=Path(args.output)) as processor:

@@ -56,6 +56,7 @@ if __name__ == '__main__':
     camera_infos.insert(CameraInfo(camera_id='ai_city:11', size=Size2i(1920, 1080), fps=10))
     camera_infos.insert(CameraInfo(camera_id='etri:5', size=Size2i(1920, 1080), fps=10))
     camera_infos.insert(CameraInfo(camera_id='etri:6', size=Size2i(1920, 1080), fps=10))
+    camera_infos.insert(CameraInfo(camera_id='test:1', size=Size2i(1920, 1080), fps=10))
 
     cur = conn.cursor()
     cur.execute(_SQL_CREATE_TRACK_EVENTS)

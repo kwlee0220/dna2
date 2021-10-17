@@ -5,82 +5,81 @@ from dataclasses import dataclass
 from enum import Enum
 
 import numpy as np
-from numpy.lib.arraysetops import isin
 
-@dataclass(frozen=True, unsafe_hash=True)
+
 class Point:
-    xy: np.ndarray
+    def __init__(self, x: Union[int, float], y: Union[int, float]) -> None:
+        self.__xy = np.array([x, y])
 
     @property
     def x(self):
-        return self.xy[0]
+        return self.__xy[0]
 
     @property
     def y(self):
-        return self.xy[1]
+        return self.__xy[1]
 
-    def distance(self, pt:Point) -> float:
+    @property
+    def xy(self):
+        return self.__xy
+
+    @classmethod
+    def from_np(cls, xy: np.ndarray) -> Point:
+        return Point(xy[0], xy[1])
+
+    def distance_to(self, pt:Point) -> float:
         return np.linalg.norm(self.xy - pt.xy)
 
     @staticmethod
-    def distance(pt1:Point, pt2:Point) -> float:
-        return np.linalg.norm(pt1.xy - pt2.xy)
-
-    @staticmethod
-    def slope(pt1:Point, pt2:Point) -> float:
-        delta = pt2.xy - pt1.xy
-        return (delta[1] / delta[0]) if delta[0] else None
-
-    @staticmethod
-    def y_int(pt1:Point, pt2:Point) -> float:
-        return pt2.y - (Point.slope(pt1, pt2) * pt2.x)
-
-    @staticmethod
     def line_function(pt1:Point, pt2:Point):
-        slope = Point.slope(pt1, pt2)
-        y_int = Point.y_int(pt1, pt2)
+        delta = pt1.xy - pt2.xy
+        if delta[0] == 0:
+            raise ValueError(f"Cannot find a line function: {pt1} - {pt}")
+        slope = delta[1] / delta[0]
+        y_int = pt2.y - (slope * pt2.x)
+
         def func(x):
             return (slope * x) + y_int
         return func
 
     @staticmethod
-    def split_points(pt1:Point, pt2:Point, npoints:int) -> List[Point]:
+    def split_points(pt1: Point, pt2: Point, npoints: int) -> List[Point]:
         func = Point.line_function(pt1, pt2)
         step_x = (pt2.x - pt1.x) / (npoints+1)
         xs = [pt1.x + (idx * step_x) for idx in range(1, npoints+1)]
-        return [Point(xy = np.array([x, func(x)])) for x in xs]
+        return [Point.from_np(np.array([x, func(x)])) for x in xs]
 
     def __add__(self, rhs) -> Point:
         if isinstance(rhs, Point):
-            return Point(xy = self.xy + rhs.xy)
+            return Point.from_np(self.xy + rhs.xy)
         elif isinstance(rhs, Size2d):
-            return Point(xy = self.xy + rhs.wh)
+            return Point.from_np(self.xy + rhs.wh)
         elif isinstance(rhs, tuple) and len(rhs) >= 2:
-            return Point(xy = self.xy + np.array(rhs[0:2]))
+            return Point(self.x + rhs[0], self.y + rhs[1])
         elif isinstance(rhs, int) or isinstance(rhs, float):
-            return Point(xy = self.xy + np.array([rhs, rhs]))
+            return Point(self.x + rhs, self.y + rhs)
         else:
             raise ValueError(f"invalid rhs: rhs={rhs}")
 
     def __sub__(self, rhs) -> Union[Point,Size2d]:
         if isinstance(rhs, Point):
-            return Size2d(wh = (self.xy - rhs.xy))
+            return Size2d.from_np(self.xy - rhs.xy)
         elif isinstance(rhs, Size2d) or isinstance(rhs, Size2i):
-            return Point(xy = self.xy - rhs.wh)
+            return Point.from_np(self.xy - rhs.wh)
         elif isinstance(rhs, tuple) and len(rhs) >= 2:
-            return Point(xy = self.xy - np.array(rhs[0:2]))
+            return Point(self.x - rhs[0], self.y - rhs[1])
         elif isinstance(rhs, int) or isinstance(rhs, float):
-            return Point(xy = self.xy - np.array([rhs, rhs]))
+            return Point(self.x - rhs, self.y - rhs)
         else:
             raise ValueError(f"invalid rhs: rhs={rhs}")
 
     def __mul__(self, rhs) -> Point:
         if isinstance(rhs, int) or isinstance(rhs, float):
-            return Point(xy = self.xy * np.array([rhs, rhs]))
+            return Point(self.x * rhs, self.y * rhs)
         elif isinstance(rhs, Size2d) or isinstance(rhs, Size2i):
-            return Point(xy = self.xy * rhs.wh)
+            return Point.from_np(self.xy * rhs.wh)
         elif isinstance(rhs, tuple) and len(rhs) >= 2:
-            return Point(xy = self.xy * np.array(rhs[0:2]))
+            return Point(self.x * rhs[0], self.y * rhs[1])
         else:
             raise ValueError(f"invalid rhs: rhs={rhs}")
 
@@ -99,56 +98,64 @@ class Point:
             return '({:.1f},{:.1f})'.format(*self.xy)
 
 
-@dataclass(frozen=True, unsafe_hash=True)
 class Size2d:
-    wh: np.ndarray
+    def __init__(self, width: Union[int, float], height: Union[int, float]) -> None:
+        self.__wh = np.array([width, height])
+
+    @classmethod
+    def from_np(cls, wh: np.ndarray) -> Point:
+        return Size2d(wh[0], wh[1])
+
+    @property
+    def wh(self) -> np.ndarray:
+        return self.__wh
 
     @property
     def width(self) -> float:
-        return self.wh[0]
+        return self.__wh[0]
     
     @property
     def height(self) -> float:
-        return self.wh[1]
+        return self.__wh[1]
 
     def area(self) -> float:
-        return self.wh[0] * self.wh[1]
+        return self.__wh[0] * self.__wh[1]
 
     def abs(self) -> Size2d:
-        return Size2d(wh = np.abs(self.wh))
+        return Size2d.from_np(np.abs(self.__wh))
 
     def to_size2i(self):
         return Size2i(np.rint(self.wh).astype(int))
 
     def __sub__(self, rhs) -> Size2d:
         if isinstance(rhs, Size2d) or isinstance(rhs, Size2i):
-            return Size2d(wh = self.wh - rhs.wh)
+            return Size2d.from_np(self.wh - rhs.wh)
         elif isinstance(rhs, int) or isinstance(rhs, float):
-            return Size2d(wh = self.wh - np.array([rhs, rhs]))
+            return Size2d.from_np(self.wh - np.array([rhs, rhs]))
         else:
             raise ValueError('invalid right-hand-side:', rhs)
 
     def __mul__(self, rhs) -> Size2d:
         if isinstance(rhs, Size2d):
-            return Size2d(wh = self.wh * rhs.wh)
+            return Size2d.from_np(self.wh * rhs.wh)
         elif isinstance(rhs, int) or isinstance(rhs, float):
-            return Size2d(wh = self.wh * np.array([rhs, rhs]))
+            return Size2d.from_np(self.wh * np.array([rhs, rhs]))
         else:
             raise ValueError('invalid right-hand-side:', rhs)
 
     def __truediv__(self, rhs) -> Size2d:
         if isinstance(rhs, Size2d):
-            return Size2d(wh = self.wh / rhs.wh)
+            return Size2d.from_np(self.wh / rhs.wh)
         elif isinstance(rhs, int) or isinstance(rhs, float):
-            return Size2d(wh = self.wh / np.array([rhs, rhs]))
+            return Size2d.from_np(self.wh / np.array([rhs, rhs]))
         else:
             raise ValueError('invalid right-hand-side:', rhs)
     
     def __repr__(self) -> str:
         if isinstance(self.wh[0], int):
-            return '{}x{}'.format(*self.wh)
+            return '{}x{}'.format(*self.__wh)
         else:
-            return '{:.1f}x{:.1f}'.format(*self.wh)
+            return '{:.1f}x{:.1f}'.format(*self.__wh)
 
 
 class Size2i:
@@ -189,9 +196,9 @@ class Size2i:
 
     def __truediv__(self, rhs) -> Size2d:
         if isinstance(rhs, Size2i) or isinstance(rhs, Size2d):
-            return Size2d(wh = self.__wh / rhs.wh)
+            return Size2d.from_np(self.__wh / rhs.wh)
         elif isinstance(rhs, int) or isinstance(rhs, float):
-            return Size2d(wh = self.__wh / np.array([rhs, rhs]))
+            return Size2d.from_np(self.__wh / np.array([rhs, rhs]))
         else:
             raise ValueError('invalid right-hand-side:', rhs)
     
@@ -199,73 +206,74 @@ class Size2i:
         return '{}x{}'.format(*self.__wh)
 
 
-_ONExONE = np.array([1, 1])
 class BBox:
-    def __init__(self, tlwh: np.ndarray) -> None:
-        self.__tlwh = tlwh
-        self.__tlbr = None
+    def __init__(self, tl: np.ndarray, br: np.ndarray, wh: np.ndarray) -> None:
+        self.__tl = tl
+        self.__br = br
+        self.__wh = wh
 
-    @property
-    def tlwh(self) -> np.ndarray:
-        return self.__tlwh
-
-    @property
-    def tlbr(self) -> np.ndarray:
-        if self.__tlbr is None:
-            tl = self.tlwh[0:2]
-            br = tl + self.tlwh[2:4] - _ONExONE
-            self.__tlbr = np.hstack([tl, br])
-        return self.__tlbr
+    @classmethod
+    def from_points(self, tl: Point, br: Point) -> BBox:
+        return BBox(tl.xy, br.xy, br.xy - tl.xy)
 
     @classmethod
     def from_tlbr(cls, tlbr: np.ndarray) -> BBox:
         tl = tlbr[0:2]
-        wh = tlbr[2:4] - tl + _ONExONE
-        return BBox(np.hstack([tl, wh]))
+        br = tlbr[2:4]
+        return BBox(tl, br, br - tl)
+
+    @classmethod
+    def from_tlwh(cls, tlwh: np.ndarray) -> BBox:
+        tl = tlwh[0:2]
+        wh = tlwh[2:4]
+        return BBox(tl, tl + wh, wh)
+
+    @property
+    def tlbr(self) -> np.ndarray:
+        return np.hstack([self.__tl, self.__br])
+
+    @property
+    def tlwh(self) -> np.ndarray:
+        return np.hstack([self.__tl, self.__wh])
 
     @property
     def tl(self) -> np.ndarray:
-        return self.tlwh[0:2]
-
-    @property
-    def wh(self) -> np.ndarray:
-        return self.tlwh[2:4]
+        return self.__tl
 
     @property
     def br(self) -> np.ndarray:
-        return self.tlbr[2:4]
+        return self.__br
+
+    @property
+    def wh(self) -> np.ndarray:
+        return self.__wh
 
     @property
     def top_left(self) -> Point:
-        return Point(xy = self.tl)
+        return Point.from_np(self.__tl)
 
     @property
     def bottom_right(self) -> Point:
-        return Point(xy = self.br)
+        return Point.from_np(self.__br)
 
-    @property
     def center(self) -> Point:
-        return Point(xy = self.tl + (self.wh / 2))
+        return Point.from_np(self.__tl + (self.wh / 2))
 
-    @property
     def size(self) -> Size2d:
-        return Size2d(wh = self.tlwh[2:4])
+        return Size2d.from_np(self.__wh)
 
     def area(self) -> int:
-        return self.size.area()
+        return self.size().area()
 
-    @property
     def width(self) -> Union[int,float]:
-        return self.tlwh[2]
+        return self.size().width
 
-    @property
     def height(self) -> Union[int,float]:
-        return self.tlwh[3]
+        return self.size().height
 
-    @classmethod
-    def distance(cls, bbox1:BBox, bbox2:BBox) -> float:
-        tlbr1 = bbox1.tlbr
-        tlbr2 = bbox2.tlbr
+    def distance_to(self, bbox:BBox) -> float:
+        tlbr1 = self.tlbr
+        tlbr2 = bbox.tlbr
 
         delta1 = tlbr1[[0,3]] - tlbr2[[2,1]]
         delta2 = tlbr2[[0,3]] - tlbr2[[2,1]]
@@ -293,12 +301,10 @@ class BBox:
 
     def __truediv__(self, rhs) -> BBox:
         if isinstance(rhs, Size2d):
-            rhs = rhs.wh
-        if isinstance(rhs, np.ndarray):
-            tlwh = np.hstack([self.tl/rhs, self.wh/rhs])
-            return BBox(tlwh)
+            wh = self.size().wh / rhs
+            return BBox.from_tlwh(self.tl, wh)
 
         raise ValueError('invalid right-hand-side:', rhs)
     
     def __repr__(self):
-        return '{}:{}'.format(self.top_left, self.size)
+        return '{}:{}'.format(self.top_left, self.size())

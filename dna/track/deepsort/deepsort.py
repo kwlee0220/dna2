@@ -1,5 +1,7 @@
 from dna import det
 from cv2 import determinant
+import dna
+from dna.utils import draw_ds_detections, draw_ds_tracks
 import nn_matching
 from tracker import Tracker 
 from application_util import preprocessing as prep
@@ -171,7 +173,28 @@ class deepsort_rbc():
 		else:
 			dets = []
 
+		##################################################################################
+		# kwlee
+		if dna.DEBUG_SHOW_IMAGE:
+			import cv2
+			from dna import color
+			convas = draw_ds_detections(frame.copy(), dets, color.GREEN, color.BLACK)
+			cv2.imshow("dets", convas)
+			cv2.waitKey(1)
+		##################################################################################
+
 		self.tracker.predict()
+
+		##################################################################################
+		# kwlee
+		if dna.DEBUG_SHOW_IMAGE:
+			import cv2
+			from dna import color
+			convas = draw_ds_tracks(frame.copy(), self.tracker.tracks, color.RED, color.BLACK, 1)
+			cv2.imshow("predictions", convas)
+			cv2.waitKey(1)
+		##################################################################################
+
 		deleteds = self.tracker.update(dets)
 
 		return self.tracker, deleteds
