@@ -39,12 +39,10 @@ if __name__ == '__main__':
     dna_home_dir = Path(args.home)
     platform = DNAPlatform(host=args.db_host, port=args.db_port,
                             user=args.db_user, password=args.db_passwd, dbname=args.db_name)
-    conn = platform.connect()
-
-    cur = conn.cursor()
-    cur.execute('drop table if exists track_events')
-    conn.commit()
-    cur.close()
+    with platform.open_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute('drop table if exists track_events')
+            conn.commit()
 
     for id in platform.get_resource_set_id_all():
         rset = platform.get_resource_set(id)
@@ -60,12 +58,18 @@ if __name__ == '__main__':
                                     size=Size2i(1920, 1080), fps=10))
     camera_infos.insert(CameraInfo(camera_id='ai_city:11', uri="C:/Temp/data/cam_11.mp4",
                                     size=Size2i(1920, 1080), fps=10))
-    camera_infos.insert(CameraInfo(camera_id='etri:5', uri="C:/Temp/data/channel05_9.mp4",
-                                    size=Size2i(1920, 1080), fps=10))
-    etri_6_9 = CameraInfo(camera_id='etri:6', uri="C:/Temp/data/channel06_9.mp4",
-                                    size=Size2i(1920, 1080), fps=10)
+                                    
+    etri_5_9 = CameraInfo(camera_id='etri:5', uri="C:/Temp/data/etri_5.mp4",
+                            size=Size2i(1920, 1080), fps=10)
+    camera_infos.insert(etri_5_9)
+
+    etri_6_9 = CameraInfo(camera_id='etri:6', uri="C:/Temp/data/etri_6.mp4",
+                            size=Size2i(1920, 1080), fps=10)
     etri_6_9.add_blind_region(BBox.from_tlbr(np.array([1309, 223, 1908, 488])))
     camera_infos.insert(etri_6_9)
+
+    camera_infos.insert(CameraInfo(camera_id='test', uri="C:/Temp/local_path.mp4",
+                                    size=Size2i(1920, 1080), fps=10))
 
     cur = conn.cursor()
     cur.execute(_SQL_CREATE_TRACK_EVENTS)

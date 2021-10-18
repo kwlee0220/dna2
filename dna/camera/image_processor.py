@@ -16,13 +16,17 @@ from .image_capture import ImageCapture
 
 _ALPHA = 0.05
 class ImageProcessor(metaclass=ABCMeta):
-    def __init__(self, capture: ImageCapture, window_name: str=None,
+    def __init__(self, capture: ImageCapture, window_name: str=None, output_video: Path=None,
                 show_progress: bool=False, stop_at_the_last=False) -> None:
         self.__cap = capture
         self.window_name = window_name
         self.show = window_name is not None
+        self.output_video = output_video if not output_video or isinstance(output_video, Path) \
+                                        else Path(output_video)
+        self.writer = None
         self.show_progress = show_progress
         self.stop_at_the_last = stop_at_the_last
+        self.__fps_measured = -1
 
     def on_started(self) -> None:
         pass
@@ -33,6 +37,10 @@ class ImageProcessor(metaclass=ABCMeta):
     def process_image(self, frame: np.ndarray, frame_idx: int, ts: datetime) -> np.ndarray:
         return frame
 
+    @property
+    def fps_measured(self) -> float:
+        return self.__fps_measured
+
     def set_control(self, key: int) -> int:
         return key
 
@@ -40,7 +48,20 @@ class ImageProcessor(metaclass=ABCMeta):
         self.__cap.open()
         try:
             self.on_started()
+            if self.output_video:
+                fourcc = None
+                ext = self.output_video.suffix.lower()
+                if ext == '.mp4':
+                    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+                elif ext == '.avi':
+                    fourcc = cv2.VideoWriter_fourcc(*'DIVX')
+                else:
+                    raise ValueError("unknown output video file extension: 'f{ext}'")
+                self.writer = cv2.VideoWriter(str(self.output_video.resolve()), fourcc,
+                                                self.__cap.fps, self.__cap.size.as_tuple())
         except Exception as e:
+            if self.writer:
+                self.writer.release()
             self.__cap.close()
             raise e
 
@@ -55,7 +76,7 @@ class ImageProcessor(metaclass=ABCMeta):
     def run(self) -> int:
         capture_count = 0
         elapsed_avg = None
-        fps_measured = 0
+        self.__fps_measured = 0
         show_fps = True
 
         if self.show_progress \
@@ -75,12 +96,14 @@ class ImageProcessor(metaclass=ABCMeta):
 
             dna.DEBUG_FRAME_IDX = frame_idx
             frame = self.process_image(frame, frame_idx, ts)
+            if self.writer:
+                self.writer.write(frame)
             if dna.DEBUG_PRINT_COST:
-                print("------------------------------------------")
+                print("---------------------------------------------------------------------")
                 
             if self.window_name and self.show:
                 if show_fps:
-                    image = cv2.putText(frame, f'FPS={fps_measured:.2f}, frames={frame_idx}', (20, 20),
+                    image = cv2.putText(frame, f'FPS={self.__fps_measured:.2f}, frames={frame_idx}', (20, 20),
                                         cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, color.RED, 2)
                 cv2.imshow(self.window_name, frame)
 
@@ -112,7 +135,7 @@ class ImageProcessor(metaclass=ABCMeta):
                 elapsed_avg = elapsed_avg * 0.5 + elapsed * 0.5
             else:
                 elapsed_avg = elapsed
-            fps_measured = 1 / elapsed_avg
+            self.__fps_measured = 1 / elapsed_avg
 
         if key != ord('q') and self.window_name and self.show and self.stop_at_the_last:
             cv2.waitKey(-1)

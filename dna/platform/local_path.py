@@ -111,26 +111,26 @@ class LocalPathSet(ResourceSet):
         self.platform = platform
 
     def create(self) -> None:
-        conn = self.platform.connection
-        with conn.cursor() as cur:
-            cur.execute(LocalPathSet.__SQL_CREATE)
-            cur.execute(LocalPathSet.__SQL_CREATE_INDEX)
-            conn.commit()
+        with self.platform.open_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(LocalPathSet.__SQL_CREATE)
+                cur.execute(LocalPathSet.__SQL_CREATE_INDEX)
+                conn.commit()
 
     def drop(self) -> None:
-        conn = self.platform.connection
-        with conn.cursor() as cur:
-            cur.execute(LocalPathSet.__SQL_DROP)
-            conn.commit()
+        with self.platform.open_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(LocalPathSet.__SQL_DROP)
+                conn.commit()
 
     def get(self, key: Tuple[int, int, int], offset=0, limit=None) -> LocalPath:
-        conn = self.platform.connection
-        with conn.cursor() as cur:
-            cur.execute(LocalPathSet.__SQL_GET, key)
-            traj = LocalPath.concat([LocalPath.deserialize(tup) for tup in cur])
-            conn.commit()
+        with self.platform.open_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(LocalPathSet.__SQL_GET, key)
+                traj = LocalPath.concat([LocalPath.deserialize(tup) for tup in cur])
+                conn.commit()
 
-            return traj
+                return traj
 
     def get_all(self, cond_expr:str, offset:int=None, limit:int=None) -> List[LocalPath]:
         where_clause = f"where {cond_expr}" if cond_expr else ""
@@ -138,38 +138,38 @@ class LocalPathSet(ResourceSet):
         limit_clause = f"limit {offset}" if limit else ""
         sql = LocalPathSet.__SQL_GET_ALL.format(where_clause, offset_clause, limit_clause)
 
-        conn = self.platform.connection
-        with conn.cursor() as cur:
-            cur.execute(sql)
-            path_parts = [LocalPath.deserialize(tup) for tup in cur]
-            conn.commit()
-            groups = itertools.groupby(path_parts, lambda t: t.luid)
-            trajs = [LocalPath.concat(list(parts)) for luid, parts in groups]
+        with self.platform.open_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql)
+                path_parts = [LocalPath.deserialize(tup) for tup in cur]
+                conn.commit()
+                groups = itertools.groupby(path_parts, lambda t: t.luid)
+                trajs = [LocalPath.concat(list(parts)) for luid, parts in groups]
 
-            return trajs
+                return trajs
 
     def insert(self, traj:LocalPath) -> None:
-        conn = self.platform.connection
-        with conn.cursor() as cur:
-            cur.execute(LocalPathSet.__SQL_INSERT, traj.serialize())
-            conn.commit()
+        with self.platform.open_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(LocalPathSet.__SQL_INSERT, traj.serialize())
+                conn.commit()
 
     def insert_many(self, paths:List[LocalPath]) -> None:
         values = [path.serialize() for path in paths]
 
-        conn = self.platform.connection
-        with conn.cursor() as cur:
-            execute_values(cur, LocalPathSet.__SQL_INSERT_MANY, values)
-            conn.commit()
+        with self.platform.open_db_connection() as conn:
+            with conn.cursor() as cur:
+                execute_values(cur, LocalPathSet.__SQL_INSERT_MANY, values)
+                conn.commit()
 
     def remove(self, key: Tuple[str]) -> None:
-        conn = self.platform.connection
-        with conn.cursor() as cur:
-            cur.execute(LocalPathSet.__SQL_REMOVE, key)
-            conn.commit()
+        with self.platform.open_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(LocalPathSet.__SQL_REMOVE, key)
+                conn.commit()
 
     def remove_all(self) -> None:
-        conn = self.platform.connection
-        with conn.cursor() as cur:
-            cur.execute(LocalPathSet.__SQL_REMOVE_ALL)
-            conn.commit()
+        with self.platform.open_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(LocalPathSet.__SQL_REMOVE_ALL)
+                conn.commit()

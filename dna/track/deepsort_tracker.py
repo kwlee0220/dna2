@@ -7,6 +7,8 @@ import cv2
 
 import sys
 
+from omegaconf.omegaconf import OmegaConf
+
 FILE = Path(__file__).absolute()
 DEEPSORT_DIR = str(FILE.parents[0] / 'deepsort')
 if not DEEPSORT_DIR in sys.path:
@@ -20,19 +22,22 @@ from .deepsort.track import Track as DSTrack
 from .deepsort.track import TrackState as DSTrackState
 
 
-
 class DeepSORTTracker(DetectionBasedObjectTracker):
-    def __init__(self, domain: BBox, detector: ObjectDetector, weights_file, det_dict = None,
-                    min_detection_score=0, matching_threshold=0.5, max_iou_distance=0.7, max_age=30) -> None:
+    # def __init__(self, detector: ObjectDetector, domain: BBox, weights_file, det_dict = None,
+    #                 min_detection_score=0, matching_threshold=0.5, max_iou_distance=0.7, max_age=30) -> None:
+    def __init__(self, detector: ObjectDetector, domain: BBox, tracker_conf: OmegaConf,
+                    blind_regions=None) -> None:
         super().__init__()
 
         self.__detector = detector
-        self.det_dict = det_dict
-        self.min_detection_score = min_detection_score
-        self.deepsort = deepsort_rbc(domain = domain, wt_path=weights_file.absolute(),
-                                    matching_threshold=matching_threshold,
-                                    max_iou_distance=max_iou_distance,
-                                    max_age=max_age)
+        self.det_dict = tracker_conf.det_mapping
+        self.min_detection_score = tracker_conf.min_detection_score
+        self.deepsort = deepsort_rbc(domain = domain,
+                                    wt_path=Path(tracker_conf.model_file).absolute(),
+                                    matching_threshold=tracker_conf.matching_threshold,
+                                    max_iou_distance=tracker_conf.max_iou_distance,
+                                    max_age=tracker_conf.max_age)
+        self.blind_regions = blind_regions
         self.__last_frame_detections = []
         
     @property
@@ -51,7 +56,12 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
 
     def track(self, frame, frame_idx:int, ts:datetime) -> List[Track]:
         dets = self.detector.detect(frame, frame_index=frame_idx)
-        self.__last_frame_detections = [det for det in dets if det.score >= self.min_detection_score]
+        dets = [det for det in dets if det.score >= self.min_detection_score]
+        if self.blind_regions:
+            for region in self.blind_regions:
+                dets = _filter_non_contained(region, dets)
+        self.__last_frame_detections = dets
+
         if self.det_dict:
             dets = []
             for det in self.__last_frame_detections:
@@ -88,3 +98,7 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
             scores.append(det.score)
         
         return np.array(boxes), scores
+
+
+def _filter_non_contained(blind_region, dets: List[Detection]):
+    return [det for det in dets if blind_region.intersection(det.bbox).area() < det.bbox.area()]

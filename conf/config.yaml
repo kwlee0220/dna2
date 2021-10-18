@@ -1,0 +1,23 @@
+
+platform:
+  db:
+    host: localhost
+    port: 5432
+    dbname: dna
+    user: postgres
+    password: dna2021
+
+detector: yolov4
+
+tracker:
+  deep_sort:
+    model_file: dna/track/deepsort/ckpts/model640.pt
+    matching_threshold: 0.5
+    max_iou_distance: 0.7
+    max_age: 10
+    min_detection_score: 0
+    det_mapping:
+      car: car
+      bus: bus
+      truck: car
+

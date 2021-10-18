@@ -2,16 +2,19 @@ from pathlib import Path
 import numpy as np
 
 from dna import color
-from dna.camera import  VideoFileCapture
 from dna.track import LogFileBasedObjectTracker, ObjectTrackingProcessor
+from dna.platform import DNAPlatform
+from omegaconf import OmegaConf
 
 
 import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description="Generating tracking events from a track-file")
-    parser.add_argument("--home", help="DNA framework home directory.", default=".")
+    parser.add_argument("--conf", help="DNA framework configuration", default="conf/config.yaml")
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--camera_id", metavar="id", help="target camera id")
+    group.add_argument("--input", metavar="source", help="input source")
     parser.add_argument("--track_file", help="Object detection algorithm.")
-    parser.add_argument("--video_file", help="input source.", required=True)
     parser.add_argument("--show", help="show detections.", action="store_true")
     return parser.parse_args()
 
@@ -19,15 +22,21 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
 
-    # open target video file temporarily to find fps, which will be used
-    # in calculating 'max_age'
-    capture = VideoFileCapture(Path(args.video_file))
+    cap = None
+    if args.input:
+        from dna.camera.utils import load_image_capture
+        cap = load_image_capture(args.input)
+    else:
+        conf = OmegaConf.load(args.conf)
+        dict = OmegaConf.to_container(conf.platform)
 
-    dna_home_dir = Path(args.home)
+        platform = DNAPlatform.load(dict)
+        cap = platform.load_image_capture(args.camera_id)
+
     tracker = LogFileBasedObjectTracker(args.track_file)
 
     win_name = "output" if args.show else None
-    with ObjectTrackingProcessor(capture, tracker, window_name=win_name) as processor:
+    with ObjectTrackingProcessor(cap, tracker, window_name=win_name) as processor:
         from timeit import default_timer as timer
         from datetime import timedelta
         started = timer()

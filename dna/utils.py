@@ -77,7 +77,7 @@ def draw_boxes(convas, boxes, box_color, label_color=None, line_thickness=2):
 
 def draw_ds_tracks(convas, tracks, box_color, label_color=None, line_thickness=2, track_indices=None):
     for idx, track in enumerate(tracks):
-        if track_indices and track.track_id in track_indices:
+        if not track_indices or track.track_id in track_indices:
             box = BBox.from_tlbr(track.to_tlbr())
             box.draw(convas, box_color)
             if label_color:

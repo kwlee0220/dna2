@@ -183,11 +183,12 @@ class Tracker:
     # kwlee
     import math
     def distance_cost(self, tracks, detections, only_position=False):
-        measurements = np.asarray([det.to_xyah() for det in detections])
         dist_matrix = np.zeros((len(tracks), len(detections)))
-        for row, track in enumerate(tracks):
-            dist_matrix[row, :] = self.kf.gating_distance(track.mean, track.covariance,
-                                                            measurements, only_position)
+        if len(tracks) > 0 and len(detections) > 0:
+            measurements = np.asarray([det.to_xyah() for det in detections])
+            for row, track in enumerate(tracks):
+                dist_matrix[row, :] = self.kf.gating_distance(track.mean, track.covariance,
+                                                                measurements, only_position)
         return dist_matrix
 
     # kwlee

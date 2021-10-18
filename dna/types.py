@@ -218,8 +218,12 @@ class BBox:
 
     @classmethod
     def from_tlbr(cls, tlbr: np.ndarray) -> BBox:
-        tl = tlbr[0:2]
-        br = tlbr[2:4]
+        tl_x, br_x = (tlbr[0], tlbr[2]) if tlbr[0] < tlbr[2] else (tlbr[2], tlbr[0])
+        tl_y, br_y = (tlbr[1], tlbr[3]) if tlbr[1] < tlbr[3] else (tlbr[3], tlbr[1])
+
+        tl = np.array([tl_x, tl_y])
+        br = np.array([br_x, br_y])
+
         return BBox(tl, br, br - tl)
 
     @classmethod
@@ -256,14 +260,17 @@ class BBox:
     def bottom_right(self) -> Point:
         return Point.from_np(self.__br)
 
+    def is_empty(self) -> bool:
+        return self.__tl[0] >= self.__br[0]
+
     def center(self) -> Point:
         return Point.from_np(self.__tl + (self.wh / 2))
 
     def size(self) -> Size2d:
-        return Size2d.from_np(self.__wh)
+        return Size2d.from_np(self.__wh) if not self.is_empty() else Size2d(-1,-1)
 
     def area(self) -> int:
-        return self.size().area()
+        return self.size().area() if not self.is_empty() else 0
 
     def width(self) -> Union[int,float]:
         return self.size().width
@@ -289,7 +296,7 @@ class BBox:
         y2 = min(self.br[1], bbox.br[1])
         
         if x1 >= x2 or y1 >= y2:
-            return None
+            return EMPTY_BBox
         else:
             return BBox.from_tlbr(np.array([x1, y1, x2, y2]))
 
@@ -308,3 +315,5 @@ class BBox:
     
     def __repr__(self):
         return '{}:{}'.format(self.top_left, self.size())
+
+EMPTY_BBox: BBox = BBox(np.array([-1,-1]), np.array([0,0]), np.array([-1,-1]))

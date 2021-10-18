@@ -11,8 +11,9 @@
             "program": "${workspaceFolder}/show_video.py",
             "console": "integratedTerminal",
             "args": [
+                "--camera", "etri:5"
                 // "--input", "C:/Temp/data/cam_9.mp4",
-                "--input", "C:/Temp/data/channel05_9.mp4",
+                // "--input", "C:/Temp/data/channel05_9.mp4",
                 // "--begin", "150",
                 // "--end",  "300",
             ]
@@ -24,11 +25,9 @@
             "program": "${workspaceFolder}/detect_video.py",
             "console": "integratedTerminal",
             "args": [
-                "--detector", "yolov4",
-                // "--detector", "file:C:/Temp/data/cam_1.txt",
-                "--input", "C:/Temp/data/cam_1.mp4",
+                "--camera", "ai_city:1",
                 "--output", "C:/Temp/cam_1_det.txt",
-                "--show_progress",
+                "--show_progress"
                 // "--show"
             ]
         },
@@ -39,12 +38,9 @@
             "program": "${workspaceFolder}/detect_video.py",
             "console": "integratedTerminal",
             "args": [
-                "--detector", "yolov4",
-                // "--detector", "file:C:/Temp/data/cam_6.txt",
-                "--input", "C:/Temp/data/cam_6.mp4",
-                // "--resize_ratio", "0.3333",
+                "--camera", "ai_city:6",
                 "--output", "C:/Temp/cam_6_det.txt",
-                "--show_progress",
+                "--show_progress"
                 // "--show"
             ]
         },
@@ -55,11 +51,9 @@
             "program": "${workspaceFolder}/detect_video.py",
             "console": "integratedTerminal",
             "args": [
-                "--detector", "yolov4",
-                // "--detector", "file:C:/Temp/data/cam_9.txt",
-                "--input", "C:/Temp/data/cam_9.mp4",
+                "--camera", "ai_city:9",
                 "--output", "C:/Temp/cam_9_det.txt",
-                "--show_progress",
+                "--show_progress"
                 // "--show"
             ]
         },
@@ -70,9 +64,9 @@
             "program": "${workspaceFolder}/detect_video.py",
             "console": "integratedTerminal",
             "args": [
-                "--detector", "yolov4",
                 // "--detector", "file:C:/Temp/data/cam_11.txt",
-                "--input", "C:/Temp/data/cam_11.mp4",
+                "--camera", "ai_city:11",
+                // "--input", "C:/Temp/data/cam_11.mp4",
                 "--output", "C:/Temp/cam_11_det.txt",
                 "--show_progress",
                 // "--show"
@@ -85,13 +79,9 @@
             "program": "${workspaceFolder}/detect_video.py",
             "console": "integratedTerminal",
             "args": [
-                "--detector", "yolov4",
-                // "--detector", "file:C:/Temp/data/channel05_9_det.txt",
-                "--input", "C:/Temp/data/channel05_9.mp4",
-                // "--resize_ratio", "0.5",
-                "--output", "C:/Temp/channel05_9_det.txt",
+                "--camera", "etri:5",
+                "--output", "C:/Temp/etri_5_det.txt",
                 "--show_progress",
-                // "--show"
             ]
         },
         {
@@ -101,12 +91,9 @@
             "program": "${workspaceFolder}/detect_video.py",
             "console": "integratedTerminal",
             "args": [
-                "--detector", "yolov4",
-                // "--detector", "file:C:/Temp/data/channel06_9_det.txt",
-                "--input", "C:/Temp/data/channel06_9.mp4",
-                "--output", "C:/Temp/channel06_9_det.txt",
-                "--show_progress",
-                // "--show"
+                "--camera", "etri:6",
+                "--output", "C:/Temp/etri_6_det.txt",
+                "--show_progress"
             ]
         },
         {
@@ -116,11 +103,8 @@
             "program": "${workspaceFolder}/detect_video.py",
             "console": "integratedTerminal",
             "args": [
-                "--detector", "yolov4",
-                // "--detector", "file:C:/Temp/data/channel06_9_det.txt",
                 "--input", "C:/Temp/local_path.mp4",
                 "--output", "C:/Temp/local_path_det.txt",
-                // "--show_progress",
                 "--show"
             ]
         },
@@ -131,11 +115,10 @@
             "program": "${workspaceFolder}/track_video.py",
             "console": "integratedTerminal",
             "args": [
-                // "--detector", "yolov4",
                 "--detector", "file:C:/Temp/data/cam_1_det.txt",
-                "--input",  "C:/Temp/data/cam_1.mp4",
+                "--camera", "ai_city:1",
                 "--output", "C:/Temp/cam_1_track.txt",
-                "--max_age", "10",
+                "--output_video", "C:/Temp/cam_1_track.mp4",
                 // "--show",
                 "--show_progress",
             ]
@@ -195,11 +178,10 @@
             "program": "${workspaceFolder}/track_video.py",
             "console": "integratedTerminal",
             "args": [
-                // "--detector", "yolov4",
-                "--detector", "file:C:/Temp/data/channel05_9_det.txt",
-                "--input",  "C:/Temp/data/channel05_9.mp4",
-                "--output", "C:/Temp/channel05_9_track.txt",
-                "--max_age", "10",
+                "--detector", "file:C:/Temp/data/etri_5_det.txt",
+                "--camera", "etri:5",
+                "--output", "C:/Temp/etri_5_track.txt",
+                "--output_video", "C:/Temp/etri_5_track.mp4",
                 // "--show",
                 "--show_progress",
             ]
@@ -211,11 +193,10 @@
             "program": "${workspaceFolder}/track_video.py",
             "console": "integratedTerminal",
             "args": [
-                // "--detector", "yolov4",
-                "--detector", "file:C:/Temp/data/channel06_9_det.txt",
-                "--input",  "C:/Temp/data/channel06_9.mp4",
-                "--output", "C:/Temp/channel06_9_track.txt",
-                "--max_age", "10",
+                "--detector", "file:C:/Temp/data/etri_6_det.txt",
+                "--camera", "etri:6",
+                "--output", "C:/Temp/etri_6_track.txt",
+                "--output_video", "C:/Temp/etri_6_track.mp4",
                 // "--show",
                 "--show_progress",
             ]
@@ -295,10 +276,9 @@
             "program": "${workspaceFolder}/replay_tracks.py",
             "console": "integratedTerminal",
             "args": [
-                "--track_file", "C:/Temp/data/channel05_9_track.txt",
-                "--video_file", "C:/Temp/data/channel05_9.mp4",
+                "--camera", "etri:5",
+                "--track_file", "C:/Temp/data/etri_5_track.txt",
                 "--show",
-                // "--show_progress",
             ]
         },
         {
@@ -483,7 +463,8 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "args": [ "camera_id=etri:5" ]
         },
         {
             "name": "Test",

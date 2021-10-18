@@ -12,8 +12,9 @@ from .utils import draw_track_trail
 
 class ObjectTrackingProcessor(ImageProcessor):
     def __init__(self, capture: ImageCapture, tracker: ObjectTracker, callback: TrackerCallback=None,
-                window_name:str=None, show_progress=False) -> None:
-        super().__init__(capture, window_name=window_name, show_progress=show_progress)
+                window_name:str=None, output_video=None, show_progress=False) -> None:
+        super().__init__(capture, window_name=window_name, output_video=output_video,
+                        show_progress=show_progress)
 
         self.tracker = tracker
         self.is_detection_based = isinstance(self.tracker, DetectionBasedObjectTracker)
@@ -36,7 +37,7 @@ class ObjectTrackingProcessor(ImageProcessor):
         if self.callback:
             self.callback.tracked(self.tracker, frame, frame_idx, tracks)
 
-        if self.window_name:
+        if self.window_name or self.output_video:
             if self.is_detection_based:
                 for det in self.tracker.last_frame_detections():
                     frame = det.draw(frame, color.WHITE, line_thickness=2)

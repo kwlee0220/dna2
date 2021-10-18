@@ -4,19 +4,20 @@ from datetime import datetime
 import logging
 
 import numpy as np
+from omegaconf import OmegaConf
 
 from dna import color
-from dna.camera import ImageProcessor, VideoFileCapture
+from dna.camera import ImageProcessor
 from dna.det import DetectorLoader, ObjectDetector, Detection
+from dna.platform import DNAPlatform
 
 
 class ObjectDetectingProcessor(ImageProcessor):
     def __init__(self, capture, detector: ObjectDetector,
-                    window_name: str=None, output: Path=None, show_progress=False) -> None:
-        super().__init__(capture, window_name=window_name,
+                    window_name: str=None, output_video: Path=None,
+                    output: Path=None, show_progress=False) -> None:
+        super().__init__(capture, window_name=window_name, output_video=output_video,
                             show_progress=show_progress)
-        # super().__init__(capture, sync=window_name is not None, window_name=window_name,
-        #                     show_progress=show_progress)
         self.detector = detector
         self.label_color = color.WHITE
         self.show_score = True
@@ -37,7 +38,7 @@ class ObjectDetectingProcessor(ImageProcessor):
         for det in self.detector.detect(frame, frame_idx):
             if self.out_handle:
                 self.out_handle.write(self._to_string(frame_idx, det) + '\n')
-            if self.window_name:
+            if self.window_name or self.output_video:
                 frame = det.draw(frame, color=color.RED, label_color=self.label_color,
                                     show_score=self.show_score)
 
@@ -60,12 +61,18 @@ class ObjectDetectingProcessor(ImageProcessor):
 import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description="Detect Objects in an input video file")
-    parser.add_argument("--input", help="input source.", required=True)
-    parser.add_argument("--resize_ratio", type=float, help="image resizing ratio", default=None)
-    parser.add_argument("--begin_frame", type=int, help="the first frame index (from 1)", default=1)
-    parser.add_argument("--end_frame", type=int, help="the last frame index", default=None)
+    parser.add_argument("--conf", help="DNA framework configuration", default="conf/config.yaml")
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--camera_id", metavar="id", help="target camera id")
+    group.add_argument("--input", metavar="source", help="input source")
+    parser.add_argument("--sync", help="sync to fps", action="store_true")
+
+    # parser.add_argument("--resize_ratio", type=float, help="image resizing ratio", default=None)
+    # parser.add_argument("--begin_frame", type=int, help="the first frame index (from 1)", default=1)
+    # parser.add_argument("--end_frame", type=int, help="the last frame index", default=None)
     parser.add_argument("--detector", help="Object detection algorithm.", default="yolov4")
     parser.add_argument("--output", help="detection output file.", required=False)
+    parser.add_argument("--output_video", help="output video file", required=False)
     parser.add_argument("--show_progress", help="show progress bar.", action="store_true")
     parser.add_argument("--show", help="show detections.", action="store_true")
     return parser.parse_args()
@@ -73,17 +80,21 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
 
-    target_size = None
-    if args.resize_ratio:
-        size, fps = VideoFileCapture.load_camera_info(Path(args.input))
-        target_size = size * args.resize_ratio
-    capture = VideoFileCapture(Path(args.input), sync=False, target_size=target_size,
-                                begin_frame=args.begin_frame, end_frame=args.end_frame)
+    cap = None
+    if args.input:
+        from dna.camera.utils import load_image_capture
+        cap = load_image_capture(args.input, sync=args.sync)
+    else:
+        conf = OmegaConf.load(args.conf)
+        dict = OmegaConf.to_container(conf.platform)
+
+        platform = DNAPlatform.load(dict)
+        cap = platform.load_image_capture(args.camera_id, sync=args.sync)
     
     detector = DetectorLoader.load(args.detector)
     window_name = "output" if args.show else None
-    with ObjectDetectingProcessor(capture, detector, window_name=window_name, output=args.output,
-                                    show_progress=args.show_progress) as processor:
+    with ObjectDetectingProcessor(cap, detector, window_name=window_name, output_video=args.output_video,
+                                    output=args.output, show_progress=args.show_progress) as processor:
         from timeit import default_timer as timer
         from datetime import timedelta
         started = timer()
