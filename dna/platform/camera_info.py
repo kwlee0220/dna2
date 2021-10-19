@@ -11,7 +11,7 @@ from dna.platform import ResourceSet, utils
 
 
 class CameraInfo:
-    def __init__(self, camera_id, uri, size, fps, blind_regions=[]) -> None:
+    def __init__(self, camera_id, uri, size, fps, blind_regions :List[BBox]=[]) -> None:
         self.camera_id = camera_id
         self.uri = uri
         self.size = size
@@ -119,7 +119,7 @@ class CameraInfoSet(ResourceSet):
                 conn.commit()
 
     def update_blind_regions(self, camera_info:CameraInfo) -> None:
-        boxes = [utils.serialize_box(region) for region in camera_info.blind_regions]
+        boxes = [(camera_info.camera_id, utils.serialize_box(region)) for region in camera_info.blind_regions]
 
         with self.platform.open_db_connection() as conn:
             with conn.cursor() as cur:

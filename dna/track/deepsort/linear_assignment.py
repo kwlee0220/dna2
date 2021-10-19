@@ -244,23 +244,26 @@ def gate_cost_matrix(kf, cost_matrix, tracks, detections, track_indices, detecti
 _DIST_THRESHOLD = 20
 def matching_distance(dist_matrix, tracks, detections, track_indices):
     matches = []
-    unmatched_tracks = [i for i in track_indices if tracks[i].time_since_update > 1]
-    track_indices = [i for i in track_indices if tracks[i].time_since_update <= 1]
     unmatched_detections = list(range(len(detections)))
-
     ndets = len(detections)
-    if ndets <= 1:
+    if ndets <= 0:
         return matches, track_indices, unmatched_detections
 
+    unmatched_tracks = [i for i in track_indices if tracks[i].time_since_update > 1]
+    track_indices = [i for i in track_indices if tracks[i].time_since_update <= 1]
     for tidx in track_indices:
         track = tracks[tidx]
         dists = dist_matrix[tidx,:]
         if ndets > 2:
             idxes = np.argpartition(dists, 2)[:2]
-        else:
+            v1, v2 = tuple(dists[idxes])
+        elif ndets == 2:
             idxes = [0, 1] if dists[0] <= dists[1] else [1, 0]
+            v1, v2 = tuple(dists[idxes])
+        else:
+            idxes = [0, -1]
+            v1, v2 = dists[0], 9999
 
-        v1, v2 = tuple(dists[idxes])
         if v1 < _DIST_THRESHOLD and v1*2 < v2:
             det_idx = idxes[0]
             dists2 = dist_matrix[track_indices,det_idx]

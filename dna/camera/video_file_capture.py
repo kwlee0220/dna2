@@ -78,6 +78,8 @@ class VideoFileCapture(ImageCapture):
         return self.__frame_count
 
     def capture(self) -> Tuple[float, int, np.ndarray]:
+        if not self.is_open():
+            raise ValueError(f"{self.__class__.__name__}: not opened")
         started = time.time()
 
         if self.frame_index >= self.end_frame:

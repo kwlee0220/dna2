@@ -36,7 +36,8 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
                                     wt_path=Path(tracker_conf.model_file).absolute(),
                                     matching_threshold=tracker_conf.matching_threshold,
                                     max_iou_distance=tracker_conf.max_iou_distance,
-                                    max_age=tracker_conf.max_age)
+                                    max_age=int(tracker_conf.max_age),
+                                    n_init=int(tracker_conf.n_init))
         self.blind_regions = blind_regions
         self.__last_frame_detections = []
         

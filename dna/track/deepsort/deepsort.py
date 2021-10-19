@@ -41,7 +41,8 @@ def get_gaussian_mask():
 
 
 class deepsort_rbc():
-	def __init__(self, domain: BBox, wt_path, matching_threshold=0.5, max_iou_distance=0.7, max_age=40):
+	def __init__(self, domain: BBox, wt_path, matching_threshold=0.5, max_iou_distance=0.7,
+					max_age=40, n_init=3):
 		self.domain = domain
 
 		#loading this encoder is slow, should be done only once.
@@ -53,7 +54,8 @@ class deepsort_rbc():
 		print("Deep sort model loaded from path: ", wt_path)
 
 		self.metric = nn_matching.NearestNeighborDistanceMetric("cosine", matching_threshold , 100)
-		self.tracker= Tracker(domain, self.metric, max_iou_distance=max_iou_distance, max_age=max_age)
+		self.tracker= Tracker(domain, self.metric, max_iou_distance=max_iou_distance,
+								max_age=max_age, n_init=n_init)
 
 		self.gaussian_mask = get_gaussian_mask().cuda()
 

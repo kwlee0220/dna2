@@ -81,12 +81,15 @@ class Tracker:
             # 더 이상 추적하지 않는다.
             track = self.tracks[track_idx]
             bbox = BBox.from_tlbr(track.to_tlbr())
-            intersection = self.domain.intersection(bbox)
-            inter_area = intersection.area() if intersection else 0
-            if (inter_area / bbox.area()) < 2/3:
-                track.mark_deleted()
+            if bbox.is_valid():
+                intersection = self.domain.intersection(bbox)
+                inter_area = intersection.area() if intersection else 0
+                if (inter_area / bbox.area()) < 2/3:
+                    track.mark_deleted()
+                else:
+                    track.mark_missed()
             else:
-                track.mark_missed()
+                track.mark_deleted()
 
         for detection_idx in unmatched_detections:
             track = self._initiate_track(detections[detection_idx])
@@ -213,14 +216,14 @@ class Tracker:
 
         for tidx, track in enumerate(self.tracks):
             dists = [int(round(v)) for v in dist_cost[tidx]]
-            track_str = f"{tidx:02d}: {track.track_id:03d}({track.state},{track.time_since_update})"
+            track_str = f"{tidx:02d}: {track.track_id:03d}({track.state},{track.time_since_update:02d})"
             dist_str = ', '.join([f"{v:3d}" for v in dists])
             print(f"{track_str}: {dist_str}")
 
     def print_metrix_cost(self, metric_cost):
         for tidx, track in enumerate(self.tracks):
             costs = [round(v, 2) for v in metric_cost[tidx]]
-            track_str = f"[{tidx:02d}]{track.track_id:03d}({track.state},{track.time_since_update})"
+            track_str = f"{tidx:02d}: {track.track_id:03d}({track.state},{track.time_since_update:02d})"
             dist_str = ', '.join([f"{v:.2f}" for v in costs])
             print(f"{track_str}: {dist_str}")
     ###############################################################################################################

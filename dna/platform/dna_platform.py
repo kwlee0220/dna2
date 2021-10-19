@@ -50,13 +50,12 @@ class DNAPlatform:
 
         return rset
 
-    def get_resource(self, rset_id:str, key:Tuple) -> Any:
+    def get_resource(self, rset_id:str, key:Tuple) -> Tuple[CameraInfoSet,Any]:
         rset = self.get_resource_set(rset_id)
-        return rset.get(key)
+        return rset, rset.get(key)
 
     def load_image_capture(self, camera_id: str, sync=True) -> ImageCapture:
-        camera_info_set = self.get_resource_set("camera_infos")
-        camera_info = self.get_resource("camera_infos", (camera_id,))
+        _, camera_info = self.get_resource("camera_infos", (camera_id,))
         if camera_info is None:
             raise ValueError(f"unknown camera_id: '{camera_id}'")
 

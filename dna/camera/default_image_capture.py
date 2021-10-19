@@ -11,7 +11,7 @@ _INIT_SIZE = Size2i(-1, -1)
 
 
 class DefaultImageCapture(ImageCapture):
-    def __init__(self, uri:str, target_size :Size2i=None) -> None:
+    def __init__(self, uri:str, target_size :Size2i=None, begin_frame: int=1, end_frame: int=None) -> None:
         """Create a DefaultImageCapture object.
 
         Args:
@@ -24,6 +24,12 @@ class DefaultImageCapture(ImageCapture):
         self.__size = target_size if target_size else _INIT_SIZE
         self.interpolation = None
         self.__frame_index = -1
+
+        if begin_frame <= 0 or (end_frame and (end_frame < begin_frame)):
+            raise ValueError((f"invalid [begin,end] frame range: "
+                                f"begin={self.begin_frame}, end={self.end_frame}"))
+        self.begin_frame = begin_frame
+        self.end_frame = end_frame
 
     def is_open(self) -> bool:
         return self.__cap is not None
@@ -52,6 +58,11 @@ class DefaultImageCapture(ImageCapture):
         else:
             self.__size = src_size
 
+        while self.__frame_index < self.begin_frame-1:
+            _, mat = self.__cap.read()
+            if mat:
+                self.__frame_index += 1
+
     def close(self) -> None:
         if self.__cap:
             self.__cap.release()
@@ -76,6 +87,8 @@ class DefaultImageCapture(ImageCapture):
     def capture(self) -> Tuple[float, int, np.ndarray]:
         if not self.is_open():
             raise ValueError(f"{self.__class__.__name__}: not opened")
+        if self.end_frame and self.__frame_index >= self.end_frame:
+            return time.time(), self.__frame_index, None
 
         _, mat = self.__cap.read()
         if mat is not None:
@@ -87,5 +100,6 @@ class DefaultImageCapture(ImageCapture):
 
     def __repr__(self) -> str:
         state = 'opened' if self.is_open() else 'closed'
-        return (f"{__class__.__name__}[{state}]: uri={self.uri}, "
+        end_frame = self.end_frame if self.end_frame else ""
+        return (f"{__class__.__name__}[{state}]: uri={self.uri}[{self.begin_frame}:{end_frame}], "
                 f"size={self.__size}, frames={self.__frame_index}, fps={self.__fps:.0f}/s")

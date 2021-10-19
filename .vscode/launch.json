@@ -116,11 +116,12 @@
             "console": "integratedTerminal",
             "args": [
                 "--camera", "ai_city:1",
-                // "--output", "C:/Temp/cam_1_track.txt",
+                "--output", "C:/Temp/cam_1_track.txt",
                 "--output_video", "C:/Temp/cam_1_track.mp4",
                 // "--show",
                 "--show_progress",
                 "tracker.detector=file:C:/Temp/data/cam_1_det.txt",
+                "tracker.max_age=20",
             ]
         },
         {
@@ -178,12 +179,12 @@
             "program": "${workspaceFolder}/track_video.py",
             "console": "integratedTerminal",
             "args": [
-                "--detector", "file:C:/Temp/data/etri_5_det.txt",
                 "--camera", "etri:5",
                 "--output", "C:/Temp/etri_5_track.txt",
                 "--output_video", "C:/Temp/etri_5_track.mp4",
                 // "--show",
                 "--show_progress",
+                "tracker.detector=file:C:/Temp/data/etri_5_det.txt",
             ]
         },
         {
@@ -193,12 +194,16 @@
             "program": "${workspaceFolder}/track_video.py",
             "console": "integratedTerminal",
             "args": [
-                "--detector", "file:C:/Temp/data/etri_6_det.txt",
                 "--camera", "etri:6",
+                // "--begin_frame", "8400",
+                // "--end_frame", "8600",
                 "--output", "C:/Temp/etri_6_track.txt",
                 "--output_video", "C:/Temp/etri_6_track.mp4",
                 // "--show",
                 "--show_progress",
+                "tracker.detector=file:C:/Temp/data/etri_6_det.txt",
+                "tracker.n_init=5",
+                "tracker.max_age=30",
             ]
         },
         {
@@ -400,7 +405,7 @@
                 // "--detector", "file:C:/Temp/data/channel06_9_det.txt",
                 "--track_file", "C:/Temp/data/channel06_9_track.txt",
                 "--max_age", "10",
-                // "--show",
+                "--show",
             ]
         },
         {
@@ -449,6 +454,14 @@
                 "--luid", "29",
                 "--output", "C:/Temp/local_path.mp4"
             ]
+        },
+        {
+            "name": "Select a blind region",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/blind_region_selector.py",
+            "console": "integratedTerminal",
+            "args": [ "--camera_id", "ai_city:1" ]
         },
         {
             "name": "Format",

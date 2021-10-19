@@ -106,6 +106,9 @@ class Size2d:
     def from_np(cls, wh: np.ndarray) -> Point:
         return Size2d(wh[0], wh[1])
 
+    def is_valid(self) -> bool:
+        return self.__wh[0] >= 0 and self.__wh[1] >= 0
+
     @property
     def wh(self) -> np.ndarray:
         return self.__wh
@@ -218,12 +221,9 @@ class BBox:
         return BBox(tl.xy, br.xy, br.xy - tl.xy)
 
     @classmethod
-    def from_tlbr(cls, tlbr: List[float]) -> BBox:
-        tl_x, br_x = (tlbr[0], tlbr[2]) if tlbr[0] < tlbr[2] else (tlbr[2], tlbr[0])
-        tl_y, br_y = (tlbr[1], tlbr[3]) if tlbr[1] < tlbr[3] else (tlbr[3], tlbr[1])
-
-        tl = np.array([tl_x, tl_y])
-        br = np.array([br_x, br_y])
+    def from_tlbr(cls, tlbr: np.ndarray) -> BBox:
+        tl = tlbr[:2]
+        br = tlbr[2:]
 
         return BBox(tl, br, br - tl)
 
@@ -232,6 +232,9 @@ class BBox:
         tl = tlwh[0:2]
         wh = tlwh[2:4]
         return BBox(tl, tl + wh, wh)
+
+    def is_valid(self) -> bool:
+        return self.__wh[0] >= 0 and self.__wh[1] >= 0
 
     @property
     def tlbr(self) -> np.ndarray:
@@ -261,17 +264,14 @@ class BBox:
     def bottom_right(self) -> Point:
         return Point.from_np(self.__br)
 
-    def is_empty(self) -> bool:
-        return self.__tl[0] >= self.__br[0]
-
     def center(self) -> Point:
         return Point.from_np(self.__tl + (self.wh / 2))
 
     def size(self) -> Size2d:
-        return Size2d.from_np(self.__wh) if not self.is_empty() else EMPTY_SIZE2D
+        return Size2d.from_np(self.__wh) if self.is_valid() else EMPTY_SIZE2D
 
     def area(self) -> int:
-        return self.size().area() if not self.is_empty() else 0
+        return self.size().area() if self.is_valid() else 0
 
     def width(self) -> Union[int,float]:
         return self.size().width
