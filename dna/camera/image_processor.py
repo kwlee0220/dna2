@@ -77,7 +77,6 @@ class ImageProcessor(metaclass=ABCMeta):
         capture_count = 0
         elapsed_avg = None
         self.__fps_measured = 0
-        show_fps = True
 
         if self.show_progress \
             and self.__cap.frame_count is not None \
@@ -96,15 +95,14 @@ class ImageProcessor(metaclass=ABCMeta):
 
             dna.DEBUG_FRAME_IDX = frame_idx
             frame = self.process_image(frame, frame_idx, ts)
+            frame = cv2.putText(frame, f'frames={frame_idx}, fps={self.__fps_measured:.2f}', (10, 20),
+                            cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, color.RED, 2)
             if self.writer:
                 self.writer.write(frame)
             if dna.DEBUG_PRINT_COST:
                 print("---------------------------------------------------------------------")
                 
             if self.window_name and self.show:
-                if show_fps:
-                    image = cv2.putText(frame, f'FPS={self.__fps_measured:.2f}, frames={frame_idx}', (20, 20),
-                                        cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, color.RED, 2)
                 cv2.imshow(self.window_name, frame)
 
                 key = cv2.waitKey(int(1)) & 0xFF
@@ -120,10 +118,6 @@ class ImageProcessor(metaclass=ABCMeta):
                     key = self.set_control(key)
                     if key == ord('v'):
                         self.show = not self.show
-                    elif key == ord('f'):
-                        show_fps = not show_fps
-                    elif key == ord('y'):
-                        sync_fps = not sync_fps
 
             elapsed = time.time() - started
             if progress is not None:

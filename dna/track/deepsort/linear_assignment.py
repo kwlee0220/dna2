@@ -170,10 +170,21 @@ def matching_cascade(distance_metric, max_distance, cascade_depth, tracks, detec
     # 'time_since_update'별로 'min_cost_matching'을 실시하여 그 결과를 merge시킨다.
     unmatched_detections = detection_indices
     matches = []
-    for track_indices_l in leveled_track_indices.values():
+    for level in range(cascade_depth):
+        if len(unmatched_detections) == 0:  # No detections left
+            break
+
+        track_indices_l = [
+            k for k in track_indices
+            if tracks[k].time_since_update == 1 + level
+        ]
+        if len(track_indices_l) == 0:  # Nothing to match at this level
+            continue
+
         matches_l, _, unmatched_detections = \
-            min_cost_matching(distance_metric, max_distance, tracks, detections,
-                                track_indices_l, unmatched_detections)
+            min_cost_matching(
+                distance_metric, max_distance, tracks, detections,
+                track_indices_l, unmatched_detections)
         matches += matches_l
     unmatched_tracks = list(set(track_indices) - set(k for k, _ in matches))
 
@@ -218,7 +229,7 @@ def gate_cost_matrix(kf, cost_matrix, tracks, detections, track_indices, detecti
     gating_dim = 2 if only_position else 4
     # gating_threshold = kalman_filter.chi2inv95[gating_dim]
     # kwlee
-    gating_threshold = kalman_filter.chi2inv95[gating_dim] * 7
+    gating_threshold = kalman_filter.chi2inv95[gating_dim] * 5
     measurements = np.asarray([detections[i].to_xyah() for i in detection_indices])
     for row, track_idx in enumerate(track_indices):
         track = tracks[track_idx]
@@ -233,7 +244,8 @@ def gate_cost_matrix(kf, cost_matrix, tracks, detections, track_indices, detecti
 _DIST_THRESHOLD = 20
 def matching_distance(dist_matrix, tracks, detections, track_indices):
     matches = []
-    unmatched_tracks = []
+    unmatched_tracks = [i for i in track_indices if tracks[i].time_since_update > 1]
+    track_indices = [i for i in track_indices if tracks[i].time_since_update <= 1]
     unmatched_detections = list(range(len(detections)))
 
     ndets = len(detections)
@@ -242,23 +254,22 @@ def matching_distance(dist_matrix, tracks, detections, track_indices):
 
     for tidx in track_indices:
         track = tracks[tidx]
-        if track.is_confirmed() and track.time_since_update <= 1:
-            dists = dist_matrix[tidx,:]
-            if ndets > 2:
-                idxes = np.argpartition(dists, 2)[:2]
-            else:
-                idxes = [0, 1] if dists[0] <= dists[1] else [1, 0]
+        dists = dist_matrix[tidx,:]
+        if ndets > 2:
+            idxes = np.argpartition(dists, 2)[:2]
+        else:
+            idxes = [0, 1] if dists[0] <= dists[1] else [1, 0]
 
-            v1, v2 = tuple(dists[idxes])
-            if v1 < _DIST_THRESHOLD and v1*2 < v2:
-                det_idx = idxes[0]
-                dists2 = dist_matrix[track_indices,det_idx]
-                # dists2 = dist_matrix[:,det_idx]
-                cnt = len(dists2[np.where(dists2 < _DIST_THRESHOLD)])
-                if cnt <= 1:
-                    matches.append((tidx, idxes[0]))
-                    unmatched_detections.remove(idxes[0])
-                    continue
+        v1, v2 = tuple(dists[idxes])
+        if v1 < _DIST_THRESHOLD and v1*2 < v2:
+            det_idx = idxes[0]
+            dists2 = dist_matrix[track_indices,det_idx]
+            # dists2 = dist_matrix[:,det_idx]
+            cnt = len(dists2[np.where(dists2 < _DIST_THRESHOLD)])
+            if cnt <= 1:
+                matches.append((tidx, idxes[0]))
+                unmatched_detections.remove(idxes[0])
+                continue
         unmatched_tracks.append(tidx)
     
     return matches, unmatched_tracks, unmatched_detections

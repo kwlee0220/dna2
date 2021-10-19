@@ -86,7 +86,7 @@ class Tracker:
             if (inter_area / bbox.area()) < 2/3:
                 track.mark_deleted()
             else:
-                self.tracks[track_idx].mark_missed()
+                track.mark_missed()
 
         for detection_idx in unmatched_detections:
             track = self._initiate_track(detections[detection_idx])
@@ -133,7 +133,10 @@ class Tracker:
         # # kwlee
         dist_cost = self.distance_cost(self.tracks, detections)
         if dna.DEBUG_PRINT_COST:
-              self.print_dist_cost(dist_cost, 999)
+            metric_cost = self.metric_cost(self.tracks, detections)
+            self.print_dist_cost(dist_cost, 999)
+            self.print_metrix_cost(metric_cost)
+            # self.print_cost(metric_cost, dist_cost)
 
         matches_z, unmatched_tracks, unmatched_detections \
             = linear_assignment.matching_distance(dist_cost, self.tracks, detections, confirmed_tracks)
@@ -193,11 +196,14 @@ class Tracker:
 
     # kwlee
     def print_cost(self, metric_cost, dist_cost):
+        dist_cost = dist_cost.copy()
+        dist_cost[dist_cost > 999] = 999
+
         for tidx, track in enumerate(self.tracks):
             dists = [int(round(v)) for v in dist_cost[tidx]]
-            metrics = [round(v, 3) for v in metric_cost[tidx]]
+            metrics = [round(v, 2) for v in metric_cost[tidx]]
             track_str = f"[{tidx:02d}]{track.track_id:03d}({track.state},{track.time_since_update})"
-            cost_str = ', '.join([f"({v1:6d}, {v2:.3f})" for v1, v2 in zip(dists, metrics)])
+            cost_str = ', '.join([f"({v1:3d}, {v2:.2f})" for v1, v2 in zip(dists, metrics)])
             print(f"{track_str}: {cost_str}")
 
     def print_dist_cost(self, dist_cost, trim_overflow=None):
@@ -213,8 +219,8 @@ class Tracker:
 
     def print_metrix_cost(self, metric_cost):
         for tidx, track in enumerate(self.tracks):
-            costs = [round(v, 3) for v in metric_cost[tidx]]
+            costs = [round(v, 2) for v in metric_cost[tidx]]
             track_str = f"[{tidx:02d}]{track.track_id:03d}({track.state},{track.time_since_update})"
-            dist_str = ', '.join([f"{v:.3f}" for v in costs])
+            dist_str = ', '.join([f"{v:.2f}" for v in costs])
             print(f"{track_str}: {dist_str}")
     ###############################################################################################################

@@ -156,6 +156,7 @@ class Size2d:
             return '{}x{}'.format(*self.__wh)
         else:
             return '{:.1f}x{:.1f}'.format(*self.__wh)
+EMPTY_SIZE2D: Size2d = Size2d(-1, -1)
 
 
 class Size2i:
@@ -217,7 +218,7 @@ class BBox:
         return BBox(tl.xy, br.xy, br.xy - tl.xy)
 
     @classmethod
-    def from_tlbr(cls, tlbr: np.ndarray) -> BBox:
+    def from_tlbr(cls, tlbr: List[float]) -> BBox:
         tl_x, br_x = (tlbr[0], tlbr[2]) if tlbr[0] < tlbr[2] else (tlbr[2], tlbr[0])
         tl_y, br_y = (tlbr[1], tlbr[3]) if tlbr[1] < tlbr[3] else (tlbr[3], tlbr[1])
 
@@ -267,7 +268,7 @@ class BBox:
         return Point.from_np(self.__tl + (self.wh / 2))
 
     def size(self) -> Size2d:
-        return Size2d.from_np(self.__wh) if not self.is_empty() else Size2d(-1,-1)
+        return Size2d.from_np(self.__wh) if not self.is_empty() else EMPTY_SIZE2D
 
     def area(self) -> int:
         return self.size().area() if not self.is_empty() else 0

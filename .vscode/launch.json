@@ -115,12 +115,12 @@
             "program": "${workspaceFolder}/track_video.py",
             "console": "integratedTerminal",
             "args": [
-                "--detector", "file:C:/Temp/data/cam_1_det.txt",
                 "--camera", "ai_city:1",
-                "--output", "C:/Temp/cam_1_track.txt",
+                // "--output", "C:/Temp/cam_1_track.txt",
                 "--output_video", "C:/Temp/cam_1_track.mp4",
                 // "--show",
                 "--show_progress",
+                "tracker.detector=file:C:/Temp/data/cam_1_det.txt",
             ]
         },
         {

@@ -7,14 +7,13 @@ platform:
     user: postgres
     password: dna2021
 
-detector: yolov4
-
 tracker:
   deep_sort:
+    detector: yolov4
     model_file: dna/track/deepsort/ckpts/model640.pt
-    matching_threshold: 0.5
-    max_iou_distance: 0.7
-    max_age: 10
+    matching_threshold: 0.55
+    max_iou_distance: 0.99
+    max_age: 20
     min_detection_score: 0
     det_mapping:
       car: car
