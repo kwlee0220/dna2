@@ -46,7 +46,10 @@ class BoxSelector:
             self.tl = pt
             self.box = None
         elif event == cv2.EVENT_LBUTTONUP:
-            self.box = BBox.from_points(self.tl, pt)
+            tl_x, br_x = (self.tl.x, pt.x) if self.tl.x <= pt.x else (pt.x, self.tl.x)
+            tl_y, br_y = (self.tl.y, pt.y) if self.tl.y <= pt.y else (pt.y, self.tl.y)
+            
+            self.box = BBox.from_tlbr(np.array([tl_x, tl_y, br_x, br_y]))
             self.tl = None
 
         if self.box:
@@ -62,7 +65,10 @@ class BoxSelector:
         cv2.setMouseCallback("image", selector.mouse_callback)
         while not self.done:
             key = cv2.waitKey(1) & 0xFF
-            if key == 27:
+            if key == 13:
+                self.done = True
+            elif key == 27:
+                self.box = None
                 self.done = True
 
         cv2.destroyWindow("image")

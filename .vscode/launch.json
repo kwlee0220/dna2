@@ -131,13 +131,12 @@
             "program": "${workspaceFolder}/track_video.py",
             "console": "integratedTerminal",
             "args": [
-                // "--detector", "yolov4",
-                "--detector", "file:C:/Temp/data/cam_6_det.txt",
-                "--input",  "C:/Temp/data/cam_6.mp4",
+                "--camera", "ai_city:6",
                 "--output", "C:/Temp/cam_6_track.txt",
-                "--max_age", "10",
+                "--output_video", "C:/Temp/cam_6_track.mp4",
                 // "--show",
                 "--show_progress",
+                "tracker.detector=file:C:/Temp/data/cam_6_det.txt",
             ]
         },
         {
@@ -147,13 +146,12 @@
             "program": "${workspaceFolder}/track_video.py",
             "console": "integratedTerminal",
             "args": [
-                // "--detector", "yolov4",
-                "--detector", "file:C:/Temp/data/cam_9_det.txt",
-                "--input",  "C:/Temp/data/cam_9.mp4",
+                "--camera", "ai_city:9",
                 "--output", "C:/Temp/cam_9_track.txt",
-                "--max_age", "10",
-                // "--show",
-                "--show_progress",
+                "--output_video", "C:/Temp/cam_9_track.mp4",
+                "--show",
+                //"--show_progress",
+                "tracker.detector=file:C:/Temp/data/cam_9_det.txt",
             ]
         },
         {
@@ -195,8 +193,6 @@
             "console": "integratedTerminal",
             "args": [
                 "--camera", "etri:6",
-                // "--begin_frame", "8400",
-                // "--end_frame", "8600",
                 "--output", "C:/Temp/etri_6_track.txt",
                 "--output_video", "C:/Temp/etri_6_track.mp4",
                 // "--show",
@@ -461,7 +457,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/blind_region_selector.py",
             "console": "integratedTerminal",
-            "args": [ "--camera_id", "ai_city:1" ]
+            "args": [ "--camera_id", "ai_city:9" ]
         },
         {
             "name": "Format",

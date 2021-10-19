@@ -11,6 +11,7 @@ tracker:
   deep_sort:
     detector: yolov4
     model_file: dna/track/deepsort/ckpts/model640.pt
+    # model_file: dna/track/deepsort/ckpts/vehicle_model280.pt
     n_init: 3
     matching_threshold: 0.55
     max_iou_distance: 0.99
