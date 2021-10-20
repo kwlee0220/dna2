@@ -1,13 +1,53 @@
-from typing import List
-from abc import ABCMeta, abstractmethod
-from datetime import datetime
+from typing import List, Union
+from dataclasses import dataclass
+from collections import defaultdict
+
 import numpy as np
 
-from dna import color
+from dna import color, BBox, plot_utils
 from dna.camera import ImageProcessor, ImageCapture
-from . import ObjectTracker, DetectionBasedObjectTracker
-from .track_callbacks import TrackerCallback, TrailCollector, DemuxTrackerCallback
-from .utils import draw_track_trail
+from .types import TrackState, Track
+from .tracker import ObjectTracker, DetectionBasedObjectTracker
+from .track_callbacks import TrackerCallback, DemuxTrackerCallback, TrackWriter
+
+
+class TrailCollector(TrackerCallback):
+    @dataclass(frozen=True, unsafe_hash=True)
+    class Mark:
+        state: TrackState
+        location: BBox
+
+        def __repr__(self) -> str:
+            return f"[{self.location}]-"
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.tracks = defaultdict(list)
+
+    def get_trail(self, track_id: str, def_value=None) -> Union[List[Mark], None]:
+        return self.tracks.get(track_id, def_value)
+
+    def track_started(self, tracker: ObjectTracker) -> None: pass
+    def track_stopped(self, tracker: ObjectTracker) -> None: pass
+
+    def tracked(self, tracker: ObjectTracker, frame, frame_idx: int, tracks: List[Track]) -> None:
+        for track in tracks:
+            if track.state == TrackState.Confirmed  \
+                or track.state == TrackState.TemporarilyLost    \
+                or track.state == TrackState.Tentative:
+                mark = TrailCollector.Mark(state=track.state, location=track.location)
+                self.tracks[track.id].append(mark)
+            elif track.state == TrackState.Deleted:
+                self.tracks.pop(track.id, None)
+
+
+def draw_track_trail(mat, track: Track, color, label_color=None,
+                    trail: List[BBox]=None, trail_color=None, line_thickness=2) -> np.ndarray:
+    mat = track.draw(mat, color, label_color=label_color, line_thickness=2)
+    if trail_color:
+        mat = plot_utils.draw_line_string(mat, [bbox.center() for bbox in trail[-11:]],
+                                        trail_color, line_thickness)
+    return mat
 
 
 class ObjectTrackingProcessor(ImageProcessor):
@@ -32,7 +72,7 @@ class ObjectTrackingProcessor(ImageProcessor):
         if self.callback:
             self.callback.track_stopped(self.tracker)
 
-    def process_image(self, frame: np.ndarray, frame_idx: int, ts: datetime) -> np.ndarray:
+    def process_image(self, frame: np.ndarray, frame_idx: int, ts) -> np.ndarray:
         tracks = self.tracker.track(frame, frame_idx, ts)
         if self.callback:
             self.callback.tracked(self.tracker, frame, frame_idx, tracks)

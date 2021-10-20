@@ -3,7 +3,6 @@ from pathlib import Path
 from abc import ABCMeta, abstractmethod
 from contextlib import suppress
 import time
-from datetime import datetime
 
 from tqdm import tqdm
 import numpy as np
@@ -34,7 +33,7 @@ class ImageProcessor(metaclass=ABCMeta):
     def on_stopped(self) -> None:
         pass
  
-    def process_image(self, frame: np.ndarray, frame_idx: int, ts: datetime) -> np.ndarray:
+    def process_image(self, frame: np.ndarray, frame_idx: int, ts) -> np.ndarray:
         return frame
 
     @property

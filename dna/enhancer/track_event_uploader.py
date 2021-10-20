@@ -15,7 +15,7 @@ class TrackEventUploader:
         self.mqueue = mqueue
         self.bulk = []
         self.bulk_size = bulk_size
-        self.conn = platform.connection
+        self.conn = platform.open_db_connection()
 
     def handle_event(self, ev: TrackEvent) -> None:
         self.bulk.append(self.__serialize(ev))

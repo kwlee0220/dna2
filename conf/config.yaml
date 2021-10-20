@@ -22,3 +22,6 @@ tracker:
       bus: bus
       truck: car
 
+enhancer:
+    path_uploader:
+      min_path_count: 20
