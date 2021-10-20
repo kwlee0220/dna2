@@ -6,8 +6,9 @@ import logging
 import numpy as np
 from omegaconf import OmegaConf
 
+import dna
 from dna import color
-from dna.camera import ImageProcessor
+from dna.camera import ImageProcessor, ImageCaptureType, image_capture_type, load_image_capture
 from dna.det import DetectorLoader, ObjectDetector, Detection
 from dna.platform import DNAPlatform
 
@@ -60,36 +61,34 @@ class ObjectDetectingProcessor(ImageProcessor):
 
 import argparse
 def parse_args():
-    parser = argparse.ArgumentParser(description="Detect Objects in an input video file")
-    parser.add_argument("--conf", help="DNA framework configuration", default="conf/config.yaml")
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--camera_id", metavar="id", help="target camera id")
-    group.add_argument("--input", metavar="source", help="input source")
+    parser = argparse.ArgumentParser(description="Detect objects in an video")
+    parser.add_argument("camera", metavar='camera_uri', help="target camera uri")
+    parser.add_argument("--conf", help="DNA framework configuration", default=dna.DNA_CONIFIG_FILE)
     parser.add_argument("--sync", help="sync to fps", action="store_true")
+    parser.add_argument("--begin_frame", type=int, metavar="<number>", help="the first frame index (from 1)", default=1)
+    parser.add_argument("--end_frame", type=int, metavar="<number>", help="the last frame index", default=None)
 
-    # parser.add_argument("--resize_ratio", type=float, help="image resizing ratio", default=None)
-    # parser.add_argument("--begin_frame", type=int, help="the first frame index (from 1)", default=1)
-    # parser.add_argument("--end_frame", type=int, help="the last frame index", default=None)
     parser.add_argument("--detector", help="Object detection algorithm.", default="yolov4")
-    parser.add_argument("--output", help="detection output file.", required=False)
-    parser.add_argument("--output_video", help="output video file", required=False)
+    parser.add_argument("--output", metavar="file",
+                        help="output detection file.", required=False)
+    parser.add_argument("--output_video", metavar="file",
+                        help="output video file", required=False)
     parser.add_argument("--show_progress", help="show progress bar.", action="store_true")
     parser.add_argument("--show", help="show detections.", action="store_true")
-    return parser.parse_args()
+    return parser.parse_known_args()
+
 
 if __name__ == '__main__':
-    args = parse_args()
+    args, unknown = parse_args()
 
-    cap = None
-    if args.input:
-        from dna.camera.utils import load_image_capture
-        cap = load_image_capture(args.input, sync=args.sync)
-    else:
+    uri = args.camera
+    cap_type = image_capture_type(uri)
+    if cap_type == ImageCaptureType.PLATFORM:
         conf = OmegaConf.load(args.conf)
-        dict = OmegaConf.to_container(conf.platform)
-
-        platform = DNAPlatform.load(dict)
-        cap = platform.load_image_capture(args.camera_id, sync=args.sync)
+        platform = DNAPlatform.load_from_config(conf.platform)
+        _, camera_info = platform.get_resource("camera_infos", (uri,))
+        uri = camera_info.uri
+    cap = load_image_capture(uri, sync=args.sync, begin_frame=args.begin_frame, end_frame=args.end_frame)
     
     detector = DetectorLoader.load(args.detector)
     window_name = "output" if args.show else None

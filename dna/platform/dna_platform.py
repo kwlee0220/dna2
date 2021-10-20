@@ -3,6 +3,7 @@ from typing import List, Union, Tuple, Any
 
 import psycopg2 as pg2
 from psycopg2.extras import execute_values
+from omegaconf.omegaconf import OmegaConf
 
 from dna.camera.image_capture import ImageCapture
 
@@ -23,22 +24,13 @@ class DNAPlatform:
     def load(cls, conf_dict) -> DNAPlatform:
         return DNAPlatform(**conf_dict['db'])
 
+    @classmethod
+    def load_from_config(cls, platform_conf: OmegaConf):
+        dict = OmegaConf.to_container(platform_conf)
+        return DNAPlatform.load(dict)
+
     def open_db_connection(self):
         return pg2.connect(**self.conn_parms)
-
-    # @property
-    # def connection(self):
-    #     if not self.conn:
-    #         raise ValueError("not connected to DNAPlatform")
-    #     return self.conn
-
-    # def connect(self):
-    #     self.conn = pg2.connect(**self.conn_parms)
-    #     return self.conn
-
-    # def disconnect(self) -> None:
-    #     self.conn.close()
-    #     self.conn = None
 
     def get_resource_set_id_all(self) -> List[str]:
         return self.resource_set_dict.keys()
