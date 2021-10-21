@@ -30,7 +30,7 @@ if __name__ == '__main__':
         uri = camera_info.uri
     cap = load_image_capture(uri, sync=not args.no_sync, begin_frame=args.begin_frame, end_frame=args.end_frame)
 
-    with ImageProcessor(cap, window_name="output") as processor:
+    with ImageProcessor(cap, window_name=args.camera) as processor:
         started = timer()
         frame_count = processor.run()
         elapsed = timer() - started

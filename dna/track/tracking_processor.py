@@ -8,7 +8,7 @@ from dna import color, BBox, plot_utils
 from dna.camera import ImageProcessor, ImageCapture
 from .types import TrackState, Track
 from .tracker import ObjectTracker, DetectionBasedObjectTracker
-from .track_callbacks import TrackerCallback, DemuxTrackerCallback, TrackWriter
+from .track_callbacks import TrackerCallback, DemuxTrackerCallback
 
 
 class TrailCollector(TrackerCallback):
@@ -61,12 +61,10 @@ class ObjectTrackingProcessor(ImageProcessor):
         self.trail_collector = TrailCollector()
         self.callback = DemuxTrackerCallback([self.trail_collector, callback])  \
                             if callback else self.trail_collector
-        self.show_label = True
 
     def on_started(self) -> None:
         if self.callback:
             self.callback.track_started(self.tracker)
-        return self
 
     def on_stopped(self) -> None:
         if self.callback:
@@ -95,9 +93,3 @@ class ObjectTrackingProcessor(ImageProcessor):
                                             trail=trail, trail_color=color.BLUE)
 
         return frame
-
-    def set_control(self, key: int) -> int:
-        if key == ord('l'):
-            self.show_label = not self.show_label
-        
-        return key

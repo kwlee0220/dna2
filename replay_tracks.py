@@ -3,6 +3,7 @@ import numpy as np
 
 from dna import color
 from dna.track import LogFileBasedObjectTracker, ObjectTrackingProcessor
+from dna.camera import load_image_capture
 from dna.platform import DNAPlatform
 from omegaconf import OmegaConf
 
@@ -24,7 +25,6 @@ if __name__ == '__main__':
 
     cap = None
     if args.input:
-        from dna.camera.utils import load_image_capture
         cap = load_image_capture(args.input)
     else:
         conf = OmegaConf.load(args.conf)

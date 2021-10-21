@@ -67,6 +67,23 @@ if __name__ == '__main__':
                             size=Size2i(1920, 1080), fps=10)
     etri_6_9.add_blind_region(BBox.from_tlbr(np.array([1309, 223, 1908, 488])))
     camera_infos.insert(etri_6_9)
+                                    
+    info = CameraInfo(camera_id='etri_live:3',
+                            uri="rtsp://admin:dnabased24@129.254.82.33:558/LiveChannel/3/media.smp",
+                            size=Size2i(1280, 720), fps=10)
+    camera_infos.insert(info)  
+    info = CameraInfo(camera_id='etri_live:4',
+                            uri="rtsp://admin:dnabased24@129.254.82.33:558/LiveChannel/4/media.smp",
+                            size=Size2i(1280, 720), fps=10)
+    camera_infos.insert(info) 
+    info = CameraInfo(camera_id='etri_live:5',
+                            uri="rtsp://admin:dnabased24@129.254.82.33:558/LiveChannel/5/media.smp",
+                            size=Size2i(1280, 720), fps=10)
+    camera_infos.insert(info) 
+    info = CameraInfo(camera_id='etri_live:6',
+                            uri="rtsp://admin:dnabased24@129.254.82.33:558/LiveChannel/6/media.smp",
+                            size=Size2i(1280, 720), fps=10)
+    camera_infos.insert(info)
 
     camera_infos.insert(CameraInfo(camera_id='test', uri="C:/Temp/local_path.mp4",
                                     size=Size2i(1920, 1080), fps=10))

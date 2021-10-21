@@ -4,18 +4,7 @@ from time import time
 from typing import Tuple
 from pathlib import Path
 
-def load_image_capture(uri, args, sync=True):
-    from dna.camera import ImageCaptureType, image_capture_type, load_image_capture
-
-    cap_type = image_capture_type(uri)
-    if cap_type == ImageCaptureType.PLATFORM:
-        conf = OmegaConf.load(args.conf)
-        platform = connect_platform(conf.platform)
-        _, camera_info = platform.get_resource("camera_infos", (uri,))
-        uri = camera_info.uri
-
-    return load_image_capture(uri, sync=sync, begin_frame=args.begin_frame, end_frame=args.end_frame)
-
+from .types import BBox
 
 def datetime2utc(dt: datetime) -> int:
     return int(dt.replace(tzinfo=timezone.utc).timestamp())

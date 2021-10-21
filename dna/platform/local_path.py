@@ -10,6 +10,7 @@ from psycopg2.extras import execute_values
 from dna import Point, BBox
 from dna.enhancer.types import TrackEvent
 from .types import ResourceSet
+from .utils import parse_point_list
 
 
 @dataclass(frozen=True, unsafe_hash=True)
@@ -31,8 +32,8 @@ class LocalPath:
 
     @classmethod
     def deserialize(cls, tup):
-        path = [pt for pt in _parse_point_list(tup[7])]
-        return LocalPath(camera_id=tup[0], luid=tup[1], points=path, length=tup[3],
+        points = list(parse_point_list(tup[7][1:-1]))
+        return LocalPath(camera_id=tup[0], luid=tup[1], points=points, length=tup[3],
                             first_frame=tup[4], last_frame=tup[5], continuation=tup[6])
 
     @staticmethod
@@ -56,17 +57,6 @@ class LocalPath:
     def __repr__(self) -> str:
         return (f"LocalPath(camera_id={self.camera_id}, luid={self.luid}, "
                 f"point_count={len(self.points)}, length={self.length:.1f})")
-
-def _parse_point_list(path_str):
-    begin = -1
-    for i, c in enumerate(path_str):
-        if c == '(':
-            begin = i
-        elif c == ')' and begin >= 0:
-            parts = path_str[begin+1:i].split(',')
-            v = np.array(parts)
-            v2 = v.astype(float)
-            yield Point.from_np(v2)
 
 class LocalPathSet(ResourceSet):
     __SQL_GET = """
@@ -127,10 +117,11 @@ class LocalPathSet(ResourceSet):
         with self.platform.open_db_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(LocalPathSet.__SQL_GET, key)
-                traj = LocalPath.concat([LocalPath.deserialize(tup) for tup in cur])
+                lpaths = [LocalPath.deserialize(tup) for tup in cur]
+                lpath = LocalPath.concat(lpaths)
                 conn.commit()
 
-                return traj
+                return lpath
 
     def get_all(self, cond_expr:str, offset:int=None, limit:int=None) -> List[LocalPath]:
         where_clause = f"where {cond_expr}" if cond_expr else ""

@@ -6,9 +6,8 @@ import numpy as np
 import threading
 import time
 
-from dna import Point, color, BBox, Size2i
-from dna import camera
-from dna.camera import ImageCapture, VideoFileCapture
+from dna import Point, color, BBox, Size2i, plot_utils
+from dna.camera import ImageCapture, load_image_capture
 from dna.platform import DNAPlatform
 
 
@@ -77,8 +76,6 @@ class BoxSelector:
 
 
 import argparse
-import dna.camera.utils as camera_utils
-from dna import plot_utils
 def parse_args():
     parser = argparse.ArgumentParser(description="Generating tracking events from a track-file")
     parser.add_argument("--conf", help="DNA framework configuration", default="conf/config.yaml")
@@ -93,8 +90,7 @@ if __name__ == '__main__':
 
     platform = DNAPlatform.load(dict)
     rset, camera_info = platform.get_resource("camera_infos", (args.camera_id,))
-    cap = camera_utils.load_image_capture(camera_info.uri, camera_info.size, sync=False,
-                                            begin_frame=5)
+    cap = load_image_capture(camera_info.uri, camera_info.size, sync=False, begin_frame=5)
     cap.open()
     _,_,bg_img = cap.capture()
     cap.close()

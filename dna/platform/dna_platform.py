@@ -5,8 +5,7 @@ import psycopg2 as pg2
 from psycopg2.extras import execute_values
 from omegaconf.omegaconf import OmegaConf
 
-from dna.camera.image_capture import ImageCapture
-
+from dna.camera import ImageCapture, load_image_capture
 from .types import ResourceSet
 from .camera_info import CameraInfo, CameraInfoSet
 from .local_path import LocalPathSet
@@ -51,5 +50,4 @@ class DNAPlatform:
         if camera_info is None:
             raise ValueError(f"unknown camera_id: '{camera_id}'")
 
-        import dna.camera.utils as camera_utils
-        return camera_utils.load_image_capture(camera_info.uri, camera_info.size, sync=sync)
+        return load_image_capture(camera_info.uri, camera_info.size, sync=sync)

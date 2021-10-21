@@ -3,9 +3,11 @@ from pathlib import Path
 from threading import Thread
 import sys
 
-import numpy as np
+from timeit import default_timer as timer
+from datetime import timedelta
 from pubsub import PubSub, Queue
 from omegaconf import OmegaConf
+import numpy as np
 
 import dna
 import dna.camera as dna_cam
@@ -29,7 +31,6 @@ def parse_args():
 
     parser.add_argument("--track_file", help="Object track log file.", default=None)
 
-    parser.add_argument("--show_progress", help="show progress bar.", action="store_true")
     parser.add_argument("--show", help="show detections.", action="store_true")
     return parser.parse_known_args()
 
@@ -71,11 +72,7 @@ if __name__ == '__main__':
     thread.start()
 
     win_name = "output" if args.show else None
-    with ObjectTrackingProcessor(cap, tracker, enhancer, window_name=win_name,
-                                show_progress=args.show_progress) as processor:
-        from timeit import default_timer as timer
-        from datetime import timedelta
-
+    with ObjectTrackingProcessor(cap, tracker, enhancer, window_name=win_name) as processor:
         started = timer()
         frame_count = processor.run()
         elapsed = timer() - started

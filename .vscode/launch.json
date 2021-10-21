@@ -7,15 +7,15 @@
         { "name": "Show Video",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_show.py",
-            "args": [ "etri:5" ]
+            "args": [ "etri_live:3" ]
         },
         { "name": "Detect Video (AI_CITY:01)",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_detect.py",
             "args": [
                 "ai_city:1",
-                // "--detector", "file:C:/Temp/data/cam_11.txt",
-                "-output", "C:/Temp/cam_1_det.txt",
+                "--output", "C:/Temp/cam_1_det.txt",
+                "--output_video", "C:/Temp/cam_1_det.mp4",
                 "--show_progress",
             ]
         },
@@ -25,6 +25,7 @@
             "args": [
                 "ai_city:6",
                 "--output", "C:/Temp/cam_6_det.txt",
+                "--output_video", "C:/Temp/cam_6_det.mp4",
                 "--show_progress",
             ]
         },
@@ -34,6 +35,7 @@
             "args": [
                 "ai_city:9",
                 "--output", "C:/Temp/cam_9_det.txt",
+                "--output_video", "C:/Temp/cam_9_det.mp4",
                 "--show_progress",
             ]
         },
@@ -43,6 +45,7 @@
             "args": [
                 "ai_city:11",
                 "--output", "C:/Temp/cam_11_det.txt",
+                "--output_video", "C:/Temp/cam_11_det.mp4",
                 "--show_progress",
             ]
         },
@@ -52,6 +55,7 @@
             "args": [
                 "etri:5",
                 "--output", "C:/Temp/etri_5_det.txt",
+                "--output_video", "C:/Temp/etri_5_det.mp4",
                 "--show_progress",
             ]
         },
@@ -61,6 +65,7 @@
             "args": [
                 "etri:6",
                 "--output", "C:/Temp/etri_6_det.txt",
+                "--output_video", "C:/Temp/etri_6_det.mp4",
                 "--show_progress"
             ]
         },
@@ -86,89 +91,71 @@
                 "tracker.max_age=20",
             ]
         },
-        {
-            "name": "Track Video (AI_CITY:06)",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/track_video.py",
-            "console": "integratedTerminal",
+        {  "name": "Track Video (AI_CITY:06)",
+            "type": "python", "request": "launch", "console": "integratedTerminal",
+            "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
-                "tracker.detector=file:C:/Temp/data/cam_6_det.txt",
-                "--camera", "ai_city:6",
+                "ai_city:6",
                 "--output", "C:/Temp/cam_6_track.txt",
                 "--output_video", "C:/Temp/cam_6_track.mp4",
                 // "--show",
                 "--show_progress",
+                "tracker.detector=file:C:/Temp/data/cam_6_det.txt",
             ]
         },
-        {
-            "name": "Track Video (AI_CITY:09)",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/track_video.py",
-            "console": "integratedTerminal",
+        { "name": "Track Video (AI_CITY:09)",
+            "type": "python", "request": "launch", "console": "integratedTerminal",
+            "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
-                "tracker.detector=file:C:/Temp/data/cam_9_det.txt",
-                "--camera", "ai_city:9",
+                "ai_city:9",
                 "--output", "C:/Temp/cam_9_track.txt",
                 "--output_video", "C:/Temp/cam_9_track.mp4",
                 // "--show",
                 "--show_progress",
+                "tracker.detector=file:C:/Temp/data/cam_9_det.txt",
             ]
         },
-        {
-            "name": "Track Video (AI_CITY:11)",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/track_video.py",
-            "console": "integratedTerminal",
+        { "name": "Track Video (AI_CITY:11)",
+            "type": "python", "request": "launch", "console": "integratedTerminal",
+            "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
-                "tracker.detector=file:C:/Temp/data/cam_11_det.txt",
-                "--camera", "ai_city:11",
+                "ai_city:11",
                 "--output", "C:/Temp/cam_11_track.txt",
                 "--output_video", "C:/Temp/cam_11_track.mp4",
                 // "--show",
                 "--show_progress",
+                "tracker.detector=file:C:/Temp/data/cam_11_det.txt",
             ]
         },
-        {
-            "name": "Track Video (ETRI:05)",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/track_video.py",
-            "console": "integratedTerminal",
+        { "name": "Track Video (ETRI:05)",
+            "type": "python", "request": "launch", "console": "integratedTerminal",
+            "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
-                "tracker.detector=file:C:/Temp/data/etri_5_det.txt",
-                "--camera", "etri:5",
+                "etri:5",
                 "--output", "C:/Temp/etri_5_track.txt",
                 "--output_video", "C:/Temp/etri_5_track.mp4",
                 // "--show",
                 "--show_progress",
+                "tracker.detector=file:C:/Temp/data/etri_5_det.txt",
             ]
         },
-        {
-            "name": "Track Video (ETRI:06)",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/track_video.py",
-            "console": "integratedTerminal",
+        {  "name": "Track Video (ETRI:06)",
+            "type": "python", "request": "launch", "console": "integratedTerminal",
+            "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
-                "tracker.detector=file:C:/Temp/data/etri_6_det.txt",
-                "tracker.n_init=5",
-                "tracker.max_age=30",
-                "--camera", "etri:6",
+                "etri:6",
                 "--output", "C:/Temp/etri_6_track.txt",
                 "--output_video", "C:/Temp/etri_6_track.mp4",
                 // "--show",
                 "--show_progress",
+                "tracker.detector=file:C:/Temp/data/etri_6_det.txt",
+                "tracker.n_init=5",
+                "tracker.max_age=30",
             ]
         },
-        {
-            "name": "Track Video (Test)",
-            "type": "python",
-            "request": "launch",
+        { "name": "Track Video (Test)",
+            "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/track_video.py",
-            "console": "integratedTerminal",
             "args": [
                 // "--detector", "yolov4",
                 "--detector", "file:C:/Temp/local_path_det.txt",
@@ -188,124 +175,70 @@
                 // "--show",
             ]
         },
-        {
-            "name": "DNA Node (AI_CITY:06)",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/dna_node.py",
-            "console": "integratedTerminal",
+        { "name": "DNA Node (AI_CITY:06)",
+            "type": "python", "request": "launch", "console": "integratedTerminal",
+            "program": "${workspaceFolder}/bin/dna_node.py",
             "args": [
-                "--camera_id", "ai_city:6",
-                "--input",  "C:/Temp/data/cam_6.mp4",
-                // "--detector", "yolov4",
-                // "--detector", "file:C:/Temp/data/cam_6_det.txt",
+                "ai_city:6",
                 "--track_file", "C:/Temp/data/cam_6_track.txt",
-                "--max_age", "10",
-                "--show",
+                // "--show",
             ]
         },
-        {
-            "name": "DNA Node (AI_CITY:09)",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/dna_node.py",
-            "console": "integratedTerminal",
+        { "name": "DNA Node (AI_CITY:09)",
+            "type": "python", "request": "launch", "console": "integratedTerminal",
+            "program": "${workspaceFolder}/bin/dna_node.py",
             "args": [
-                "--camera_id", "ai_city:9",
-                "--input",  "C:/Temp/data/cam_9.mp4",
-                // "--detector", "yolov4",
-                // "--detector", "file:C:/Temp/data/cam_9_det.txt",
+                "ai_city:9",
                 "--track_file", "C:/Temp/data/cam_9_track.txt",
-                "--max_age", "10",
                 // "--show",
             ]
         },
-        {
-            "name": "DNA Node (AI_CITY:11)",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/dna_node.py",
-            "console": "integratedTerminal",
+        { "name": "DNA Node (AI_CITY:11)",
+            "type": "python", "request": "launch", "console": "integratedTerminal",
+            "program": "${workspaceFolder}/bin/dna_node.py",
             "args": [
-                "--camera_id", "ai_city:11",
-                "--input",  "C:/Temp/data/cam_11.mp4",
-                // "--detector", "yolov4",
-                // "--detector", "file:C:/Temp/data/cam_11_det.txt",
+                "ai_city:11",
                 "--track_file", "C:/Temp/data/cam_11_track.txt",
-                "--max_age", "10",
-                "--show",
-            ]
-        },
-        {
-            "name": "DNA Node (ETRI:05)",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/dna_node.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--camera_id", "etri:5",
-                "--input",  "C:/Temp/data/channel05_9.mp4",
-                // "--detector", "yolov4",
-                // "--detector", "file:C:/Temp/data/channel05_9_det.txt",
-                "--track_file", "C:/Temp/data/channel05_9_track.txt",
-                "--max_age", "10",
                 // "--show",
             ]
         },
-        {
-            "name": "DNA Node (ETRI:06)",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/dna_node.py",
-            "console": "integratedTerminal",
+        { "name": "DNA Node (ETRI:05)",
+            "type": "python", "request": "launch", "console": "integratedTerminal",
+            "program": "${workspaceFolder}/bin/dna_node.py",
             "args": [
-                "--camera_id", "etri:6",
-                "--input",  "C:/Temp/data/channel06_9.mp4",
-                // "--detector", "yolov4",
-                // "--detector", "file:C:/Temp/data/channel06_9_det.txt",
-                "--track_file", "C:/Temp/data/channel06_9_track.txt",
-                "--max_age", "10",
-                "--show",
+                "etri:5",
+                "--track_file", "C:/Temp/data/etri_5_track.txt",
             ]
         },
-        {
-            "name": "DNA Node (Test)",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/dna_node.py",
-            "console": "integratedTerminal",
+        { "name": "DNA Node (ETRI:06)",
+            "type": "python", "request": "launch", "console": "integratedTerminal",
+            "program": "${workspaceFolder}/bin/dna_node.py",
             "args": [
-                "--camera_id", "test:1",
+                "etri:6",
+                "--track_file", "C:/Temp/data/etri_6_track.txt",
+            ]
+        },
+        { "name": "DNA Node (Test)",
+            "type": "python", "request": "launch", "console": "integratedTerminal",
+            "program": "${workspaceFolder}/bin/dna_node.py",
+            "args": [
+                "test:1",
                 "--input",  "C:/Temp/local_path.mp4",
-                // "--detector", "yolov4",
-                // "--detector", "file:C:/Temp/data/channel06_9_det.txt",
                 "--track_file", "C:/Temp/local_path_track.txt",
-                "--max_age", "10",
-                // "--show",
             ]
         },
-        {
-            "name": "Replay Local Path",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/replay_local_path.py",
-            "console": "integratedTerminal",
+        { "name": "Replay a Local Path",
+            "type": "python", "request": "launch", "console": "integratedTerminal",
+            "program": "${workspaceFolder}/bin/dna_replay_local_path.py",
             "args": [
-                // "--camera_id", "etri:6",
-                // "--input", "C:/Temp/data/channel06_9.mp4",
-                // "--camera_id", "ai_city:9",
-                // "--input", "C:/Temp/data/cam_9.mp4",
-                "--camera_id", "test:1",
-                "--input", "C:/Temp/local_path.mp4",
-                "--luid", "1",
+                "etri:6",
+                "--id", "1",
+                "--output_video", "C:/Temp/local_path.mp4",
             ]
         },
-        {
-            "name": "Extract a local path",
-            "type": "python",
-            "request": "launch",
+        { "name": "Extract a local path",
+            "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/extract_local_path.py",
-            "console": "integratedTerminal",
             "args": [
                 // "--camera_id", "etri:5",
                 // "--input", "C:/Temp/data/channel05_9.mp4",
@@ -315,36 +248,24 @@
                 "--output", "C:/Temp/local_path.mp4"
             ]
         },
-        {
-            "name": "Select a blind region",
-            "type": "python",
-            "request": "launch",
+        { "name": "Select a blind region",
+            "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/blind_region_selector.py",
-            "console": "integratedTerminal",
-            "args": [ "--camera_id", "ai_city:9" ]
+            "args": [ "--camera_id", "etri:6" ]
         },
-        {
-            "name": "Format",
-            "type": "python",
-            "request": "launch",
+        { "name": "Format",
+            "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/create_schema.py",
-            "console": "integratedTerminal",
             "args": []
         },
-        {
-            "name": "Current File",
-            "type": "python",
-            "request": "launch",
+        { "name": "Current File",
+            "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${file}",
-            "console": "integratedTerminal",
             "args": [ "camera_id=etri:5" ]
         },
-        {
-            "name": "Test",
-            "type": "python",
-            "request": "launch",
+        { "name": "Test",
+            "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/test.py",
-            "console": "integratedTerminal",
             "args": []
         },
     ]

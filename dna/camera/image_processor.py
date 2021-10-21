@@ -27,6 +27,10 @@ class ImageProcessor(metaclass=ABCMeta):
         self.stop_at_the_last = stop_at_the_last
         self.__fps_measured = -1
 
+    @property
+    def fps_measured(self) -> float:
+        return self.__fps_measured
+
     def on_started(self) -> None:
         pass
 
@@ -35,10 +39,6 @@ class ImageProcessor(metaclass=ABCMeta):
  
     def process_image(self, frame: np.ndarray, frame_idx: int, ts) -> np.ndarray:
         return frame
-
-    @property
-    def fps_measured(self) -> float:
-        return self.__fps_measured
 
     def set_control(self, key: int) -> int:
         return key
@@ -138,4 +138,4 @@ class ImageProcessor(metaclass=ABCMeta):
         if self.window_name:
             cv2.destroyWindow(self.window_name)
 
-        return self.__cap.frame_count
+        return capture_count

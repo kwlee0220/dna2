@@ -15,36 +15,22 @@ class LocalPathDisplayProcessor(ImageProcessor):
         super().__init__(capture, window_name='output', show_progress=False,
                             stop_at_the_last=True)
 
-        self.traj = path
+        self.path = path
         self.points = path.points
         self.index = 0
-        self.show_label = True
 
-    def on_started(self) -> None:
-        pass
+    def process_image(self, convas, frame_idx: int, ts):
+        convas = plot_utils.draw_line_string(convas, self.points[self.index:], color.GREEN)
+        if frame_idx >= self.path.first_frame and frame_idx <= self.path.last_frame:
+            convas = plot_utils.draw_line_string(convas, self.points[0:self.index+1], color.RED, 3)
+            
+            pt = self.points[self.index]
+            convas = cv2.circle(convas, pt.xy.astype(int), 7, color.RED, thickness=-1, lineType=cv2.LINE_AA)
+            convas = plot_utils.draw_label(convas, str(self.path.luid), pt.xy.astype(int), color.BLACK, color.RED, 4)
 
-    def on_stopped(self) -> None:
-        pass
-
-    def process_image(self, convas, frame_idx: int, ts: datetime):
-        if self.show_label:
-            convas = plot_utils.draw_line_string(convas, self.points[self.index:], color.GREEN)
-            if frame_idx >= self.traj.first_frame and frame_idx <= self.traj.last_frame:
-                convas = plot_utils.draw_line_string(convas, self.points[0:self.index+1], color.RED, 3)
-                
-                pt = self.points[self.index]
-                convas = cv2.circle(convas, pt.xy.astype(int), 7, color.RED, thickness=-1, lineType=cv2.LINE_AA)
-                convas = plot_utils.draw_label(convas, str(self.traj.luid), pt.xy.astype(int), color.BLACK, color.RED, 4)
-
-                self.index += 1
+            self.index += 1
 
         return convas
-
-    def set_control(self, key: int) -> int:
-        if key == ord('l'):
-            self.show_label = not self.show_label
-        
-        return key
 
 
 import sys
