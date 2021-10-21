@@ -83,6 +83,7 @@
             "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
                 "ai_city:1",
+                // "--begin_frame", "80",
                 "--output", "C:/Temp/cam_1_track.txt",
                 "--output_video", "C:/Temp/cam_1_track.mp4",
                 // "--show",
