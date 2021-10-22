@@ -7,7 +7,7 @@ import logging
 
 import numpy as np
 
-from dna import BBox
+from dna import Box
 from dna.det import Detection
 
 
@@ -82,7 +82,7 @@ class LogReadingDetector(ObjectDetector):
 
     def _parse_line(self, parts):
         tlbr = np.array(parts[2:6]).astype(float)
-        bbox = BBox.from_tlbr(tlbr)
+        bbox = Box.from_tlbr(tlbr)
         label = parts[10] if len(parts) >= 11 else None
         return Detection(bbox=bbox, label=label, score=float(parts[6]))
 

@@ -3,15 +3,15 @@ from typing import List, Union, Tuple
 
 import numpy as np
 
-from dna import Point, BBox
+from dna import Point, Box
 from dna.camera import ImageCapture
 
 
 def deserialize_box(box_str: str):
     pts = list(parse_point_list(box_str))
-    return BBox.from_points(pts[1], pts[0])
+    return Box.from_points(pts[1], pts[0])
 
-def serialize_box(box: BBox):
+def serialize_box(box: Box):
     return "(({},{}),({},{}))".format(*box.tlbr.astype(int))
 
 def parse_point_list(pt_list_str) -> List[Point]:

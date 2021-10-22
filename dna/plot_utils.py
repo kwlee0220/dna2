@@ -3,7 +3,7 @@ from typing import List
 import numpy as np
 import cv2
 
-from dna import BBox, Point
+from dna import Box, Point
 
 def draw_line(mat, from_pt: Point, to_pt: Point, color, line_thickness=2) -> np.ndarray:
     return draw_line_raw(mat, from_pt.xy.astype(int), to_pt.xy.astype(int), color, line_thickness)

@@ -210,28 +210,28 @@ class Size2i:
         return '{}x{}'.format(*self.__wh)
 
 
-class BBox:
+class Box:
     def __init__(self, tl: np.ndarray, br: np.ndarray, wh: np.ndarray) -> None:
         self.__tl = tl
         self.__br = br
         self.__wh = wh
 
     @classmethod
-    def from_points(self, tl: Point, br: Point) -> BBox:
-        return BBox(tl.xy, br.xy, br.xy - tl.xy)
+    def from_points(self, tl: Point, br: Point) -> Box:
+        return Box(tl.xy, br.xy, br.xy - tl.xy)
 
     @classmethod
-    def from_tlbr(cls, tlbr: np.ndarray) -> BBox:
+    def from_tlbr(cls, tlbr: np.ndarray) -> Box:
         tl = tlbr[:2]
         br = tlbr[2:]
 
-        return BBox(tl, br, br - tl)
+        return Box(tl, br, br - tl)
 
     @classmethod
-    def from_tlwh(cls, tlwh: np.ndarray) -> BBox:
+    def from_tlwh(cls, tlwh: np.ndarray) -> Box:
         tl = tlwh[0:2]
         wh = tlwh[2:4]
-        return BBox(tl, tl + wh, wh)
+        return Box(tl, tl + wh, wh)
 
     def is_valid(self) -> bool:
         return self.__wh[0] >= 0 and self.__wh[1] >= 0
@@ -279,7 +279,7 @@ class BBox:
     def height(self) -> Union[int,float]:
         return self.size().height
 
-    def distance_to(self, bbox:BBox) -> float:
+    def distance_to(self, bbox:Box) -> float:
         tlbr1 = self.tlbr
         tlbr2 = bbox.tlbr
 
@@ -290,7 +290,7 @@ class BBox:
         dist = np.linalg.norm(np.concatenate([u, v]))
         return dist
 
-    def intersection(self, bbox: BBox) -> Union[BBox, None]:
+    def intersection(self, bbox: Box) -> Union[Box, None]:
         x1 = max(self.tl[0], bbox.tl[0])
         y1 = max(self.tl[1], bbox.tl[1])
         x2 = min(self.br[0], bbox.br[0])
@@ -299,7 +299,7 @@ class BBox:
         if x1 >= x2 or y1 >= y2:
             return EMPTY_BBox
         else:
-            return BBox.from_tlbr(np.array([x1, y1, x2, y2]))
+            return Box.from_tlbr(np.array([x1, y1, x2, y2]))
 
     def draw(self, mat, color, line_thickness=2):
         import cv2
@@ -307,14 +307,14 @@ class BBox:
         tlbr = self.tlbr.astype(int)
         return cv2.rectangle(mat, tlbr[0:2], tlbr[2:4], color, thickness=line_thickness, lineType=cv2.LINE_AA)
 
-    def __truediv__(self, rhs) -> BBox:
+    def __truediv__(self, rhs) -> Box:
         if isinstance(rhs, Size2d):
             wh = self.size().wh / rhs
-            return BBox.from_tlwh(self.tl, wh)
+            return Box.from_tlwh(self.tl, wh)
 
         raise ValueError('invalid right-hand-side:', rhs)
     
     def __repr__(self):
         return '{}:{}'.format(self.top_left, self.size())
 
-EMPTY_BBox: BBox = BBox(np.array([-1,-1]), np.array([0,0]), np.array([-1,-1]))
+EMPTY_BBox: Box = Box(np.array([-1,-1]), np.array([0,0]), np.array([-1,-1]))

@@ -17,7 +17,7 @@ if Path(_YOLOV5_DIR).exists() and not _YOLOV5_DIR in sys.path:
 
 from dna import get_logger
 from dna.utils import parse_query
-from dna.det import ObjectDetector, BBox, Detection
+from dna.det import ObjectDetector, Box, Detection
 from dna.utils import get_first_param
 
 from models.experimental import attempt_load
@@ -105,7 +105,7 @@ class Yolov5Detector(ObjectDetector):
             for pred in preds:
                 det = pred.tolist()
 
-                bbox = BBox.from_tlbr(det[:4])
+                bbox = Box.from_tlbr(det[:4])
                 det_list.append(Detection(bbox, self.names[int(det[5])], det[4]))
 
         return det_list

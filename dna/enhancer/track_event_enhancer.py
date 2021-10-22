@@ -5,7 +5,7 @@ import logging
 
 from pubsub import PubSub, Queue
 
-from dna import BBox, get_logger
+from dna import Box, get_logger
 from dna.track import Track, TrackState, ObjectTracker
 from dna.track.track_callbacks import TrackerCallback
 from .types import TrackEvent

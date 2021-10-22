@@ -5,20 +5,20 @@ from typing import List, Tuple, Union
 import numpy as np
 from psycopg2.extras import execute_values
 
-from dna import Size2i, BBox, Point
+from dna import Size2i, Box, Point
 from dna.camera import ImageCapture, DefaultImageCapture, VideoFileCapture
 from dna.platform import ResourceSet, utils
 
 
 class CameraInfo:
-    def __init__(self, camera_id, uri, size, fps, blind_regions :List[BBox]=[]) -> None:
+    def __init__(self, camera_id, uri, size, fps, blind_regions :List[Box]=[]) -> None:
         self.camera_id = camera_id
         self.uri = uri
         self.size = size
         self.fps = fps
         self.blind_regions = blind_regions
 
-    def add_blind_region(self, region: BBox) -> CameraInfo:
+    def add_blind_region(self, region: Box) -> CameraInfo:
         self.blind_regions.append(region)
         return self
 

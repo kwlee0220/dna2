@@ -5,7 +5,7 @@ import numpy as np
 import argparse
 from omegaconf import OmegaConf
 
-from dna import BBox, utils as dna_utils, DNA_CONIFIG_FILE, parse_config_args
+from dna import Box, utils as dna_utils, DNA_CONIFIG_FILE, parse_config_args
 from dna.camera import ImageProcessor, ImageCaptureType, image_capture_type, load_image_capture
 from dna.det import DetectorLoader
 from dna.track import DeepSORTTracker, ObjectTrackingProcessor
@@ -56,7 +56,7 @@ if __name__ == '__main__':
 
     cap.open()
     sz = cap.size
-    domain = BBox.from_tlbr(np.array([0, 0, sz.width, sz.height]))
+    domain = Box.from_tlbr(np.array([0, 0, sz.width, sz.height]))
     cap.close()
 
     tracker_conf = OmegaConf.select(conf, args.tracker)

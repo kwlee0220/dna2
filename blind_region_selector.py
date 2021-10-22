@@ -6,7 +6,7 @@ import numpy as np
 import threading
 import time
 
-from dna import Point, color, BBox, Size2i, plot_utils
+from dna import Point, color, Box, Size2i, plot_utils
 from dna.camera import ImageCapture, load_image_capture
 from dna.platform import DNAPlatform
 
@@ -48,13 +48,13 @@ class BoxSelector:
             tl_x, br_x = (self.tl.x, pt.x) if self.tl.x <= pt.x else (pt.x, self.tl.x)
             tl_y, br_y = (self.tl.y, pt.y) if self.tl.y <= pt.y else (pt.y, self.tl.y)
             
-            self.box = BBox.from_tlbr(np.array([tl_x, tl_y, br_x, br_y]))
+            self.box = Box.from_tlbr(np.array([tl_x, tl_y, br_x, br_y]))
             self.tl = None
 
         if self.box:
             self.box.draw(self.convas, color.RED, line_thickness=1)
         elif self.tl:
-            box = BBox.from_points(self.tl, pt)
+            box = Box.from_points(self.tl, pt)
             box.draw(self.convas, color.RED, line_thickness=1)
 
         cv2.imshow("image", self.convas)

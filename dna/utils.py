@@ -4,7 +4,7 @@ from time import time
 from typing import Tuple
 from pathlib import Path
 
-from .types import BBox
+from .types import Box
 
 def datetime2utc(dt: datetime) -> int:
     return int(dt.replace(tzinfo=timezone.utc).timestamp())
@@ -79,7 +79,7 @@ def draw_boxes(convas, boxes, box_color, label_color=None, line_thickness=2):
 def draw_ds_tracks(convas, tracks, box_color, label_color=None, line_thickness=2, track_indices=None):
     for idx, track in enumerate(tracks):
         if not track_indices or track.track_id in track_indices:
-            box = BBox.from_tlbr(track.to_tlbr())
+            box = Box.from_tlbr(track.to_tlbr())
             box.draw(convas, box_color)
             if label_color:
                 msg = f"{track.track_id}[{track.state}]"
@@ -88,7 +88,7 @@ def draw_ds_tracks(convas, tracks, box_color, label_color=None, line_thickness=2
 
 def draw_ds_detections(convas, dets, box_color, label_color=None, line_thickness=2):
     for idx, det in enumerate(dets):
-        box = BBox.from_tlbr(det.to_tlbr())
+        box = Box.from_tlbr(det.to_tlbr())
         box.draw(convas, box_color)
         if label_color:
             msg = f"{idx:02d}"

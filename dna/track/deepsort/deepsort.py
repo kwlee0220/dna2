@@ -15,7 +15,7 @@ import torch
 import torchvision
 from scipy.stats import multivariate_normal
 
-from dna import BBox
+from dna import Box
 
 WHITE = (255,255,255)
 YELLOW = (0,255,255)
@@ -41,7 +41,7 @@ def get_gaussian_mask():
 
 
 class deepsort_rbc():
-	def __init__(self, domain: BBox, wt_path, matching_threshold=0.5, max_iou_distance=0.7,
+	def __init__(self, domain: Box, wt_path, matching_threshold=0.5, max_iou_distance=0.7,
 					max_age=40, n_init=3):
 		self.domain = domain
 

@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from dna.track.deepsort.detection import Detection
 import dna
 import numpy as np
-from dna.types import BBox
+from dna.types import Box
 import kalman_filter
 import linear_assignment
 import iou_matching
@@ -80,7 +80,7 @@ class Tracker:
             # track 영역이 image 전체의 영역에서 1/3 이상 벗어난 경우에는
             # 더 이상 추적하지 않는다.
             track = self.tracks[track_idx]
-            bbox = BBox.from_tlbr(track.to_tlbr())
+            bbox = Box.from_tlbr(track.to_tlbr())
             if bbox.is_valid():
                 intersection = self.domain.intersection(bbox)
                 inter_area = intersection.area() if intersection else 0

@@ -7,7 +7,7 @@ import numpy as np
 import cv2
 
 import dna.utils as utils
-from dna import BBox, plot_utils
+from dna import Box, plot_utils
 
 from enum import Enum
 class TrackState(Enum):
@@ -22,7 +22,7 @@ class TrackState(Enum):
 class Track:
     id: int
     state: TrackState
-    location: BBox
+    location: Box
     frame_index: int
     ts: float
 
@@ -65,7 +65,7 @@ class Track:
         frame_idx = int(parts[0])
         track_id = int(parts[1])
         tlbr = np.array(parts[2:6]).astype(float)
-        bbox = BBox.from_tlbr(tlbr)
+        bbox = Box.from_tlbr(tlbr)
         state = TrackState(int(parts[6]))
         ts = int(parts[7]) / 1000
         

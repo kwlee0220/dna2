@@ -14,7 +14,7 @@ _YOLOV4_DIR = str(Path(FILE.parents[3], 'dna-plugins/dna-yolov4-torch'))
 if not _YOLOV4_DIR in sys.path:
     sys.path.append(_YOLOV4_DIR)
 
-from dna import BBox, get_logger
+from dna import Box, get_logger
 from dna.utils import parse_query
 from dna.det import Detection, ObjectDetector
 from dna.utils import get_first_param
@@ -90,7 +90,7 @@ class Yolov4TorchDetector(ObjectDetector):
 
     def box_to_detection(self, box, w, h):
         coords = np.array([box[0] * w, box[1] * h, box[2] * w, box[3] * h])
-        bbox = BBox.from_tlbr(coords)
+        bbox = Box.from_tlbr(coords)
         conf = box[5]
         label = self.class_names[box[6]]
         return Detection(bbox, label=label, score=conf)

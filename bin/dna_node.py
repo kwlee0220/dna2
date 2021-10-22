@@ -12,7 +12,7 @@ import numpy as np
 import dna
 import dna.camera as dna_cam
 import dna.det as dna_det
-from dna import BBox
+from dna import Box
 from dna.track import DeepSORTTracker, LogFileBasedObjectTracker, ObjectTrackingProcessor
 from dna.enhancer import TrackEventEnhancer
 from dna.enhancer.track_event_uploader import TrackEventUploader
@@ -56,7 +56,7 @@ if __name__ == '__main__':
         update_config(tracker_conf, config_grp.get('tracker', []))
         detector = dna_det.DetectorLoader.load(tracker_conf.detector)
 
-        domain = BBox.from_tlbr(np.array([0, 0, camera_info.size.width, camera_info.size.height]))
+        domain = Box.from_tlbr(np.array([0, 0, camera_info.size.width, camera_info.size.height]))
         tracker = DeepSORTTracker(detector, domain, tracker_conf, blind_regions=camera_info.blind_regions)
 
     pubsub = PubSub()

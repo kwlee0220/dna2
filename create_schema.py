@@ -8,7 +8,7 @@ from psycopg2.extras import execute_values
 
 from dna import  Size2i
 from dna.platform import CameraInfo, DNAPlatform
-from dna.types import BBox
+from dna.types import Box
 
 _SQL_CREATE_TRACK_EVENTS = """
 create table track_events (
@@ -54,10 +54,10 @@ if __name__ == '__main__':
     
     info = CameraInfo(camera_id='ai_city:1', uri="C:/Temp/data/cam_1.mp4",
                                     size=Size2i(1280, 960), fps=10)
-    info.add_blind_region(BBox.from_tlbr(np.array([7,2,504,115])))
-    info.add_blind_region(BBox.from_tlbr(np.array([10,591,279,816])))
-    info.add_blind_region(BBox.from_tlbr(np.array([909,38,1063,138])))
-    info.add_blind_region(BBox.from_tlbr(np.array([1045,76,1154,155])))
+    info.add_blind_region(Box.from_tlbr(np.array([7,2,504,115])))
+    info.add_blind_region(Box.from_tlbr(np.array([10,591,279,816])))
+    info.add_blind_region(Box.from_tlbr(np.array([909,38,1063,138])))
+    info.add_blind_region(Box.from_tlbr(np.array([1045,76,1154,155])))
     camera_infos.insert(info)
 
     camera_infos.insert(CameraInfo(camera_id='ai_city:6', uri="C:/Temp/data/cam_6.mp4",
@@ -73,7 +73,7 @@ if __name__ == '__main__':
 
     etri_6_9 = CameraInfo(camera_id='etri:6', uri="C:/Temp/data/etri_6.mp4",
                             size=Size2i(1920, 1080), fps=10)
-    etri_6_9.add_blind_region(BBox.from_tlbr(np.array([1309, 223, 1908, 488])))
+    etri_6_9.add_blind_region(Box.from_tlbr(np.array([1309, 223, 1908, 488])))
     camera_infos.insert(etri_6_9)
                                     
     info = CameraInfo(camera_id='etri_live:3',

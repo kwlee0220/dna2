@@ -3,13 +3,13 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from dna import BBox, Size2d
+from dna import Box, Size2d
 from dna import plot_utils
 
 
 @dataclass(frozen=True, unsafe_hash=True)
 class Detection:
-    bbox: BBox
+    bbox: Box
     label: str
     score: float
 

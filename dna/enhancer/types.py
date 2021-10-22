@@ -5,7 +5,7 @@ from datetime import datetime
 
 import numpy as np
 
-from dna import Point, BBox, utils
+from dna import Point, Box, utils
 from dna.track.types import Track
 
 
@@ -13,7 +13,7 @@ from dna.track.types import Track
 class TrackEvent:
     camera_id: str
     luid: int
-    location: BBox
+    location: Box
     frame_index: int
     ts: float
     

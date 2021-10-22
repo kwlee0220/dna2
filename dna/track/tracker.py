@@ -7,7 +7,7 @@ import logging
 
 import numpy as np
 
-from dna import BBox
+from dna import Box
 from dna.det import Detection
 from dna.det.detector import ObjectDetector
 from . import Track, TrackState

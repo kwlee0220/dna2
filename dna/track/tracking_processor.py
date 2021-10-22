@@ -4,7 +4,7 @@ from collections import defaultdict
 
 import numpy as np
 
-from dna import color, BBox, plot_utils
+from dna import color, Box, plot_utils
 from dna.camera import ImageProcessor, ImageCapture
 from .types import TrackState, Track
 from .tracker import ObjectTracker, DetectionBasedObjectTracker
@@ -15,7 +15,7 @@ class TrailCollector(TrackerCallback):
     @dataclass(frozen=True, unsafe_hash=True)
     class Mark:
         state: TrackState
-        location: BBox
+        location: Box
 
         def __repr__(self) -> str:
             return f"[{self.location}]-"
@@ -42,7 +42,7 @@ class TrailCollector(TrackerCallback):
 
 
 def draw_track_trail(mat, track: Track, color, label_color=None,
-                    trail: List[BBox]=None, trail_color=None, line_thickness=2) -> np.ndarray:
+                    trail: List[Box]=None, trail_color=None, line_thickness=2) -> np.ndarray:
     mat = track.draw(mat, color, label_color=label_color, line_thickness=2)
     if trail_color:
         mat = plot_utils.draw_line_string(mat, [bbox.center() for bbox in trail[-11:]],

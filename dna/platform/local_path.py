@@ -7,7 +7,7 @@ from datetime import datetime
 import numpy as np
 from psycopg2.extras import execute_values
 
-from dna import Point, BBox
+from dna import Point, Box
 from dna.enhancer.types import TrackEvent
 from .types import ResourceSet
 from .utils import parse_point_list
