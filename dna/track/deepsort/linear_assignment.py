@@ -192,40 +192,6 @@ def matching_cascade(distance_metric, max_distance, cascade_depth, tracks, detec
 
 def gate_cost_matrix(kf, cost_matrix, tracks, detections, track_indices, detection_indices,
                     gated_cost=INFTY_COST, only_position=False):
-    """Invalidate infeasible entries in cost matrix based on the state
-    distributions obtained by Kalman filtering.
-
-    Parameters
-    ----------
-    kf : The Kalman filter.
-    cost_matrix : ndarray
-        The NxM dimensional cost matrix, where N is the number of track indices
-        and M is the number of detection indices, such that entry (i, j) is the
-        association cost between `tracks[track_indices[i]]` and
-        `detections[detection_indices[j]]`.
-    tracks : List[track.Track]
-        A list of predicted tracks at the current time step.
-    detections : List[detection.Detection]
-        A list of detections at the current time step.
-    track_indices : List[int]
-        List of track indices that maps rows in `cost_matrix` to tracks in
-        `tracks` (see description above).
-    detection_indices : List[int]
-        List of detection indices that maps columns in `cost_matrix` to
-        detections in `detections` (see description above).
-    gated_cost : Optional[float]
-        Entries in the cost matrix corresponding to infeasible associations are
-        set this value. Defaults to a very large value.
-    only_position : Optional[bool]
-        If True, only the x, y position of the state distribution is considered
-        during gating. Defaults to False.
-
-    Returns
-    -------
-    ndarray
-        Returns the modified cost matrix.
-
-    """
     gating_dim = 2 if only_position else 4
     # gating_threshold = kalman_filter.chi2inv95[gating_dim]
     # kwlee
@@ -241,16 +207,16 @@ def gate_cost_matrix(kf, cost_matrix, tracks, detections, track_indices, detecti
 
 
     # kwlee
-_DIST_THRESHOLD = 20
-def matching_distance(dist_matrix, tracks, detections, track_indices):
+_DIST_THRESHOLD = 25
+def matching_by_distance(dist_matrix, tracks, detections, track_indices):
     matches = []
     unmatched_detections = list(range(len(detections)))
     ndets = len(detections)
     if ndets <= 0:
         return matches, track_indices, unmatched_detections
 
-    unmatched_tracks = [i for i in track_indices if tracks[i].time_since_update > 1]
-    track_indices = [i for i in track_indices if tracks[i].time_since_update <= 1]
+    unmatched_tracks = [i for i in track_indices if tracks[i].time_since_update > 3]
+    track_indices = [i for i in track_indices if tracks[i].time_since_update <= 3]
     for tidx in track_indices:
         track = tracks[tidx]
         dists = dist_matrix[tidx,:]
@@ -264,7 +230,8 @@ def matching_distance(dist_matrix, tracks, detections, track_indices):
             idxes = [0, -1]
             v1, v2 = dists[0], 9999
 
-        if v1 < _DIST_THRESHOLD and v1*2 < v2:
+        dividend = max(1, track.time_since_update * 0.75)
+        if v1 < _DIST_THRESHOLD/dividend and v1*2 < v2:
             det_idx = idxes[0]
             dists2 = dist_matrix[track_indices,det_idx]
             # dists2 = dist_matrix[:,det_idx]
@@ -278,24 +245,60 @@ def matching_distance(dist_matrix, tracks, detections, track_indices):
     return matches, unmatched_tracks, unmatched_detections
 
 
-def combined_cost(app_costs, dists, tracks, metric_threshold=0.5):
+def combined_cost(app_costs, dists, tracks, detections):
     threshold = kalman_filter.chi2inv95[4] * 7
-    invalid = np.logical_or(app_costs > metric_threshold, dists > threshold)
+    invalid = np.logical_or(app_costs > 0.55, dists > threshold)
 
-    mat2 = dists / threshold
-    tsu = np.array([t.time_since_update for t in tracks])
-    mat3 = 0.2 * (tsu / 20)
-    mat = 0.5 * app_costs + 0.3 * mat2
+    dists_mod = dists / threshold
+    tsu = np.array([0.2*t.time_since_update/20 for t in tracks])
 
-    nrows = mat.shape[0]
-    for row in range(nrows):
-        mat[row,:] += mat3[row]
+    matrix = np.zeros((len(tracks), len(detections)))
+    for didx, det in enumerate(detections):
+        det = detections[didx]
+        if det.tlwh[2] >= 25 and det.tlwh[3] >= 25: # large detection
+            matrix[:,didx] = 0.7*app_costs[:,didx] + 0.3*dists_mod[:,didx]
+        else:   # small detection
+            matrix[:,didx] = 0.2*app_costs[:,didx] + 0.6*dists_mod[:,didx] + 0.2*tsu
+    matrix[invalid] = 9.99
+
+    return matrix
+
+_INFINIT = 999.9
+def matching_by_total_cost(cost_matrix, tracks, detections, track_indices, detection_indices,
+                            threshold=0.7):
+    matches = []
+    unmatched_detections = []
+    unmatched_tracks = track_indices[:]
+
+    cost_matrix = cost_matrix[:]
+    mask = np.zeros((len(tracks),), dtype=bool)
+    mask[track_indices] = True
+    cost_matrix[~mask,:] = 999.9
+
+    weights = np.array([2 if t.is_tentative() else 1 for t in tracks])
+    for didx in detection_indices:
+        det = detections[didx]
+
+        weighted_cost = cost_matrix[:, didx] * weights
+        while True:
+            tidx = np.argmin(weighted_cost)
+            selected_tidx = -1
+            if weighted_cost[tidx] <= threshold:
+                selected_tidx = tidx
+            elif tracks[tidx].is_tentative() and weighted_cost[tidx] < _INFINIT:
+                if cost_matrix[tidx, didx] <= threshold:
+                    selected_tidx = tidx
+            
+            if selected_tidx >= 0:
+                selected_didx = np.argmin(cost_matrix[selected_tidx,:])
+                if selected_didx == didx:
+                    matches.append((selected_tidx, selected_didx))
+                    unmatched_tracks.remove(selected_tidx)
+                    break
+                else:
+                    weighted_cost[selected_tidx] = _INFINIT
+            else:
+                unmatched_detections.append(didx)
+                break
     
-    mat[invalid] = 9.99
-
-    return mat
-
-def is_small_detection(detections):
-    def is_small(det):
-        return det.tlwh[2] <= 25 or det.tlwh[3] <= 25
-    return np.array(list(map(is_small, detections)))
+    return matches, unmatched_tracks, unmatched_detections
