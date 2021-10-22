@@ -86,8 +86,8 @@
                 // "--begin_frame", "80",
                 "--output", "C:/Temp/cam_1_track.txt",
                 "--output_video", "C:/Temp/cam_1_track.mp4",
-                // "--show",
-                "--show_progress",
+                "--show",
+                // "--show_progress",
                 "tracker.detector=file:C:/Temp/data/cam_1_det.txt",
                 "tracker.max_age=20",
             ]
@@ -252,7 +252,7 @@
         { "name": "Select a blind region",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/blind_region_selector.py",
-            "args": [ "--camera_id", "etri:6" ]
+            "args": [ "--camera_id", "ai_city:1" ]
         },
         { "name": "Format",
             "type": "python", "request": "launch", "console": "integratedTerminal",

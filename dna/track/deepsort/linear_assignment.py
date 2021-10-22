@@ -229,7 +229,7 @@ def gate_cost_matrix(kf, cost_matrix, tracks, detections, track_indices, detecti
     gating_dim = 2 if only_position else 4
     # gating_threshold = kalman_filter.chi2inv95[gating_dim]
     # kwlee
-    gating_threshold = kalman_filter.chi2inv95[gating_dim] * 3
+    gating_threshold = kalman_filter.chi2inv95[gating_dim] * 4
     measurements = np.asarray([detections[i].to_xyah() for i in detection_indices])
     for row, track_idx in enumerate(track_indices):
         track = tracks[track_idx]
@@ -276,3 +276,26 @@ def matching_distance(dist_matrix, tracks, detections, track_indices):
         unmatched_tracks.append(tidx)
     
     return matches, unmatched_tracks, unmatched_detections
+
+
+def combined_cost(app_costs, dists, tracks, metric_threshold=0.5):
+    threshold = kalman_filter.chi2inv95[4] * 7
+    invalid = np.logical_or(app_costs > metric_threshold, dists > threshold)
+
+    mat2 = dists / threshold
+    tsu = np.array([t.time_since_update for t in tracks])
+    mat3 = 0.2 * (tsu / 20)
+    mat = 0.5 * app_costs + 0.3 * mat2
+
+    nrows = mat.shape[0]
+    for row in range(nrows):
+        mat[row,:] += mat3[row]
+    
+    mat[invalid] = 9.99
+
+    return mat
+
+def is_small_detection(detections):
+    def is_small(det):
+        return det.tlwh[2] <= 25 or det.tlwh[3] <= 25
+    return np.array(list(map(is_small, detections)))

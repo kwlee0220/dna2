@@ -7,8 +7,8 @@ DNA_HOME = Path(os.environ.get('DNA_HOME', '.'))
 DNA_CONIFIG_FILE = DNA_HOME / 'conf' / 'config.yaml'
 
 DEBUG_FRAME_IDX = -1
-DEBUG_SHOW_IMAGE = False
-DEBUG_PRINT_COST = False
+DEBUG_SHOW_IMAGE = True
+DEBUG_PRINT_COST = True
 DEBUG_TARGET_TRACKS = None
 
 from collections import defaultdict

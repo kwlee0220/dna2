@@ -139,6 +139,11 @@ class Tracker:
             metric_cost = self.metric_cost(self.tracks, detections)
             self.print_dist_cost(dist_cost, 999)
             self.print_metrix_cost(metric_cost)
+
+
+            cmatrix = linear_assignment.combined_cost(metric_cost, dist_cost, self.tracks)
+            print("==========================")
+            self.print_metrix_cost(cmatrix)
             # self.print_cost(metric_cost, dist_cost)
 
         matches_z, unmatched_tracks, unmatched_detections \

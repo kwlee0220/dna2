@@ -42,6 +42,7 @@ if __name__ == '__main__':
     with platform.open_db_connection() as conn:
         with conn.cursor() as cur:
             cur.execute('drop table if exists track_events')
+            cur.execute('drop table if exists blind_regions')
             conn.commit()
 
     for id in platform.get_resource_set_id_all():
@@ -50,8 +51,15 @@ if __name__ == '__main__':
         rset.create()
 
     camera_infos = platform.get_resource_set("camera_infos")
-    camera_infos.insert(CameraInfo(camera_id='ai_city:1', uri="C:/Temp/data/cam_1.mp4",
-                                    size=Size2i(1280, 960), fps=10))
+    
+    info = CameraInfo(camera_id='ai_city:1', uri="C:/Temp/data/cam_1.mp4",
+                                    size=Size2i(1280, 960), fps=10)
+    info.add_blind_region(BBox.from_tlbr(np.array([7,2,504,115])))
+    info.add_blind_region(BBox.from_tlbr(np.array([10,591,279,816])))
+    info.add_blind_region(BBox.from_tlbr(np.array([909,38,1063,138])))
+    info.add_blind_region(BBox.from_tlbr(np.array([1045,76,1154,155])))
+    camera_infos.insert(info)
+
     camera_infos.insert(CameraInfo(camera_id='ai_city:6', uri="C:/Temp/data/cam_6.mp4",
                                     size=Size2i(1280, 960), fps=10))
     camera_infos.insert(CameraInfo(camera_id='ai_city:9', uri="C:/Temp/data/cam_9.mp4",
