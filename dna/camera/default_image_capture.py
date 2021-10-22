@@ -53,7 +53,7 @@ class DefaultImageCapture(ImageCapture):
             self.__size = src_size
         elif self.__size.area() < src_size.area():
             self.interpolation = cv2.INTER_AREA
-        elif self.__size.area > src_size.area:
+        elif self.__size.area() > src_size.area():
             self.interpolation = cv2.INTER_LINEAR
         else:
             self.__size = src_size
