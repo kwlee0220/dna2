@@ -202,54 +202,6 @@ class deepsort_rbc():
 
 		return self.tracker, deleteds
 
-
-	# def run_deep_sort(self, frame, out_scores, out_boxes):
-	# 	if len(out_boxes) == 0:
-	# 		self.tracker.predict()
-	# 		print('No detections')
-	# 		trackers = self.tracker.tracks
-	# 		return trackers
-
-	# 	detections = np.array(out_boxes)
-	# 	#features = self.encoder(frame, detections.copy())
-
-	# 	processed_crops = self.pre_process(frame, detections).cuda()
-	# 	processed_crops = self.gaussian_mask * processed_crops
-
-	# 	features = self.encoder.forward_once(processed_crops)
-	# 	features = features.detach().cpu().numpy()
-
-	# 	if len(features.shape)==1:
-	# 		features = np.expand_dims(features,0)
-
-	# 	dets = [Detection(bbox, score, feature) for bbox, score, feature in zip(detections, out_scores, features)]
-	# 	outboxes = np.array([d.tlwh for d in dets])
-	# 	outscores = np.array([d.confidence for d in dets])
-	# 	indices = prep.non_max_suppression(outboxes, 0.8, outscores)
-		
-	# 	dets = [dets[i] for i in indices]
-
-	# 	self.tracker.predict()
-
-	# 	# # KWLEE
-	# 	# import cv2
-	# 	# from dna import plot_utils, BBox
-	# 	# canvas = frame.copy()
-	# 	# for track in list(self.tracker.tracks)[:1]:
-	# 	# 	loc =  BBox.from_tlwh(track.to_tlwh())
-	# 	# 	canvas = loc.draw(canvas, color=BLUE, line_thickness=2)
-	# 	# 	canvas = plot_utils.draw_label(canvas, str(track.track_id), loc.tl.xy.astype(int), (0,0,0), BLUE, 2)
-	# 	# for idx, det in enumerate(detections[:3]):
-	# 	# 	bbox = BBox.from_tlwh(det)
-	# 	# 	canvas = bbox.draw(canvas, YELLOW, line_thickness=2)
-	# 	# 	canvas = plot_utils.draw_label(canvas, str(idx), bbox.br.xy.astype(int), (0,0,0), YELLOW, 2)
-	# 	# cv2.imshow("output", canvas)
-	# 	# cv2.waitKey(5)
-
-	# 	deleteds = self.tracker.update(dets)
-
-	# 	return self.tracker, deleteds
-
 	def extract_features(self, frame, bboxes):
 		processed_crops = self.pre_process(frame, bboxes).cuda()
 		processed_crops = self.gaussian_mask * processed_crops

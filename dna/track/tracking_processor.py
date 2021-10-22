@@ -76,6 +76,9 @@ class ObjectTrackingProcessor(ImageProcessor):
             self.callback.tracked(self.tracker, frame, frame_idx, tracks)
 
         if self.window_name or self.output_video:
+            for region in self.tracker.blind_regions:
+                frame = region.draw(frame, color.RED, 2)
+
             if self.is_detection_based:
                 for det in self.tracker.last_frame_detections():
                     frame = det.draw(frame, color.WHITE, line_thickness=2)

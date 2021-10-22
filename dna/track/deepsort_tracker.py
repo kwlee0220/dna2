@@ -69,8 +69,6 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
                 label = self.det_dict.get(det.label, None)
                 if label:
                     dets.append(Detection(det.bbox, label, det.score))
-                # else:
-                #     print(f"drop detection: {det.label}")
             self.__last_frame_detections = dets
         boxes, scores = self.split_boxes_scores(self.__last_frame_detections)
 
