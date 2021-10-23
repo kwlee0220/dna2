@@ -7,7 +7,7 @@
         { "name": "Show Video",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_show.py",
-            "args": [ "etri_live:3" ]
+            "args": [ "etri:1" ]
         },
         { "name": "Detect Video (AI_CITY:01)",
             "type": "python", "request": "launch", "console": "integratedTerminal",
@@ -86,8 +86,8 @@
                 // "--begin_frame", "80",
                 "--output", "C:/Temp/cam_1_track.txt",
                 "--output_video", "C:/Temp/cam_1_track.mp4",
-                "--show",
-                // "--show_progress",
+                // "--show",
+                "--show_progress",
                 "tracker.detector=file:C:/Temp/data/cam_1_det.txt",
                 "tracker.max_age=20",
             ]
@@ -232,7 +232,7 @@
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_replay_local_path.py",
             "args": [
-                "etri:6",
+                "etri:9",
                 "--id", "1",
                 "--output_video", "C:/Temp/local_path.mp4",
             ]
@@ -249,10 +249,10 @@
                 "--output", "C:/Temp/local_path.mp4"
             ]
         },
-        { "name": "Select a blind region",
+        { "name": "Add a blind region",
             "type": "python", "request": "launch", "console": "integratedTerminal",
-            "program": "${workspaceFolder}/blind_region_selector.py",
-            "args": [ "--camera_id", "ai_city:1" ]
+            "program": "${workspaceFolder}/add_blind_region.py",
+            "args": [ "ai_city:11" ]
         },
         { "name": "Format",
             "type": "python", "request": "launch", "console": "integratedTerminal",

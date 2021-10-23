@@ -55,7 +55,7 @@ class Track:
     def to_string(self) -> str:
         tlbr = self.location.tlbr
         epoch = int(round(self.ts * 1000))
-        return (f"{self.frame_index},{self.id},{tlbr[0]:.3f},{tlbr[1]:.3f},{tlbr[2]:.3f},{tlbr[3]:.3f},"
+        return (f"{self.frame_index},{self.id},{tlbr[0]:.0f},{tlbr[1]:.0f},{tlbr[2]:.0f},{tlbr[3]:.0f},"
                 f"{self.state.value},{epoch}")
     
     @staticmethod
@@ -64,7 +64,7 @@ class Track:
 
         frame_idx = int(parts[0])
         track_id = int(parts[1])
-        tlbr = np.array(parts[2:6]).astype(float)
+        tlbr = np.array(parts[2:6]).astype(int)
         bbox = Box.from_tlbr(tlbr)
         state = TrackState(int(parts[6]))
         ts = int(parts[7]) / 1000

@@ -15,7 +15,7 @@ if not _YOLOV4_DIR in sys.path:
     sys.path.append(_YOLOV4_DIR)
 
 from dna import Box, get_logger
-from dna.utils import parse_query
+from dna.utils import parse_query, get_dna_home_dir
 from dna.det import Detection, ObjectDetector
 from dna.utils import get_first_param
 
@@ -24,11 +24,12 @@ from dna_yolov4_torch.tool.torch_utils import do_detect
 from dna_yolov4_torch.tool.darknet2pytorch import Darknet
 
 _LOGGER = get_logger("dna.det")
-def load(query: str):
+def load(query: str, conf_home:Path =None):
     args = parse_query(query)
     model_id = args.get('model', 'normal')
 
-    with open('./configurations.yaml') as f:
+    conf_path = get_dna_home_dir(conf_home) / "configurations.yaml"
+    with open(conf_path) as f:
         models = yaml.load(f, Loader=yaml.FullLoader)
 
     model = models['detector']['yolov4'][model_id]

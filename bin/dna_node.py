@@ -30,6 +30,7 @@ def parse_args():
     parser.add_argument("--end_frame", type=int, metavar="<number>", help="the last frame index", default=None)
 
     parser.add_argument("--track_file", help="Object track log file.", default=None)
+    parser.add_argument("--tracker", help="tracker", default="tracker.deep_sort")
 
     parser.add_argument("--show", help="show detections.", action="store_true")
     return parser.parse_known_args()
@@ -62,13 +63,14 @@ if __name__ == '__main__':
     pubsub = PubSub()
     enhancer = TrackEventEnhancer(pubsub, args.camera)
 
-    te_upload = TrackEventUploader(platform, enhancer.subscribe())
+    ev_uploader_conf = OmegaConf.select(conf, "event_uploader")
+    te_upload = TrackEventUploader(platform, enhancer.subscribe(), ev_uploader_conf)
     thread = Thread(target=te_upload.run, args=tuple())
     thread.start()
 
-    trj_upload = LocalPathUploader(platform, enhancer.subscribe(),
-                                    min_path_count=conf.enhancer.path_uploader.min_path_count)
-    thread = Thread(target=trj_upload.run, args=tuple())
+    path_uploader_conf = OmegaConf.select(conf, "path_uploader")
+    path_upload = LocalPathUploader(platform, enhancer.subscribe(), path_uploader_conf)
+    thread = Thread(target=path_upload.run, args=tuple())
     thread.start()
 
     win_name = "output" if args.show else None

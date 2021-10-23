@@ -11,12 +11,12 @@ from dna.platform import ResourceSet, utils
 
 
 class CameraInfo:
-    def __init__(self, camera_id, uri, size, fps, blind_regions :List[Box]=[]) -> None:
+    def __init__(self, camera_id, uri, size, fps) -> None:
         self.camera_id = camera_id
         self.uri = uri
         self.size = size
         self.fps = fps
-        self.blind_regions = blind_regions
+        self.blind_regions = []
 
     def add_blind_region(self, region: Box) -> CameraInfo:
         self.blind_regions.append(region)
@@ -28,8 +28,10 @@ class CameraInfo:
     @classmethod
     def deserialize(cls, tup: Tuple, blind_regions=None) -> CameraInfo:
         size = Size2i(*tup[2:4])
-        return CameraInfo(camera_id=tup[0], uri=tup[1], size=size, fps=tup[4],
-                            blind_regions=blind_regions)
+        info = CameraInfo(camera_id=tup[0], uri=tup[1], size=size, fps=tup[4])
+        for r in blind_regions:
+            info.add_blind_region(r)
+        return info
     
     def __repr__(self) -> str:
         return f"{self.camera_id}({self.size}), fps={self.fps}, uri={self.uri}"
@@ -88,6 +90,8 @@ class CameraInfoSet(ResourceSet):
             with conn.cursor() as cur:
                 cur.execute(CameraInfoSet.__SQL_GET, key)
                 tup = cur.fetchone()
+                if not tup:
+                    raise ValueError(f"unknown camera id='{key[0]}'")
 
                 cur.execute(CameraInfoSet.__SQL_GET_REGIONS, key)
                 regions = [utils.deserialize_box(tup[0]) for tup in cur]

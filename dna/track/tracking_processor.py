@@ -61,6 +61,7 @@ class ObjectTrackingProcessor(ImageProcessor):
         self.trail_collector = TrailCollector()
         self.callback = DemuxTrackerCallback([self.trail_collector, callback])  \
                             if callback else self.trail_collector
+        self.show_blind_regions = False
 
     def on_started(self) -> None:
         if self.callback:
@@ -70,14 +71,20 @@ class ObjectTrackingProcessor(ImageProcessor):
         if self.callback:
             self.callback.track_stopped(self.tracker)
 
+    def set_control(self, key: int) -> int:
+        if key == ord('r'):
+            self.show_blind_regions = not self.show_blind_regions
+        return key
+
     def process_image(self, frame: np.ndarray, frame_idx: int, ts) -> np.ndarray:
         tracks = self.tracker.track(frame, frame_idx, ts)
         if self.callback:
             self.callback.tracked(self.tracker, frame, frame_idx, tracks)
 
         if self.window_name or self.output_video:
-            for region in self.tracker.blind_regions:
-                frame = region.draw(frame, color.RED, 2)
+            if self.show_blind_regions:
+                for region in self.tracker.blind_regions:
+                    frame = region.draw(frame, color.RED, 2)
 
             if self.is_detection_based:
                 for det in self.tracker.last_frame_detections():

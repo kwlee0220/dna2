@@ -6,6 +6,7 @@ import numpy as np
 import psycopg2 as pg2
 from psycopg2.extras import execute_values
 from queue import Queue
+from omegaconf import OmegaConf
 
 from dna import Point
 import dna.utils as utils
@@ -44,14 +45,13 @@ class Session:
                             continuation=cont)
 
 class LocalPathUploader:
-    def __init__(self, platform:DNAPlatform, mqueue: Queue, batch_size=10,
-                    min_path_count=10, max_pending_sec=5) -> None:
+    def __init__(self, platform:DNAPlatform, mqueue: Queue, conf: OmegaConf) -> None:
         self.mqueue = mqueue
         self.local_paths = platform.get_resource_set("local_paths")
         self.sessions = dict()
-        self.batch_size = batch_size
-        self.min_path_count = min_path_count
-        self.max_pending_sec = timedelta(max_pending_sec)
+        self.batch_size = conf.batch_size
+        self.min_path_count = conf.min_path_count
+        self.max_pending_sec = timedelta(conf.max_pending_sec)
         self.local_path_buffer = []
         self.last_upload_ts = datetime.now()
 

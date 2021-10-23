@@ -6,6 +6,7 @@ import numpy as np
 import threading
 import time
 
+import dna
 from dna import Point, color, Box, Size2i, plot_utils
 from dna.camera import ImageCapture, load_image_capture
 from dna.platform import DNAPlatform
@@ -78,18 +79,18 @@ class BoxSelector:
 import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description="Generating tracking events from a track-file")
-    parser.add_argument("--conf", help="DNA framework configuration", default="conf/config.yaml")
-    parser.add_argument("--camera_id", metavar="id", help="target camera id")
-    return parser.parse_args()
+    parser.add_argument("camera", metavar='camera_uri', help="target camera uri")
+    parser.add_argument("--conf", help="DNA framework configuration", default=dna.DNA_CONIFIG_FILE)
+    return parser.parse_known_args()
 
 if __name__ == '__main__':
-    args = parse_args()
+    args, unknown = parse_args()
 
     conf = OmegaConf.load(args.conf)
-    dict = OmegaConf.to_container(conf.platform)
+    config_grp = dna.parse_config_args(unknown)
 
-    platform = DNAPlatform.load(dict)
-    rset, camera_info = platform.get_resource("camera_infos", (args.camera_id,))
+    platform = DNAPlatform.load_from_config(conf.platform)
+    rset, camera_info = platform.get_resource("camera_infos", (args.camera,))
     cap = load_image_capture(camera_info.uri, camera_info.size, sync=False, begin_frame=5)
     cap.open()
     _,_,bg_img = cap.capture()

@@ -265,7 +265,7 @@ class Box:
         return Point.from_np(self.__br)
 
     def center(self) -> Point:
-        return Point.from_np(self.__tl + (self.wh / 2))
+        return Point.from_np(self.__tl + (self.wh / 2.))
 
     def size(self) -> Size2d:
         return Size2d.from_np(self.__wh) if self.is_valid() else EMPTY_SIZE2D
@@ -300,6 +300,10 @@ class Box:
             return EMPTY_BBox
         else:
             return Box.from_tlbr(np.array([x1, y1, x2, y2]))
+
+    def contains(self, box: Box) -> bool:
+        return self.tlbr[0] <= box.tlbr[0] and self.tlbr[1] <= box.tlbr[1] \
+                and self.tlbr[2] >= box.tlbr[2] and self.tlbr[3] <= box.tlbr[3]
 
     def draw(self, mat, color, line_thickness=2):
         import cv2

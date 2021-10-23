@@ -1,7 +1,7 @@
 import sys
+from typing import Tuple, Union
 from datetime import datetime, timezone
 from time import time
-from typing import Tuple
 from pathlib import Path
 
 from .types import Box
@@ -63,6 +63,13 @@ def get_logger(name=None):
         
     return logger
 
+def get_dna_home_dir(home_dir: Union[Path, str] =None):
+    if not home_dir:
+        import os
+        home_dir = Path(os.environ.get('DNA_HOME', "."))
+    elif isinstance(home_dir, str):
+        home_dir = Path(home_dir)
+    return home_dir
 
 from dna import color, plot_utils
 import cv2

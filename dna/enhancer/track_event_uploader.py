@@ -4,6 +4,7 @@ from datetime import datetime
 import numpy as np
 from psycopg2.extras import execute_values
 from queue import Queue
+from omegaconf import OmegaConf
 
 from dna.platform import DNAPlatform
 from .types import TrackEvent
@@ -11,15 +12,15 @@ from .types import TrackEvent
 
 _INSERT_SQL = "insert into track_events(camera_id, luid, bbox, frame_index, ts) values %s"
 class TrackEventUploader:
-    def __init__(self, platform:DNAPlatform, mqueue: Queue, bulk_size:int=100) -> None:
+    def __init__(self, platform:DNAPlatform, mqueue: Queue, conf: OmegaConf) -> None:
         self.mqueue = mqueue
         self.bulk = []
-        self.bulk_size = bulk_size
+        self.batch_size = conf.batch_size
         self.conn = platform.open_db_connection()
 
     def handle_event(self, ev: TrackEvent) -> None:
         self.bulk.append(self.__serialize(ev))
-        if len(self.bulk) >= self.bulk_size:
+        if len(self.bulk) >= self.batch_size:
             self.__upload()
     
     def run(self) -> None:

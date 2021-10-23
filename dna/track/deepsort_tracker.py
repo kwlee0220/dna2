@@ -14,7 +14,7 @@ DEEPSORT_DIR = str(FILE.parents[0] / 'deepsort')
 if not DEEPSORT_DIR in sys.path:
     sys.path.append(DEEPSORT_DIR)
 
-from dna import Box
+from dna import Box, utils
 from dna.det import ObjectDetector, Detection
 from . import Track, TrackState, DetectionBasedObjectTracker
 from .deepsort.deepsort import deepsort_rbc
@@ -32,8 +32,13 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
         self.__detector = detector
         self.det_dict = tracker_conf.det_mapping
         self.min_detection_score = tracker_conf.min_detection_score
+
+        wt_path = Path(tracker_conf.model_file)
+        if not wt_path.is_absolute():
+            wt_path = utils.get_dna_home_dir() / wt_path
+
         self.deepsort = deepsort_rbc(domain = domain,
-                                    wt_path=Path(tracker_conf.model_file).absolute(),
+                                    wt_path=wt_path,
                                     matching_threshold=tracker_conf.matching_threshold,
                                     max_iou_distance=tracker_conf.max_iou_distance,
                                     max_age=int(tracker_conf.max_age),
@@ -86,7 +91,8 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
         elif ds_track.state == DSTrackState.Deleted:
             state = TrackState.Deleted
 
-        return Track(id=ds_track.track_id, state=state, location=Box.from_tlbr(ds_track.to_tlbr()),
+        return Track(id=ds_track.track_id, state=state,
+                    location=Box.from_tlbr(np.rint(ds_track.to_tlbr())),
                     frame_index=frame_idx, ts=ts)
 
     def split_boxes_scores(self, det_list):
