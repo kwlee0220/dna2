@@ -39,12 +39,13 @@ class Tracker:
 
     """
 
-    def __init__(self, domain, metric, max_iou_distance=0.7, max_age=40, n_init=3):
+    def __init__(self, domain, metric, max_iou_distance=0.7, max_age=40, n_init=3, blind_regions=[]):
         self.domain = domain
         self.metric = metric
         self.max_iou_distance = max_iou_distance
         self.max_age = max_age
         self.n_init = n_init
+        self.blind_regions = blind_regions
 
         self.kf = kalman_filter.KalmanFilter()
         self.tracks = []
@@ -96,6 +97,17 @@ class Tracker:
             self.tracks.append(track)
             self._next_id += 1
 
+        # kwlee
+        # update된 위치가 blind_region 안에 있는 경우는 delete된 것으로 간주한다.
+        for track in self.tracks:
+            if track.is_tentative():
+                i = self.n_init
+            if not track.is_deleted():
+                tbox = Box.from_tlbr(track.to_tlbr())
+                for r in self.blind_regions:
+                    if r.contains(tbox):
+                        track.mark_deleted()
+
         delete_tracks = [t for t in self.tracks if t.is_deleted()]
         self.tracks = [t for t in self.tracks if not t.is_deleted()]
 
@@ -116,7 +128,7 @@ class Tracker:
         return delete_tracks
         
     def _match(self, detections):
-        # Split track set into confirmed and unconfirmed tracks.
+        # Split track set into confirmed and unconfirmed tracks.q
         confirmed_tracks = [i for i, t in enumerate(self.tracks) if t.is_confirmed()]
         unconfirmed_tracks = [i for i, t in enumerate(self.tracks) if not t.is_confirmed()]
 

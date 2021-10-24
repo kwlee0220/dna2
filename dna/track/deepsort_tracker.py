@@ -14,6 +14,7 @@ DEEPSORT_DIR = str(FILE.parents[0] / 'deepsort')
 if not DEEPSORT_DIR in sys.path:
     sys.path.append(DEEPSORT_DIR)
 
+import dna
 from dna import Box, utils
 from dna.det import ObjectDetector, Detection
 from . import Track, TrackState, DetectionBasedObjectTracker
@@ -31,6 +32,7 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
 
         self.__detector = detector
         self.det_dict = tracker_conf.det_mapping
+        self.domain = domain
         self.min_detection_score = tracker_conf.min_detection_score
 
         wt_path = Path(tracker_conf.model_file)
@@ -42,7 +44,7 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
                                     matching_threshold=tracker_conf.matching_threshold,
                                     max_iou_distance=tracker_conf.max_iou_distance,
                                     max_age=int(tracker_conf.max_age),
-                                    n_init=int(tracker_conf.n_init))
+                                    n_init=int(tracker_conf.n_init), blind_regions=blind_regions)
         self.blind_regions = blind_regions
         self.__last_frame_detections = []
         
@@ -62,19 +64,25 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
 
     def track(self, frame, frame_idx:int, ts:datetime) -> List[Track]:
         dets = self.detector.detect(frame, frame_index=frame_idx)
-        dets = [det for det in dets if det.score >= self.min_detection_score]
-        if self.blind_regions:
-            for region in self.blind_regions:
-                dets = _filter_non_contained(region, dets)
-        self.__last_frame_detections = dets
 
+        # 일정 점수 이하의 detection은 버린다
+        dets = [det for det in dets if det.score >= self.min_detection_score]
+
+        # 검출 물체 중 관련있는 label의 detection만 사용한다.
         if self.det_dict:
-            dets = []
-            for det in self.__last_frame_detections:
+            new_dets = []
+            for det in dets:
                 label = self.det_dict.get(det.label, None)
                 if label:
-                    dets.append(Detection(det.bbox, label, det.score))
-            self.__last_frame_detections = dets
+                    new_dets.append(Detection(det.bbox, label, det.score))
+            dets = new_dets
+
+        # Blind 영역에 포함되지 않은 detection만 사용한다.
+        if self.blind_regions:
+            for region in self.blind_regions:
+                dets = [det for det in dets if not region.contains(det.bbox)]
+
+        self.__last_frame_detections = dets
         boxes, scores = self.split_boxes_scores(self.__last_frame_detections)
 
         tracker, deleted_tracks = self.deepsort.run_deep_sort(frame.astype(np.uint8), boxes, scores)
@@ -103,7 +111,3 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
             scores.append(det.score)
         
         return np.array(boxes), scores
-
-
-def _filter_non_contained(blind_region, dets: List[Detection]):
-    return [det for det in dets if blind_region.intersection(det.bbox).area() < det.bbox.area()]

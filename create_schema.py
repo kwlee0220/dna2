@@ -58,6 +58,7 @@ if __name__ == '__main__':
     info.add_blind_region(Box.from_tlbr(np.array([10,591,279,816])))
     info.add_blind_region(Box.from_tlbr(np.array([909,38,1063,138])))
     info.add_blind_region(Box.from_tlbr(np.array([1045,76,1154,155])))
+    info.add_blind_region(Box.from_tlbr(np.array([1156,6,1283,287])))
     camera_infos.insert(info)
     
     info = CameraInfo(camera_id='ai_city:6', uri="C:/Temp/data/cam_6.mp4", size=Size2i(1280, 960), fps=10)
@@ -90,6 +91,8 @@ if __name__ == '__main__':
     info = CameraInfo(camera_id='etri:6', uri="C:/Temp/data/etri_6.mp4", size=Size2i(1920, 1080), fps=10)
     info.add_blind_region(Box.from_tlbr(np.array([1309,223,1908,488])))
     info.add_blind_region(Box.from_tlbr(np.array([743,87,1081,316])))
+    info.add_blind_region(Box.from_tlbr(np.array([1741,508,1923,1087])))
+    info.add_blind_region(Box.from_tlbr(np.array([-4,680,585,1084])))
     camera_infos.insert(info)
                                     
     info = CameraInfo(camera_id='etri_live:3',

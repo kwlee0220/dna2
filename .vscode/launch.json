@@ -86,8 +86,8 @@
                 // "--begin_frame", "80",
                 "--output", "C:/Temp/cam_1_track.txt",
                 "--output_video", "C:/Temp/cam_1_track.mp4",
-                // "--show",
-                "--show_progress",
+                "--show",
+                // "--show_progress",
                 "tracker.detector=file:C:/Temp/data/cam_1_det.txt",
                 "tracker.max_age=20",
             ]
@@ -149,6 +149,7 @@
                 "--output_video", "C:/Temp/etri_6_track.mp4",
                 // "--show",
                 "--show_progress",
+                // "--begin_frame", "7300",
                 "tracker.detector=file:C:/Temp/data/etri_6_det.txt",
                 "tracker.n_init=5",
                 "tracker.max_age=30",
@@ -252,7 +253,7 @@
         { "name": "Add a blind region",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/add_blind_region.py",
-            "args": [ "ai_city:11" ]
+            "args": [ "etri:6" ]
         },
         { "name": "Format",
             "type": "python", "request": "launch", "console": "integratedTerminal",

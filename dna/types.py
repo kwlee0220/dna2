@@ -303,7 +303,7 @@ class Box:
 
     def contains(self, box: Box) -> bool:
         return self.tlbr[0] <= box.tlbr[0] and self.tlbr[1] <= box.tlbr[1] \
-                and self.tlbr[2] >= box.tlbr[2] and self.tlbr[3] <= box.tlbr[3]
+                and self.tlbr[2] >= box.tlbr[2] and self.tlbr[3] >= box.tlbr[3]
 
     def draw(self, mat, color, line_thickness=2):
         import cv2
