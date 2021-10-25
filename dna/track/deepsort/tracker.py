@@ -111,6 +111,9 @@ class Tracker:
         delete_tracks = [t for t in self.tracks if t.is_deleted()]
         self.tracks = [t for t in self.tracks if not t.is_deleted()]
 
+        # kwlee (첫번째로 검출되지 마자 delete되는 경우 그냥 삭제함)
+        delete_tracks = [t for t in delete_tracks if t.age > 1]
+
         # Update distance metric.
         confirmed_tracks = [t for t in self.tracks if t.is_confirmed()]
         features, targets = [], []
@@ -143,7 +146,7 @@ class Tracker:
         unmatched_tracks += unconfirmed_tracks
         if len(unmatched_tracks) > 0 and len(unmatched_detections) > 0:
             metric_cost = self.metric_cost(self.tracks, detections)
-            cmatrix = linear_assignment.combined_cost(metric_cost, dist_cost, self.tracks, detections)
+            cmatrix = linear_assignment.combine_cost_matrices(metric_cost, dist_cost, self.tracks, detections)
             if dna.DEBUG_PRINT_COST:
                 self.print_metrix_cost(metric_cost)
                 print("-----------------------------------")

@@ -92,7 +92,9 @@ if __name__ == '__main__':
     info.add_blind_region(Box.from_tlbr(np.array([1309,223,1908,488])))
     info.add_blind_region(Box.from_tlbr(np.array([743,87,1081,316])))
     info.add_blind_region(Box.from_tlbr(np.array([1741,508,1923,1087])))
-    info.add_blind_region(Box.from_tlbr(np.array([-4,680,585,1084])))
+    # info.add_blind_region(Box.from_tlbr(np.array([-4,680,385,1084])))
+    # info.add_blind_region(Box.from_tlbr(np.array([-4,680,585,1084])))
+    info.add_blind_region(Box.from_tlbr(np.array([-3,634,387,1083])))
     camera_infos.insert(info)
                                     
     info = CameraInfo(camera_id='etri_live:3',
@@ -110,6 +112,15 @@ if __name__ == '__main__':
     info = CameraInfo(camera_id='etri_live:6',
                             uri="rtsp://admin:dnabased24@129.254.82.33:558/LiveChannel/6/media.smp",
                             size=Size2i(1280, 720), fps=10)
+    camera_infos.insert(info)
+
+    info = CameraInfo(camera_id='cross:1', uri="C:/Temp/data/cross_1.mp4", size=Size2i(1920, 1080), fps=15)
+    camera_infos.insert(info)
+    info = CameraInfo(camera_id='cross:2', uri="C:/Temp/data/cross_2.mp4", size=Size2i(1920, 1080), fps=15)
+    camera_infos.insert(info)
+    info = CameraInfo(camera_id='cross:3', uri="C:/Temp/data/cross_3.mp4", size=Size2i(1920, 1080), fps=15)
+    camera_infos.insert(info)
+    info = CameraInfo(camera_id='cross:4', uri="C:/Temp/data/cross_4.mp4", size=Size2i(1920, 1080), fps=15)
     camera_infos.insert(info)
 
     camera_infos.insert(CameraInfo(camera_id='test', uri="C:/Temp/local_path.mp4",

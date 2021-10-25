@@ -7,7 +7,7 @@
         { "name": "Show Video",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_show.py",
-            "args": [ "etri:1" ]
+            "args": [ "cross:1" ]
         },
         { "name": "Detect Video (AI_CITY:01)",
             "type": "python", "request": "launch", "console": "integratedTerminal",
@@ -149,23 +149,58 @@
                 "--output_video", "C:/Temp/etri_6_track.mp4",
                 // "--show",
                 "--show_progress",
-                // "--begin_frame", "7300",
+                // "--begin_frame", "400",
                 "tracker.detector=file:C:/Temp/data/etri_6_det.txt",
                 "tracker.n_init=5",
                 "tracker.max_age=30",
             ]
         },
-        { "name": "Track Video (Test)",
+        {  "name": "Track Video (CROSS:01)",
             "type": "python", "request": "launch", "console": "integratedTerminal",
-            "program": "${workspaceFolder}/track_video.py",
+            "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
-                // "--detector", "yolov4",
-                "--detector", "file:C:/Temp/local_path_det.txt",
-                "--input",  "C:/Temp/local_path.mp4",
-                "--output", "C:/Temp/local_path_track.txt",
-                "--max_age", "10",
+                "cross:1",
+                "--output", "C:/Temp/cross_1_track.txt",
+                "--output_video", "C:/Temp/cross_1_track.mp4",
                 "--show",
                 // "--show_progress",
+                "tracker.detector=file:C:/Temp/data/cross_1_det.txt",
+            ]
+        },
+        {  "name": "Track Video (CROSS:02)",
+            "type": "python", "request": "launch", "console": "integratedTerminal",
+            "program": "${workspaceFolder}/bin/dna_track.py",
+            "args": [
+                "cross:2",
+                "--output", "C:/Temp/cross_2_track.txt",
+                "--output_video", "C:/Temp/cross_2_track.mp4",
+                "--show",
+                // "--show_progress",
+                "tracker.detector=file:C:/Temp/data/cross_2_det.txt",
+            ]
+        },
+        {  "name": "Track Video (CROSS:03)",
+            "type": "python", "request": "launch", "console": "integratedTerminal",
+            "program": "${workspaceFolder}/bin/dna_track.py",
+            "args": [
+                "cross:3",
+                "--output", "C:/Temp/cross_3_track.txt",
+                "--output_video", "C:/Temp/cross_3_track.mp4",
+                "--show",
+                // "--show_progress",
+                "tracker.detector=file:C:/Temp/data/cross_3_det.txt",
+            ]
+        },
+        {  "name": "Track Video (CROSS:04)",
+            "type": "python", "request": "launch", "console": "integratedTerminal",
+            "program": "${workspaceFolder}/bin/dna_track.py",
+            "args": [
+                "cross:4",
+                "--output", "C:/Temp/cross_4_track.txt",
+                "--output_video", "C:/Temp/cross_4_track.mp4",
+                "--show",
+                // "--show_progress",
+                "tracker.detector=file:C:/Temp/data/cross_4_det.txt",
             ]
         },
         { "name": "DNA Node (AI_CITY:01)",
@@ -233,8 +268,8 @@
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_replay_local_path.py",
             "args": [
-                "etri:9",
-                "--id", "1",
+                "etri:6",
+                "--id", "74", "69",
                 "--output_video", "C:/Temp/local_path.mp4",
             ]
         },
@@ -253,7 +288,7 @@
         { "name": "Add a blind region",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/add_blind_region.py",
-            "args": [ "etri:6" ]
+            "args": [ "cross:4" ]
         },
         { "name": "Format",
             "type": "python", "request": "launch", "console": "integratedTerminal",

@@ -1,6 +1,7 @@
 from datetime import timedelta
 from timeit import default_timer as timer
 
+import cv2
 from omegaconf import OmegaConf
 
 import dna

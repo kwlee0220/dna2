@@ -244,24 +244,48 @@ def matching_by_distance(dist_matrix, tracks, detections, track_indices):
     
     return matches, unmatched_tracks, unmatched_detections
 
-
-def combined_cost(app_costs, dists, tracks, detections):
+def combine_cost_matrices(app_costs, dists, tracks, detections):
     threshold = kalman_filter.chi2inv95[4] * 7
-    invalid = np.logical_or(app_costs > 0.55, dists > threshold)
+    # invalid = np.logical_or(app_costs > 0.55, dists > threshold)
 
     dists_mod = dists / threshold
     tsu = np.array([0.2*t.time_since_update/20 for t in tracks])
 
     matrix = np.zeros((len(tracks), len(detections)))
+    invalid = np.zeros((len(tracks), len(detections)), dtype=bool)
     for didx, det in enumerate(detections):
         det = detections[didx]
-        if det.tlwh[2] >= 25 and det.tlwh[3] >= 25: # large detection
+
+        if det.tlwh[2] >= 150 and det.tlwh[3] >= 150: # large detections
+            matrix[:,didx] = 0.8*app_costs[:,didx] + 0.1*dists_mod[:,didx]
+            invalid[:,didx] = np.logical_or(app_costs[:,didx] > 0.45, dists[:,didx] > 300)
+        elif det.tlwh[2] >= 25 and det.tlwh[3] >= 25: # medium detections
             matrix[:,didx] = 0.7*app_costs[:,didx] + 0.3*dists_mod[:,didx]
-        else:   # small detection
+            invalid[:,didx] = np.logical_or(app_costs[:,didx] > 0.55, dists[:,didx] > threshold)
+        else:
             matrix[:,didx] = 0.2*app_costs[:,didx] + 0.6*dists_mod[:,didx] + 0.2*tsu
+            invalid[:,didx] = np.logical_or(app_costs[:,didx] > 0.55, dists[:,didx] > threshold)
     matrix[invalid] = 9.99
 
     return matrix
+
+# def combine_cost_matrices(app_costs, dists, tracks, detections):
+#     threshold = kalman_filter.chi2inv95[4] * 7
+#     invalid = np.logical_or(app_costs > 0.55, dists > threshold)
+
+#     dists_mod = dists / threshold
+#     tsu = np.array([0.2*t.time_since_update/20 for t in tracks])
+
+#     matrix = np.zeros((len(tracks), len(detections)))
+#     for didx, det in enumerate(detections):
+#         det = detections[didx]
+#         if det.tlwh[2] >= 25 and det.tlwh[3] >= 25: # large detection
+#             matrix[:,didx] = 0.7*app_costs[:,didx] + 0.3*dists_mod[:,didx]
+#         else:   # small detection
+#             matrix[:,didx] = 0.2*app_costs[:,didx] + 0.6*dists_mod[:,didx] + 0.2*tsu
+#     matrix[invalid] = 9.99
+
+#     return matrix
 
 _INFINIT = 999.9
 def matching_by_total_cost(cost_matrix, tracks, detections, track_indices, detection_indices,
