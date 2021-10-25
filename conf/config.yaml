@@ -22,6 +22,9 @@ tracker:
       bus: bus
       truck: car
 
+enhancer:
+  log_level: info
+
 event_uploader:
   batch_size: 100
 

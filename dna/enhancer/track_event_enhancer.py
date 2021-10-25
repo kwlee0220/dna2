@@ -4,6 +4,7 @@ from threading import Thread
 import logging
 
 from pubsub import PubSub, Queue
+from omegaconf import OmegaConf
 
 from dna import Box, get_logger
 from dna.track import Track, TrackState, ObjectTracker
@@ -12,7 +13,6 @@ from .types import TrackEvent
 
 
 _CHANNEL = "track_events"
-_logger = get_logger('dna.enhancer')
 
 
 @dataclass(unsafe_hash=True)
@@ -21,13 +21,18 @@ class Session:
     pendings: List[Track]
 
 class TrackEventEnhancer(TrackerCallback):
-    def __init__(self, pubsub: PubSub, camera_id) -> None:
+    def __init__(self, pubsub: PubSub, camera_id, conf: OmegaConf) -> None:
         super().__init__()
         self.sessions = {}
 
         self.camera_id = camera_id
         self.pubsub = pubsub
         self.queue = self.pubsub.subscribe(_CHANNEL)
+
+        self.logger = get_logger("dna_enhancer")
+        level_name = conf.get("log_level", "info").upper()
+        level = logging.getLevelName(level_name)
+        self.logger.setLevel(level)
 
     def subscribe(self) -> Queue:
         return self.pubsub.subscribe(_CHANNEL)
@@ -44,12 +49,12 @@ class TrackEventEnhancer(TrackerCallback):
             if track.state == TrackState.Deleted:
                 session = self.sessions.pop(track.id, None)
                 if session.state == TrackState.Tentative:
-                    _logger.debug(f"drop immature track[{track.id}]")
+                    self.logger.debug(f"drop immature track[{track.id}]")
                 else:
                     self.__publish(track)
                     count = len(session.pendings)
                     if count > 0:
-                        _logger.debug(f"drop trailing tracks[{track.id}]: count={count}")
+                        self.logger.debug(f"drop trailing tracks[{track.id}]: count={count}")
 
                 continue
 
@@ -61,7 +66,7 @@ class TrackEventEnhancer(TrackerCallback):
                     self.sessions[track.id] = Session(track.state, [track])
             elif session.state == TrackState.Tentative:
                 if track.state == TrackState.Confirmed:
-                    # _logger.debug(f"accept tentative tracks: track={track.id}, count={len(session.pendings)}")
+                    # self.logger.debug(f"accept tentative tracks: track={track.id}, count={len(session.pendings)}")
                     self.__publish_all_pended_events(session)
                     self.__publish(track)
                     session.state = TrackState.Confirmed
@@ -75,7 +80,7 @@ class TrackEventEnhancer(TrackerCallback):
                     session.state = TrackState.TemporarilyLost
             elif session.state == TrackState.TemporarilyLost:
                 if track.state == TrackState.Confirmed:
-                    _logger.debug(f"accept 'temporarily-lost' tracks[{track.id}]: count={len(session.pendings)}")
+                    self.logger.debug(f"accept 'temporarily-lost' tracks[{track.id}]: count={len(session.pendings)}")
 
                     self.__publish_all_pended_events(session)
                     self.__publish(track)

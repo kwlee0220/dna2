@@ -61,7 +61,8 @@ if __name__ == '__main__':
         tracker = DeepSORTTracker(detector, domain, tracker_conf, blind_regions=camera_info.blind_regions)
 
     pubsub = PubSub()
-    enhancer = TrackEventEnhancer(pubsub, args.camera)
+    enhancer_conf = OmegaConf.select(conf, "enhancer")
+    enhancer = TrackEventEnhancer(pubsub, args.camera, enhancer_conf)
 
     ev_uploader_conf = OmegaConf.select(conf, "event_uploader")
     te_upload = TrackEventUploader(platform, enhancer.subscribe(), ev_uploader_conf)

@@ -123,8 +123,8 @@
                 "ai_city:11",
                 "--output", "C:/Temp/cam_11_track.txt",
                 "--output_video", "C:/Temp/cam_11_track.mp4",
-                // "--show",
-                "--show_progress",
+                "--show",
+                // "--show_progress",
                 "tracker.detector=file:C:/Temp/data/cam_11_det.txt",
             ]
         },

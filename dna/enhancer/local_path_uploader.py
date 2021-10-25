@@ -8,12 +8,13 @@ from psycopg2.extras import execute_values
 from queue import Queue
 from omegaconf import OmegaConf
 
-from dna import Point
+from dna import Point, get_logger
 import dna.utils as utils
 from .types import TrackEvent
 from dna.platform import DNAPlatform, LocalPath
 
 _MAX_BLOCK_SIZE = 1000
+_logger = get_logger('dna.enhancer')
 
 class Session:
     def __init__(self, camera_id, luid) -> None:
@@ -106,5 +107,6 @@ class LocalPathUploader:
 
     def flush(self):
         self.local_paths.insert_many(self.local_path_buffer)
-        self.local_path_buffer.clear()
         self.last_upload_ts = datetime.now()
+        _logger.info(f"upload {len(self.local_path_buffer)} local_paths")
+        self.local_path_buffer.clear()
