@@ -60,14 +60,6 @@ class Tracker:
             track.predict(self.kf)
 
     def update(self, detections):
-        """Perform measurement update and track management.
-
-        Parameters
-        ----------
-        detections : List[deep_sort.detection.Detection]
-            A list of detections at the current time step.
-
-        """
         # Run matching cascade.
         matches, unmatched_tracks, unmatched_detections = self._match(detections)
 
@@ -141,22 +133,30 @@ class Tracker:
         if dna.DEBUG_PRINT_COST:
             self.print_dist_cost(dist_cost, 999)
         matches, unmatched_tracks, unmatched_detections \
-             = linear_assignment.matching_by_distance(dist_cost, self.tracks, detections, confirmed_tracks)
+             = linear_assignment.matching_by_close_distance(dist_cost, self.tracks, detections, confirmed_tracks)
 
-        unmatched_tracks += unconfirmed_tracks
-        if len(unmatched_tracks) > 0 and len(unmatched_detections) > 0:
+        if (len(unmatched_tracks) > 0 or len(unconfirmed_tracks) > 0) and len(unmatched_detections) > 0:
             metric_cost = self.metric_cost(self.tracks, detections)
             cmatrix = linear_assignment.combine_cost_matrices(metric_cost, dist_cost, self.tracks, detections)
             if dna.DEBUG_PRINT_COST:
                 self.print_metrix_cost(metric_cost)
                 print("-----------------------------------")
                 self.print_metrix_cost(cmatrix)
-            matches_1, unmatched_tracks, unmatched_detections =\
-                    linear_assignment.matching_by_total_cost(cmatrix, self.tracks, detections,
-                                                            unmatched_tracks, unmatched_detections)
-            matches += matches_1
 
-        if len(unmatched_tracks) > 0:
+            unmatched_tracks_2 = []
+            if len(unmatched_tracks) > 0:
+                matches_1, unmatched_tracks, unmatched_detections =\
+                    linear_assignment.matching_by_total_cost(cmatrix, unmatched_tracks, unmatched_detections)
+                matches += matches_1
+            if len(unconfirmed_tracks) > 0 and len(unmatched_detections) > 0:
+                matches_2, unmatched_tracks_2, unmatched_detections =\
+                    linear_assignment.matching_by_total_cost(cmatrix, unconfirmed_tracks, unmatched_detections)
+                matches += matches_2
+                unmatched_tracks += unmatched_tracks_2
+        else:
+            unmatched_tracks += unconfirmed_tracks
+
+        if len(unmatched_tracks) > 0 and len(unmatched_detections) > 0:
             matches_2, unmatched_tracks, unmatched_detections = \
                 linear_assignment.min_cost_matching(iou_matching.iou_cost, self.max_iou_distance,
                                                     self.tracks, detections,
@@ -177,7 +177,6 @@ class Tracker:
         return self.metric.distance(features, targets)
 
     # kwlee
-    import math
     def distance_cost(self, tracks, detections, only_position=False):
         dist_matrix = np.zeros((len(tracks), len(detections)))
         if len(tracks) > 0 and len(detections) > 0:

@@ -81,6 +81,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Generating tracking events from a track-file")
     parser.add_argument("camera", metavar='camera_uri', help="target camera uri")
     parser.add_argument("--conf", help="DNA framework configuration", default=dna.DNA_CONIFIG_FILE)
+    parser.add_argument("--begin_frame", type=int, metavar="<number>",
+                        help="the first frame index (from 1)", default=5)
     return parser.parse_known_args()
 
 if __name__ == '__main__':
@@ -91,7 +93,7 @@ if __name__ == '__main__':
 
     platform = DNAPlatform.load_from_config(conf.platform)
     rset, camera_info = platform.get_resource("camera_infos", (args.camera,))
-    cap = load_image_capture(camera_info.uri, camera_info.size, sync=False, begin_frame=5)
+    cap = load_image_capture(camera_info.uri, camera_info.size, sync=False, begin_frame=args.begin_frame)
     cap.open()
     _,_,bg_img = cap.capture()
     cap.close()

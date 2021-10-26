@@ -147,7 +147,7 @@ class Tracker:
             # self.print_cost(metric_cost, dist_cost)
 
         matches_z, unmatched_tracks, unmatched_detections \
-            = linear_assignment.matching_by_distance(dist_cost, self.tracks, detections, confirmed_tracks)
+            = linear_assignment.matching_by_close_distance(dist_cost, self.tracks, detections, confirmed_tracks)
 
         matches_a, unmatched_tracks, unmatched_detections = \
             linear_assignment.matching_cascade(gated_metric, self.metric.matching_threshold, self.max_age,

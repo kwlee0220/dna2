@@ -26,18 +26,12 @@ class LocalPathDraw:
             convas = plot_utils.draw_label(convas, str(self.path.luid), pt.xy.astype(int), color.BLACK, color.RED, 4)
 
             self.index += 1
-        # elif frame_idx < self.path.first_frame:
-        #     first_pt = self.points[0]
-        #     convas = cv2.circle(convas, first_pt.xy.astype(int), 4, color.RED,
-        #                         thickness=-1, lineType=cv2.LINE_AA)
-        #     convas = plot_utils.draw_label(convas, str(self.path.luid), first_pt.xy.astype(int),
-        #                                     color.BLACK, color.RED, 2)
         elif frame_idx > self.path.last_frame:
             last_pt = self.points[-1]
-            convas = cv2.circle(convas, last_pt.xy.astype(int), 4, color.RED,
+            convas = cv2.circle(convas, last_pt.xy.astype(int), 5, color.RED,
                                 thickness=-1, lineType=cv2.LINE_AA)
             convas = plot_utils.draw_label(convas, str(self.path.luid), last_pt.xy.astype(int),
-                                            color.BLACK, color.RED, 2)
+                                            color.BLACK, color.RED, 3)
 
         return convas
 

@@ -207,18 +207,21 @@ def gate_cost_matrix(kf, cost_matrix, tracks, detections, track_indices, detecti
 
 
     # kwlee
-_DIST_THRESHOLD = 25
-def matching_by_distance(dist_matrix, tracks, detections, track_indices):
+_CLOSE_DIST_THRESHOLD = 25
+_INFINIT_DIST = 9999
+def matching_by_close_distance(dist_matrix, tracks, detections, track_indices):
     matches = []
     unmatched_detections = list(range(len(detections)))
     ndets = len(detections)
     if ndets <= 0:
         return matches, track_indices, unmatched_detections
 
-    unmatched_tracks = [i for i in track_indices if tracks[i].time_since_update > 3]
+    dist_matrix = dist_matrix.copy()
+    unmatched_tracks = track_indices.copy()
     track_indices = [i for i in track_indices if tracks[i].time_since_update <= 3]
     for tidx in track_indices:
         track = tracks[tidx]
+
         dists = dist_matrix[tidx,:]
         if ndets > 2:
             idxes = np.argpartition(dists, 2)[:2]
@@ -228,27 +231,31 @@ def matching_by_distance(dist_matrix, tracks, detections, track_indices):
             v1, v2 = tuple(dists[idxes])
         else:
             idxes = [0, -1]
-            v1, v2 = dists[0], 9999
+            v1, v2 = dists[0], _INFINIT_DIST
 
         dividend = max(1, track.time_since_update * 0.75)
-        if v1 < _DIST_THRESHOLD/dividend and v1*2 < v2:
+        if v1 < _CLOSE_DIST_THRESHOLD/dividend and v1*2 < v2:
             det_idx = idxes[0]
-            dists2 = dist_matrix[track_indices,det_idx]
-            # dists2 = dist_matrix[:,det_idx]
-            cnt = len(dists2[np.where(dists2 < _DIST_THRESHOLD)])
+            dists2 = dist_matrix[unmatched_tracks, det_idx]
+            cnt = len(dists2[np.where(dists2 < _CLOSE_DIST_THRESHOLD)])
             if cnt <= 1:
                 matches.append((tidx, idxes[0]))
+                unmatched_tracks.remove(tidx)
                 unmatched_detections.remove(idxes[0])
+                dist_matrix[:,idxes[0]] = _INFINIT_DIST
                 continue
-        unmatched_tracks.append(tidx)
     
     return matches, unmatched_tracks, unmatched_detections
 
-def combine_cost_matrices(app_costs, dists, tracks, detections):
-    threshold = kalman_filter.chi2inv95[4] * 7
-    # invalid = np.logical_or(app_costs > 0.55, dists > threshold)
+_COMBINED_METRIC_THRESHOLD = 0.55
+_COMBINED_METRIC_THRESHOLD_4L = 0.45
+_COMBINED_DIST_THRESHOLD = 67
+_COMBINED_DIST_THRESHOLD_4_LARGE = 300
+_COMBINED_INFINITE = 999.99
+def combine_cost_matrices(metric_costs, dist_costs, tracks, detections):
+    dists_mod = dist_costs / _COMBINED_DIST_THRESHOLD
 
-    dists_mod = dists / threshold
+    # temporary lost 횟수를 통한 가중치 계산
     tsu = np.array([0.2*t.time_since_update/20 for t in tracks])
 
     matrix = np.zeros((len(tracks), len(detections)))
@@ -257,72 +264,59 @@ def combine_cost_matrices(app_costs, dists, tracks, detections):
         det = detections[didx]
 
         if det.tlwh[2] >= 150 and det.tlwh[3] >= 150: # large detections
-            matrix[:,didx] = 0.8*app_costs[:,didx] + 0.1*dists_mod[:,didx]
-            invalid[:,didx] = np.logical_or(app_costs[:,didx] > 0.45, dists[:,didx] > 300)
+            # detection 크기가 크면 metric cost에 많은 가중치를 주어, 외형을 보다 많이 고려한다.
+            # 또한 외형에 많은 가중치를 주기 때문에 gate용 distance 한계도 넉넉하게 (300) 주는 대신,
+            # gate용 metric thresholds는 다른 경우보다 작게 (0.45) 준다.
+            matrix[:,didx] = 0.8*metric_costs[:,didx] + 0.2*dists_mod[:,didx]
+            invalid[:,didx] = np.logical_or(metric_costs[:,didx] > _COMBINED_METRIC_THRESHOLD_4L,
+                                            dist_costs[:,didx] > _COMBINED_DIST_THRESHOLD_4_LARGE)
         elif det.tlwh[2] >= 25 and det.tlwh[3] >= 25: # medium detections
-            matrix[:,didx] = 0.7*app_costs[:,didx] + 0.3*dists_mod[:,didx]
-            invalid[:,didx] = np.logical_or(app_costs[:,didx] > 0.55, dists[:,didx] > threshold)
+            matrix[:,didx] = 0.7*metric_costs[:,didx] + 0.3*dists_mod[:,didx]
+            invalid[:,didx] = np.logical_or(metric_costs[:,didx] > _COMBINED_METRIC_THRESHOLD,
+                                            dist_costs[:,didx] > _COMBINED_DIST_THRESHOLD)
         else:
-            matrix[:,didx] = 0.2*app_costs[:,didx] + 0.6*dists_mod[:,didx] + 0.2*tsu
-            invalid[:,didx] = np.logical_or(app_costs[:,didx] > 0.55, dists[:,didx] > threshold)
-    matrix[invalid] = 9.99
+            # detection의 크기가 작으면 외형을 이용한 검색이 의미가 작으므로, track과 detection사이의 거리
+            # 정보에 보다 많은 가중치를 부여한다.
+            matrix[:,didx] = 0.2*metric_costs[:,didx] + 0.6*dists_mod[:,didx] + tsu
+            invalid[:,didx] = np.logical_or(metric_costs[:,didx] > _COMBINED_METRIC_THRESHOLD,
+                                            dist_costs[:,didx] > _COMBINED_DIST_THRESHOLD)
+    matrix[invalid] = _COMBINED_INFINITE
 
     return matrix
 
-# def combine_cost_matrices(app_costs, dists, tracks, detections):
-#     threshold = kalman_filter.chi2inv95[4] * 7
-#     invalid = np.logical_or(app_costs > 0.55, dists > threshold)
+def matching_by_total_cost(cost_matrix, track_indices, detection_indices, threshold=0.7):
+    if len(track_indices) <= 1 and len(detection_indices) <= 1:
+        if cost_matrix[track_indices[0], detection_indices[0]] <= threshold:
+            return [(track_indices[0], detection_indices[0])], [], []
+        else:
+            return [], track_indices, detection_indices
+    elif len(detection_indices) <= 1:   # track만 여러개
+        tidx = np.argmin(cost_matrix[:,detection_indices[0]])
+        if cost_matrix[tidx, detection_indices[0]] <= threshold:
+            return [(tidx, detection_indices[0])], [], []
+        else:
+            return [], track_indices, detection_indices
+    elif len(track_indices) <= 1:       # detection만 여러개
+        didx = np.argmin(cost_matrix[track_indices[0],:])
+        if cost_matrix[track_indices[0], didx] <= threshold:
+            return [(track_indices[0], didx)], [], []
+        else:
+            return [], track_indices, detection_indices
 
-#     dists_mod = dists / threshold
-#     tsu = np.array([0.2*t.time_since_update/20 for t in tracks])
+    matrix = cost_matrix[np.ix_(track_indices, detection_indices)]
+    indices = linear_sum_assignment(matrix)
+    indices = np.asarray(indices)
+    indices = np.transpose(indices)
 
-#     matrix = np.zeros((len(tracks), len(detections)))
-#     for didx, det in enumerate(detections):
-#         det = detections[didx]
-#         if det.tlwh[2] >= 25 and det.tlwh[3] >= 25: # large detection
-#             matrix[:,didx] = 0.7*app_costs[:,didx] + 0.3*dists_mod[:,didx]
-#         else:   # small detection
-#             matrix[:,didx] = 0.2*app_costs[:,didx] + 0.6*dists_mod[:,didx] + 0.2*tsu
-#     matrix[invalid] = 9.99
-
-#     return matrix
-
-_INFINIT = 999.9
-def matching_by_total_cost(cost_matrix, tracks, detections, track_indices, detection_indices,
-                            threshold=0.7):
     matches = []
-    unmatched_detections = []
-    unmatched_tracks = track_indices[:]
-
-    cost_matrix = cost_matrix[:]
-    mask = np.zeros((len(tracks),), dtype=bool)
-    mask[track_indices] = True
-    cost_matrix[~mask,:] = 999.9
-
-    weights = np.array([2 if t.is_tentative() else 1 for t in tracks])
-    for didx in detection_indices:
-        det = detections[didx]
-
-        weighted_cost = cost_matrix[:, didx] * weights
-        while True:
-            tidx = np.argmin(weighted_cost)
-            selected_tidx = -1
-            if weighted_cost[tidx] <= threshold:
-                selected_tidx = tidx
-            elif tracks[tidx].is_tentative() and weighted_cost[tidx] < _INFINIT:
-                if cost_matrix[tidx, didx] <= threshold:
-                    selected_tidx = tidx
-            
-            if selected_tidx >= 0:
-                selected_didx = np.argmin(cost_matrix[selected_tidx,:])
-                if selected_didx == didx:
-                    matches.append((selected_tidx, selected_didx))
-                    unmatched_tracks.remove(selected_tidx)
-                    break
-                else:
-                    weighted_cost[selected_tidx] = _INFINIT
-            else:
-                unmatched_detections.append(didx)
-                break
+    unmatched_tracks = track_indices.copy()
+    unmatched_detections = detection_indices.copy()
+    for i, j in indices:
+        tidx = track_indices[i]
+        didx = detection_indices[j]
+        if cost_matrix[tidx, didx] <= threshold:
+            matches.append((tidx, didx))
+            unmatched_tracks.remove(tidx)
+            unmatched_detections.remove(didx)
     
     return matches, unmatched_tracks, unmatched_detections
