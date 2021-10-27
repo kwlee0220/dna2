@@ -69,6 +69,16 @@
                 "--show_progress"
             ]
         },
+        { "name": "Detect Video (CROSS)",
+            "type": "python", "request": "launch", "console": "integratedTerminal",
+            "program": "${workspaceFolder}/bin/dna_detect.py",
+            "args": [
+                "cross:4",
+                "--output", "C:/Temp/cross_4_det.txt",
+                "--output_video", "C:/Temp/cross_4_det.mp4",
+                "--show_progress"
+            ]
+        },
         { "name": "Detect Video (Test)",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_detect.py",
@@ -83,11 +93,10 @@
             "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
                 "ai_city:1",
-                // "--begin_frame", "80",
                 "--output", "C:/Temp/cam_1_track.txt",
                 "--output_video", "C:/Temp/cam_1_track.mp4",
-                "--show",
-                // "--show_progress",
+                // "--show",
+                "--show_progress",
                 "tracker.detector=file:C:/Temp/data/cam_1_det.txt",
                 "tracker.max_age=20",
             ]
@@ -123,8 +132,8 @@
                 "ai_city:11",
                 "--output", "C:/Temp/cam_11_track.txt",
                 "--output_video", "C:/Temp/cam_11_track.mp4",
-                "--show",
-                // "--show_progress",
+                // "--show",
+                "--show_progress",
                 "tracker.detector=file:C:/Temp/data/cam_11_det.txt",
             ]
         },
@@ -145,11 +154,11 @@
             "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
                 "etri:6",
+                // "--begin_frame", "7590",
                 "--output", "C:/Temp/etri_6_track.txt",
                 "--output_video", "C:/Temp/etri_6_track.mp4",
                 // "--show", 
                 "--show_progress",
-                // "--begin_frame", "6900",
                 "tracker.detector=file:C:/Temp/data/etri_6_det.txt",
                 "tracker.n_init=5",
                 "tracker.max_age=30",
@@ -162,8 +171,8 @@
                 "cross:1",
                 "--output", "C:/Temp/cross_1_track.txt",
                 "--output_video", "C:/Temp/cross_1_track.mp4",
-                "--show",
-                // "--show_progress",
+                // "--show",
+                "--show_progress",
                 "tracker.detector=file:C:/Temp/data/cross_1_det.txt",
             ]
         },
@@ -174,8 +183,8 @@
                 "cross:2",
                 "--output", "C:/Temp/cross_2_track.txt",
                 "--output_video", "C:/Temp/cross_2_track.mp4",
-                "--show",
-                // "--show_progress",
+                // "--show",
+                "--show_progress",
                 "tracker.detector=file:C:/Temp/data/cross_2_det.txt",
             ]
         },
@@ -184,11 +193,11 @@
             "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
                 "cross:3",
-                "--begin_frame", "1617",
+                // "--begin_frame", "620",
                 "--output", "C:/Temp/cross_3_track.txt",
                 "--output_video", "C:/Temp/cross_3_track.mp4",
-                "--show",
-                // "--show_progress",
+                // "--show",
+                "--show_progress",
                 "tracker.detector=file:C:/Temp/data/cross_3_det.txt",
             ]
         },
@@ -199,8 +208,8 @@
                 "cross:4",
                 "--output", "C:/Temp/cross_4_track.txt",
                 "--output_video", "C:/Temp/cross_4_track.mp4",
-                "--show",
-                // "--show_progress",
+                // "--show",
+                "--show_progress",
                 "tracker.detector=file:C:/Temp/data/cross_4_det.txt",
             ]
         },
@@ -304,6 +313,14 @@
                 "--track_file", "C:/Temp/data/etri_6_track.txt",
             ]
         },
+        { "name": "DNA Node (CROSS:03)",
+            "type": "python", "request": "launch", "console": "integratedTerminal",
+            "program": "${workspaceFolder}/bin/dna_node.py",
+            "args": [
+                "cross:3",
+                "--track_file", "C:/Temp/data/cross_3_track.txt",
+            ]
+        },
         { "name": "DNA Node (Test)",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_node.py",
@@ -322,6 +339,14 @@
                 "--output_video", "C:/Temp/local_path.mp4",
             ]
         },
+        { "name": "Replay tracks",
+            "type": "python", "request": "launch", "console": "integratedTerminal",
+            "program": "${workspaceFolder}/bin/dna_replay_tracks.py",
+            "args": [
+                "cross:4",
+                "--output_video", "C:/Temp/local_path.mp4",
+            ]
+        },
         { "name": "Extract a local path",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/extract_local_path.py",
@@ -337,8 +362,8 @@
         { "name": "Add a blind region",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/add_blind_region.py",
-            "args": [ "cross:3",
-                "--begin_frame", "2175",
+            "args": [ "etri:5",
+                "--begin_frame", "627",
             ]
         },
         { "name": "Format",

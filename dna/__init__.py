@@ -9,12 +9,12 @@ DNA_CONIFIG_FILE = DNA_HOME / 'conf' / 'config.yaml'
 DEBUG_FRAME_IDX = -1
 DEBUG_SHOW_IMAGE = False
 DEBUG_PRINT_COST = False
-DEBUG_START_FRAME = 7030 
+DEBUG_START_FRAME = 668
 DEBUG_TARGET_TRACKS = None
 
 from collections import defaultdict
-def parse_config_args(args):
-    config_grp = defaultdict(list)
+def parse_config_args(args): 
+    config_grp = defaultdict(list) 
     for arg in args:
         idx = arg.find('=')
         if idx >= 0:

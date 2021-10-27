@@ -1,3 +1,4 @@
+from re import L
 from dna import det
 from cv2 import determinant
 import dna
@@ -180,7 +181,7 @@ class deepsort_rbc():
 		if dna.DEBUG_SHOW_IMAGE:
 			import cv2
 			from dna import color
-			convas = draw_ds_detections(frame.copy(), dets, color.GREEN, color.BLACK)
+			convas = draw_ds_detections(frame.copy(), dets, color.GREEN, color.BLACK, line_thickness=1)
 			cv2.imshow("dets", convas)
 			cv2.waitKey(1)
 		##################################################################################

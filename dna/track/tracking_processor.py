@@ -91,15 +91,18 @@ class ObjectTrackingProcessor(ImageProcessor):
                     frame = det.draw(frame, color.WHITE, line_thickness=2)
 
             for track in tracks:
-                trail = [mark.location for mark in self.trail_collector.get_trail(track.id, [])]
-                if track.is_confirmed():
-                    frame = draw_track_trail(frame, track, color.BLUE, label_color=color.WHITE,
-                                            trail=trail, trail_color=color.RED)
-                if track.is_temporarily_lost():
-                    frame = draw_track_trail(frame, track, color.BLUE, label_color=color.WHITE,
-                                            trail=trail, trail_color=color.LIGHT_GREY)
-                elif track.is_tentative():
+                if track.is_tentative():
+                    trail = [mark.location for mark in self.trail_collector.get_trail(track.id, [])]
                     frame = draw_track_trail(frame, track, color.RED, label_color=color.WHITE,
                                             trail=trail, trail_color=color.BLUE)
+            for track in sorted(tracks, key=lambda t: t.id, reverse=True):
+                if not track.is_tentative():
+                    trail = [mark.location for mark in self.trail_collector.get_trail(track.id, [])]
+                    if track.is_confirmed():
+                        frame = draw_track_trail(frame, track, color.BLUE, label_color=color.WHITE,
+                                                trail=trail, trail_color=color.RED)
+                    if track.is_temporarily_lost():
+                        frame = draw_track_trail(frame, track, color.BLUE, label_color=color.WHITE,
+                                                trail=trail, trail_color=color.LIGHT_GREY)
 
         return frame

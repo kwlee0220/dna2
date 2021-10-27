@@ -83,23 +83,34 @@ def draw_boxes(convas, boxes, box_color, label_color=None, line_thickness=2):
             mat = plot_utils.draw_label(convas, msg, box.tl.astype(int), label_color, box_color, 2)
     return convas
 
+def _draw_ds_track(convas, track, box_color, label_color, line_thickness):
+    box = Box.from_tlbr(track.to_tlbr())
+    box.draw(convas, box_color)
+    if label_color:
+        msg = f"{track.track_id}[{track.state}]"
+        mat = plot_utils.draw_label(convas, msg, box.br.astype(int), label_color, box_color, 2)
+    return convas
+
 def draw_ds_tracks(convas, tracks, box_color, label_color=None, line_thickness=2, track_indices=None):
-    for idx, track in enumerate(tracks):
-        if not track_indices or track.track_id in track_indices:
-            box = Box.from_tlbr(track.to_tlbr())
-            box.draw(convas, box_color)
-            if label_color:
-                msg = f"{track.track_id}[{track.state}]"
-                mat = plot_utils.draw_label(convas, msg, box.br.astype(int), label_color, box_color, 2)
+    if track_indices:
+        tracks = [tracks[i] for i in track_indices]
+    tracks = sorted(tracks, key=lambda t: t.track_id, reverse=True)
+
+    for track in tracks:
+        if track.is_tentative():
+            convas = _draw_ds_track(convas, track, box_color, label_color, line_thickness)
+    for track in tracks:
+        if not track.is_tentative():
+            convas = _draw_ds_track(convas, track, box_color, label_color, line_thickness)
     return convas
 
 def draw_ds_detections(convas, dets, box_color, label_color=None, line_thickness=2):
     for idx, det in enumerate(dets):
         box = Box.from_tlbr(det.to_tlbr())
-        box.draw(convas, box_color)
+        box.draw(convas, box_color, line_thickness=line_thickness)
         if label_color:
             msg = f"{idx:02d}"
-            mat = plot_utils.draw_label(convas, msg, box.tl.astype(int), label_color, box_color, 2)
+            mat = plot_utils.draw_label(convas, msg, box.br.astype(int), label_color, box_color, 2)
     return convas
 
 def find_track_index(track_id, tracks):

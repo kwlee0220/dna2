@@ -124,7 +124,8 @@ class Tracker:
         
     def _match(self, detections):
         # Split track set into confirmed and unconfirmed tracks.q
-        confirmed_tracks = [i for i, t in enumerate(self.tracks) if t.is_confirmed()]
+        hot_tracks = [i for i, t in enumerate(self.tracks) if t.is_confirmed() and t.time_since_update <= 1]
+        tlost_tracks = [i for i, t in enumerate(self.tracks) if t.is_confirmed() and t.time_since_update > 1]
         unconfirmed_tracks = [i for i, t in enumerate(self.tracks) if not t.is_confirmed()]
 
         # ##############################################################################################
@@ -133,7 +134,8 @@ class Tracker:
         if dna.DEBUG_PRINT_COST:
             self.print_dist_cost(dist_cost, 999)
         matches, unmatched_tracks, unmatched_detections \
-             = linear_assignment.matching_by_close_distance(dist_cost, self.tracks, detections, confirmed_tracks)
+             = linear_assignment.matching_by_close_distance(dist_cost, self.tracks, detections, hot_tracks)
+        unmatched_tracks += tlost_tracks
 
         if (len(unmatched_tracks) > 0 or len(unconfirmed_tracks) > 0) and len(unmatched_detections) > 0:
             metric_cost = self.metric_cost(self.tracks, detections)

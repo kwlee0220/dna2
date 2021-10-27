@@ -207,7 +207,7 @@ def gate_cost_matrix(kf, cost_matrix, tracks, detections, track_indices, detecti
 
 
     # kwlee
-_CLOSE_DIST_THRESHOLD = 25
+_CLOSE_DIST_THRESHOLD = 21
 _INFINIT_DIST = 9999
 def matching_by_close_distance(dist_matrix, tracks, detections, track_indices):
     matches = []
@@ -218,7 +218,8 @@ def matching_by_close_distance(dist_matrix, tracks, detections, track_indices):
 
     dist_matrix = dist_matrix.copy()
     unmatched_tracks = track_indices.copy()
-    track_indices = [i for i in track_indices if tracks[i].time_since_update <= 3]
+    # track_indices = [i for i in track_indices if tracks[i].time_since_update <= 3]
+    track_indices = [i for i in track_indices if tracks[i].time_since_update <= 1]
     for tidx in track_indices:
         track = tracks[tidx]
 
@@ -238,6 +239,7 @@ def matching_by_close_distance(dist_matrix, tracks, detections, track_indices):
             det_idx = idxes[0]
             dists2 = dist_matrix[unmatched_tracks, det_idx]
             cnt = len(dists2[np.where(dists2 < _CLOSE_DIST_THRESHOLD)])
+            # cnt = len(dists2[np.where(dists2 < min(v1*3, _CLOSE_DIST_THRESHOLD))])
             if cnt <= 1:
                 matches.append((tidx, idxes[0]))
                 unmatched_tracks.remove(tidx)
@@ -251,7 +253,7 @@ _COMBINED_METRIC_THRESHOLD = 0.55
 _COMBINED_METRIC_THRESHOLD_4L = 0.45
 _COMBINED_DIST_THRESHOLD = 67
 _COMBINED_DIST_THRESHOLD_4_LARGE = 300
-_COMBINED_INFINITE = 999.99
+_COMBINED_INFINITE = 9.99
 def combine_cost_matrices(metric_costs, dist_costs, tracks, detections):
     dists_mod = dist_costs / _COMBINED_DIST_THRESHOLD
 
@@ -291,15 +293,17 @@ def matching_by_total_cost(cost_matrix, track_indices, detection_indices, thresh
         else:
             return [], track_indices, detection_indices
     elif len(detection_indices) <= 1:   # track만 여러개
-        tidx = np.argmin(cost_matrix[:,detection_indices[0]])
-        if cost_matrix[tidx, detection_indices[0]] <= threshold:
-            return [(tidx, detection_indices[0])], [], []
+        reduced = cost_matrix[:,detection_indices[0]][track_indices]
+        tidx = np.argmin(reduced)
+        if reduced[tidx] <= threshold:
+            return [(track_indices[tidx], detection_indices[0])], [], []
         else:
             return [], track_indices, detection_indices
     elif len(track_indices) <= 1:       # detection만 여러개
-        didx = np.argmin(cost_matrix[track_indices[0],:])
-        if cost_matrix[track_indices[0], didx] <= threshold:
-            return [(track_indices[0], didx)], [], []
+        reduced = cost_matrix[track_indices[0],:][detection_indices]
+        didx = np.argmin(reduced)
+        if reduced[didx] <= threshold:
+            return [(track_indices[0], detection_indices[didx])], [], []
         else:
             return [], track_indices, detection_indices
 

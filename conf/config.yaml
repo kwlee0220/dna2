@@ -29,6 +29,6 @@ event_uploader:
   batch_size: 100
 
 path_uploader:
-  min_path_count: 20
+  min_path_count: 10
   batch_size: 10
   max_pending_sec: 5
