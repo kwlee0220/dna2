@@ -9,37 +9,7 @@
             "program": "${workspaceFolder}/bin/dna_show.py",
             "args": [ "cross:1" ]
         },
-        { "name": "Detect Video (AI_CITY:01)",
-            "type": "python", "request": "launch", "console": "integratedTerminal",
-            "program": "${workspaceFolder}/bin/dna_detect.py",
-            "args": [
-                "ai_city:1",
-                "--output", "C:/Temp/cam_1_det.txt",
-                "--output_video", "C:/Temp/cam_1_det.mp4",
-                "--show_progress",
-            ]
-        },
-        { "name": "Detect Video (AI_CITY:06)",
-            "type": "python", "request": "launch", "console": "integratedTerminal",
-            "program": "${workspaceFolder}/bin/dna_detect.py",
-            "args": [
-                "ai_city:6",
-                "--output", "C:/Temp/cam_6_det.txt",
-                "--output_video", "C:/Temp/cam_6_det.mp4",
-                "--show_progress",
-            ]
-        },
-        { "name": "Detect Video (AI_CITY:09)",
-            "type": "python", "request": "launch", "console": "integratedTerminal",
-            "program": "${workspaceFolder}/bin/dna_detect.py",
-            "args": [
-                "ai_city:9",
-                "--output", "C:/Temp/cam_9_det.txt",
-                "--output_video", "C:/Temp/cam_9_det.mp4",
-                "--show_progress",
-            ]
-        },
-        { "name": "Detect Video (AI_CITY:11)",
+        { "name": "Detect Video (AI_CITY)",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_detect.py",
             "args": [
@@ -49,24 +19,14 @@
                 "--show_progress",
             ]
         },
-        { "name": "Detect Video (ETRI:05)",
+        { "name": "Detect Video (ETRI)",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_detect.py",
             "args": [
-                "etri:5",
-                "--output", "C:/Temp/etri_5_det.txt",
-                "--output_video", "C:/Temp/etri_5_det.mp4",
+                "etri:05",
+                "--output", "C:/Temp/etri_05_det.txt",
+                "--output_video", "C:/Temp/etri_05_det.mp4",
                 "--show_progress",
-            ]
-        },
-        { "name": "Detect Video (ETRI:06)",
-            "type": "python", "request": "launch", "console": "integratedTerminal",
-            "program": "${workspaceFolder}/bin/dna_detect.py",
-            "args": [
-                "etri:6",
-                "--output", "C:/Temp/etri_6_det.txt",
-                "--output_video", "C:/Temp/etri_6_det.mp4",
-                "--show_progress"
             ]
         },
         { "name": "Detect Video (crossroads)",
@@ -79,25 +39,16 @@
                 "--show_progress"
             ]
         },
-        { "name": "Detect Video (Test)",
-            "type": "python", "request": "launch", "console": "integratedTerminal",
-            "program": "${workspaceFolder}/bin/dna_detect.py",
-            "args": [
-                "C:/Temp/local_path.mp4",
-                "--output", "C:/Temp/local_path_det.txt",
-                "--show"
-            ]
-        },
         { "name": "Track Video (AI_CITY:01)",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
-                "ai_city:1",
-                "--output", "C:/Temp/cam_1_track.txt",
-                "--output_video", "C:/Temp/cam_1_track.mp4",
+                "ai_city:01",
+                "--output", "C:/Temp/cam_01_track.txt",
+                "--output_video", "C:/Temp/cam_01_track.mp4",
                 // "--show",
                 "--show_progress",
-                "tracker.detector=file:C:/Temp/data/cam_1_det.txt",
+                "tracker.detector=file:C:/Temp/data/ai_city/cam_01_det.txt",
                 "tracker.max_age=20",
             ]
         },
@@ -105,24 +56,24 @@
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
-                "ai_city:6",
-                "--output", "C:/Temp/cam_6_track.txt",
-                "--output_video", "C:/Temp/cam_6_track.mp4",
+                "ai_city:06",
+                "--output", "C:/Temp/cam_06_track.txt",
+                "--output_video", "C:/Temp/cam_06_track.mp4",
                 // "--show",
                 "--show_progress",
-                "tracker.detector=file:C:/Temp/data/cam_6_det.txt",
+                "tracker.detector=file:C:/Temp/data/ai_city/cam_06_det.txt",
             ]
         },
         { "name": "Track Video (AI_CITY:09)",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
-                "ai_city:9",
-                "--output", "C:/Temp/cam_9_track.txt",
-                "--output_video", "C:/Temp/cam_9_track.mp4",
+                "ai_city:09",
+                "--output", "C:/Temp/cam_09_track.txt",
+                "--output_video", "C:/Temp/cam_09_track.mp4",
                 // "--show",
                 "--show_progress",
-                "tracker.detector=file:C:/Temp/data/cam_9_det.txt",
+                "tracker.detector=file:C:/Temp/data/ai_city/cam_09_det.txt",
             ]
         },
         { "name": "Track Video (AI_CITY:11)",
@@ -134,7 +85,7 @@
                 "--output_video", "C:/Temp/cam_11_track.mp4",
                 // "--show",
                 "--show_progress",
-                "tracker.detector=file:C:/Temp/data/cam_11_det.txt",
+                "tracker.detector=file:C:/Temp/data/ai_city/cam_11_det.txt",
             ]
         },
         { "name": "Track Video (ETRI:05)",
@@ -164,109 +115,24 @@
                 "tracker.max_age=30",
             ]
         },
-        {  "name": "Track Video (CROSS:01)",
+        {  "name": "Track Video (crossroads)",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
-                "cross:1",
-                "--output", "C:/Temp/cross_1_track.txt",
-                "--output_video", "C:/Temp/cross_1_track.mp4",
+                "cross:13",
+                "--output", "C:/Temp/cross_13_track.txt",
+                "--output_video", "C:/Temp/cross_13_track.mp4",
                 // "--show",
                 "--show_progress",
-                "tracker.detector=file:C:/Temp/data/cross_1_det.txt",
-            ]
-        },
-        {  "name": "Track Video (CROSS:02)",
-            "type": "python", "request": "launch", "console": "integratedTerminal",
-            "program": "${workspaceFolder}/bin/dna_track.py",
-            "args": [
-                "cross:2",
-                "--output", "C:/Temp/cross_2_track.txt",
-                "--output_video", "C:/Temp/cross_2_track.mp4",
-                // "--show",
-                "--show_progress",
-                "tracker.detector=file:C:/Temp/data/cross_2_det.txt",
-            ]
-        },
-        {  "name": "Track Video (CROSS:03)",
-            "type": "python", "request": "launch", "console": "integratedTerminal",
-            "program": "${workspaceFolder}/bin/dna_track.py",
-            "args": [
-                "cross:3",
-                "--begin_frame", "1130",
-                "--output", "C:/Temp/cross_3_track.txt",
-                "--output_video", "C:/Temp/cross_3_track.mp4",
-                "--show",
-                // "--show_progress",
-                "tracker.detector=file:C:/Temp/data/cross_3_det.txt",
-            ]
-        },
-        {  "name": "Track Video (CROSS:04)",
-            "type": "python", "request": "launch", "console": "integratedTerminal",
-            "program": "${workspaceFolder}/bin/dna_track.py",
-            "args": [
-                "cross:4",
-                "--output", "C:/Temp/cross_4_track.txt",
-                "--output_video", "C:/Temp/cross_4_track.mp4",
-                // "--show",
-                "--show_progress",
-                "tracker.detector=file:C:/Temp/data/cross_4_det.txt",
-            ]
-        },
-        {  "name": "Track Video (CROSS:11)",
-            "type": "python", "request": "launch", "console": "integratedTerminal",
-            "program": "${workspaceFolder}/bin/dna_track.py",
-            "args": [
-                "cross:11",
-                "--output", "C:/Temp/cross_11_track.txt",
-                "--output_video", "C:/Temp/cross_11_track.mp4",
-                // "--show",
-                "--show_progress",
-                "tracker.detector=file:C:/Temp/data/cross_11_det.txt",
-            ]
-        },
-        {  "name": "Track Video (CROSS:21)",
-            "type": "python", "request": "launch", "console": "integratedTerminal",
-            "program": "${workspaceFolder}/bin/dna_track.py",
-            "args": [
-                "cross:21",
-                "--output", "C:/Temp/cross_21_track.txt",
-                "--output_video", "C:/Temp/cross_21_track.mp4",
-                // "--show",
-                "--show_progress",
-                "tracker.detector=file:C:/Temp/data/cross_21_det.txt",
-            ]
-        },
-        {  "name": "Track Video (CROSS:22)",
-            "type": "python", "request": "launch", "console": "integratedTerminal",
-            "program": "${workspaceFolder}/bin/dna_track.py",
-            "args": [
-                "cross:22",
-                "--output", "C:/Temp/cross_22_track.txt",
-                "--output_video", "C:/Temp/cross_22_track.mp4",
-                // "--show",
-                "--show_progress",
-                "tracker.detector=file:C:/Temp/data/cross_22_det.txt",
-            ]
-        },
-        {  "name": "Track Video (CROSS:23)",
-            "type": "python", "request": "launch", "console": "integratedTerminal",
-            "program": "${workspaceFolder}/bin/dna_track.py",
-            "args": [
-                "cross:23",
-                "--output", "C:/Temp/cross_23_track.txt",
-                "--output_video", "C:/Temp/cross_23_track.mp4",
-                // "--show",
-                "--show_progress",
-                "tracker.detector=file:C:/Temp/data/cross_23_det.txt",
+                "tracker.detector=file:C:/Temp/data/crossroads/cross_13_det.txt",
             ]
         },
         { "name": "DNA Node (AI_CITY:01)",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_node.py",
             "args": [
-                "ai_city:1",
-                "--track_file", "C:/Temp/data/cam_1_track.txt",
+                "ai_city:01",
+                "--track_file", "C:/Temp/data/ai_city/cam_01_track.txt",
                 // "--show",
             ]
         },
@@ -301,24 +167,24 @@
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_node.py",
             "args": [
-                "etri:5",
-                "--track_file", "C:/Temp/data/etri_5_track.txt",
+                "etri:05",
+                "--track_file", "C:/Temp/data/etri/etri_05_track.txt",
             ]
         },
         { "name": "DNA Node (ETRI:06)",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_node.py",
             "args": [
-                "etri:6",
-                "--track_file", "C:/Temp/data/etri_6_track.txt",
+                "etri:06",
+                "--track_file", "C:/Temp/data/etri_06_track.txt",
             ]
         },
-        { "name": "DNA Node (CROSS:03)",
+        { "name": "DNA Node (crossroads)",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_node.py",
             "args": [
-                "cross:3",
-                "--track_file", "C:/Temp/data/cross_3_track.txt",
+                "cross:01",
+                "--track_file", "C:/Temp/data/crossroads/cross_01_track.txt",
             ]
         },
         { "name": "DNA Node (Test)",

@@ -52,8 +52,7 @@ if __name__ == '__main__':
 
     camera_infos = platform.get_resource_set("camera_infos")
     
-    info = CameraInfo(camera_id='ai_city:1', uri="C:/Temp/data/cam_1.mp4",
-                                    size=Size2i(1280, 960), fps=10)
+    info = CameraInfo(camera_id='ai_city:01', uri="C:/Temp/data/ai_city/cam_01.mp4", size=Size2i(1280, 960), fps=10)
     info.add_blind_region(Box.from_tlbr(np.array([7,2,504,115])))
     info.add_blind_region(Box.from_tlbr(np.array([10,591,279,816])))
     info.add_blind_region(Box.from_tlbr(np.array([909,38,1063,138])))
@@ -61,7 +60,7 @@ if __name__ == '__main__':
     info.add_blind_region(Box.from_tlbr(np.array([1156,6,1283,287])))
     camera_infos.insert(info)
     
-    info = CameraInfo(camera_id='ai_city:6', uri="C:/Temp/data/cam_6.mp4", size=Size2i(1280, 960), fps=10)
+    info = CameraInfo(camera_id='ai_city:06', uri="C:/Temp/data/ai_city/cam_06.mp4", size=Size2i(1280, 960), fps=10)
     info.add_blind_region(Box.from_tlbr(np.array([234,2,1054,145])))
     info.add_blind_region(Box.from_tlbr(np.array([806,126,1171,229])))
     info.add_blind_region(Box.from_tlbr(np.array([-8,-1,245,179])))
@@ -69,7 +68,7 @@ if __name__ == '__main__':
     info.add_blind_region(Box.from_tlbr(np.array([1164,66,1247,295])))
     camera_infos.insert(info)
 
-    info = CameraInfo(camera_id='ai_city:9', uri="C:/Temp/data/cam_9.mp4", size=Size2i(1920, 1080), fps=10)
+    info = CameraInfo(camera_id='ai_city:09', uri="C:/Temp/data/ai_city/cam_09.mp4", size=Size2i(1920, 1080), fps=10)
     info.add_blind_region(Box.from_tlbr(np.array([-13,1,1219,228])))
     info.add_blind_region(Box.from_tlbr(np.array([1209,-6,1435,159])))
     info.add_blind_region(Box.from_tlbr(np.array([1425,1,1918,110])))
@@ -77,40 +76,38 @@ if __name__ == '__main__':
     info.add_blind_region(Box.from_tlbr(np.array([1725,100,1917,172])))
     camera_infos.insert(info)
 
-    info = CameraInfo(camera_id='ai_city:11', uri="C:/Temp/data/cam_11.mp4", size=Size2i(1920, 1080), fps=10)
+    info = CameraInfo(camera_id='ai_city:11', uri="C:/Temp/data/ai_city/cam_11.mp4", size=Size2i(1920, 1080), fps=10)
     info.add_blind_region(Box.from_tlbr(np.array([-6,-1,979,189])))
     info.add_blind_region(Box.from_tlbr(np.array([1412,6,1930,271])))
     camera_infos.insert(info)
                                     
-    info = CameraInfo(camera_id='etri:5', uri="C:/Temp/data/etri_5.mp4", size=Size2i(1920, 1080), fps=10)
+    info = CameraInfo(camera_id='etri:05', uri="C:/Temp/data/etri/etri_05.mp4", size=Size2i(1920, 1080), fps=10)
     info.add_blind_region(Box.from_tlbr(np.array([-17,-3,727,391])))
     info.add_blind_region(Box.from_tlbr(np.array([719,29,1904,249])))
     info.add_blind_region(Box.from_tlbr(np.array([1307,232,1915,398])))
     info.add_blind_region(Box.from_tlbr(np.array([-5,828,1235,1082])))
     camera_infos.insert(info)
 
-    info = CameraInfo(camera_id='etri:6', uri="C:/Temp/data/etri_6.mp4", size=Size2i(1920, 1080), fps=10)
+    info = CameraInfo(camera_id='etri:06', uri="C:/Temp/data/etri/etri_06.mp4", size=Size2i(1920, 1080), fps=10)
     info.add_blind_region(Box.from_tlbr(np.array([1309,223,1908,488])))
     info.add_blind_region(Box.from_tlbr(np.array([743,87,1081,316])))
     info.add_blind_region(Box.from_tlbr(np.array([1741,508,1923,1087])))
-    # info.add_blind_region(Box.from_tlbr(np.array([-4,680,385,1084])))
-    # info.add_blind_region(Box.from_tlbr(np.array([-4,680,585,1084])))
     info.add_blind_region(Box.from_tlbr(np.array([-3,634,387,1083])))
     camera_infos.insert(info)
                                     
-    info = CameraInfo(camera_id='etri_live:3',
+    info = CameraInfo(camera_id='etri_live:03',
                             uri="rtsp://admin:dnabased24@129.254.82.33:558/LiveChannel/3/media.smp",
                             size=Size2i(1280, 720), fps=10)
     camera_infos.insert(info)  
-    info = CameraInfo(camera_id='etri_live:4',
+    info = CameraInfo(camera_id='etri_live:04',
                             uri="rtsp://admin:dnabased24@129.254.82.33:558/LiveChannel/4/media.smp",
                             size=Size2i(1280, 720), fps=10)
     camera_infos.insert(info) 
-    info = CameraInfo(camera_id='etri_live:5',
+    info = CameraInfo(camera_id='etri_live:05',
                             uri="rtsp://admin:dnabased24@129.254.82.33:558/LiveChannel/5/media.smp",
                             size=Size2i(1280, 720), fps=10)
     camera_infos.insert(info) 
-    info = CameraInfo(camera_id='etri_live:6',
+    info = CameraInfo(camera_id='etri_live:06',
                             uri="rtsp://admin:dnabased24@129.254.82.33:558/LiveChannel/6/media.smp",
                             size=Size2i(1280, 720), fps=10)
     camera_infos.insert(info)
