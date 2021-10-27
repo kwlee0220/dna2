@@ -193,11 +193,11 @@
             "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
                 "cross:3",
-                // "--begin_frame", "620",
+                "--begin_frame", "1130",
                 "--output", "C:/Temp/cross_3_track.txt",
                 "--output_video", "C:/Temp/cross_3_track.mp4",
-                // "--show",
-                "--show_progress",
+                "--show",
+                // "--show_progress",
                 "tracker.detector=file:C:/Temp/data/cross_3_det.txt",
             ]
         },

@@ -215,6 +215,13 @@ class Tracker:
         for tidx, track in enumerate(self.tracks):
             costs = [round(v, 2) for v in metric_cost[tidx]]
             track_str = f"{tidx:02d}: {track.track_id:03d}({track.state},{track.time_since_update:02d})"
-            dist_str = ', '.join([f"{v:.2f}" for v in costs])
+            # dist_str = ', '.join([f"{v:.2f}" for v in costs])
+            dist_str = ', '.join([_pattern(i,v) for i, v in enumerate(costs)])
             print(f"{track_str}: {dist_str}")
+
+def _pattern(i,v):
+    if v == 9.99:
+        return "    "
+    else:
+        return f"{v:.2f}"
     ###############################################################################################################
