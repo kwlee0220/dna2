@@ -69,13 +69,13 @@
                 "--show_progress"
             ]
         },
-        { "name": "Detect Video (CROSS)",
+        { "name": "Detect Video (crossroads)",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_detect.py",
             "args": [
-                "cross:4",
-                "--output", "C:/Temp/cross_4_det.txt",
-                "--output_video", "C:/Temp/cross_4_det.mp4",
+                "cross:21",
+                "--output", "C:/Temp/cross_21_det.txt",
+                "--output_video", "C:/Temp/cross_21_det.mp4",
                 "--show_progress"
             ]
         },
