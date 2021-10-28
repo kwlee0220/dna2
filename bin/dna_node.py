@@ -74,7 +74,7 @@ if __name__ == '__main__':
     thread = Thread(target=path_upload.run, args=tuple())
     thread.start()
 
-    win_name = "output" if args.show else None
+    win_name = args.camera if args.show else None
     with ObjectTrackingProcessor(cap, tracker, enhancer, window_name=win_name) as processor:
         started = timer()
         frame_count = processor.run()

@@ -52,7 +52,7 @@ class LocalPathUploader:
         self.sessions = dict()
         self.batch_size = conf.batch_size
         self.min_path_count = conf.min_path_count
-        self.max_pending_sec = timedelta(conf.max_pending_sec)
+        self.max_pending_sec = timedelta(seconds=conf.max_pending_sec)
         self.local_path_buffer = []
         self.last_upload_ts = datetime.now()
 

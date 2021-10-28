@@ -19,7 +19,6 @@ class ImageProcessor(metaclass=ABCMeta):
                 show_progress: bool=False, stop_at_the_last=False) -> None:
         self.__cap = capture
         self.window_name = window_name
-        self.show = window_name is not None
         self.output_video = output_video if not output_video or isinstance(output_video, Path) \
                                         else Path(output_video)
         self.writer = None
@@ -101,7 +100,7 @@ class ImageProcessor(metaclass=ABCMeta):
             if dna.DEBUG_PRINT_COST:
                 print("---------------------------------------------------------------------")
                 
-            if self.window_name and self.show:
+            if self.window_name:
                 cv2.imshow(self.window_name, frame)
 
                 key = cv2.waitKey(int(1)) & 0xFF
@@ -115,8 +114,6 @@ class ImageProcessor(metaclass=ABCMeta):
                             break
                 else:
                     key = self.set_control(key)
-                    if key == ord('v'):
-                        self.show = not self.show
 
             elapsed = time.time() - started
             if progress is not None:
@@ -130,7 +127,7 @@ class ImageProcessor(metaclass=ABCMeta):
                 elapsed_avg = elapsed
             self.__fps_measured = 1 / elapsed_avg
 
-        if key != ord('q') and self.window_name and self.show and self.stop_at_the_last:
+        if key != ord('q') and self.window_name and self.stop_at_the_last:
             cv2.waitKey(-1)
 
         if progress:

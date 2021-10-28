@@ -95,19 +95,19 @@ if __name__ == '__main__':
     info.add_blind_region(Box.from_tlbr(np.array([-3,634,387,1083])))
     camera_infos.insert(info)
                                     
-    info = CameraInfo(camera_id='etri_live:03',
+    info = CameraInfo(camera_id='etri_live:04',
                             uri="rtsp://admin:dnabased24@129.254.82.33:558/LiveChannel/3/media.smp",
                             size=Size2i(1280, 720), fps=10)
     camera_infos.insert(info)  
-    info = CameraInfo(camera_id='etri_live:04',
+    info = CameraInfo(camera_id='etri_live:05',
                             uri="rtsp://admin:dnabased24@129.254.82.33:558/LiveChannel/4/media.smp",
                             size=Size2i(1280, 720), fps=10)
     camera_infos.insert(info) 
-    info = CameraInfo(camera_id='etri_live:05',
+    info = CameraInfo(camera_id='etri_live:06',
                             uri="rtsp://admin:dnabased24@129.254.82.33:558/LiveChannel/5/media.smp",
                             size=Size2i(1280, 720), fps=10)
     camera_infos.insert(info) 
-    info = CameraInfo(camera_id='etri_live:06',
+    info = CameraInfo(camera_id='etri_live:07',
                             uri="rtsp://admin:dnabased24@129.254.82.33:558/LiveChannel/6/media.smp",
                             size=Size2i(1280, 720), fps=10)
     camera_infos.insert(info)
