@@ -4,7 +4,7 @@ from cv2 import determinant
 import dna
 from dna.utils import draw_ds_detections, draw_ds_tracks
 import nn_matching
-from tracker import Tracker 
+from .tracker import Tracker 
 from application_util import preprocessing as prep
 from application_util import visualization
 from detection import Detection
