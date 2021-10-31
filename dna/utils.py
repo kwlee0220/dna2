@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .types import Box
 
+
 def datetime2utc(dt: datetime) -> int:
     return int(dt.replace(tzinfo=timezone.utc).timestamp())
 

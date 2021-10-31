@@ -6,31 +6,6 @@ platform:
     dbname: dna
     user: postgres
     password: dna2021
-    
-camera:
-  etri:
-    04:
-      focal: [1096.5373289696195, 1098.8949696040663]
-      center: [967.19734807350915, 553.59473827451427]
-      distort: [-0.32895262915344975, 0.074313750093941575, 0.00229937730428126, 0.000639401514756703]
-      idx_pts:
-          3: [986, 375]
-          6: [1078, 388]
-
-tracker:
-  deep_sort:
-    detector: yolov4
-    model_file: dna/track/deepsort/ckpts/model640.pt
-    # model_file: dna/track/deepsort/ckpts/vehicle_model280.pt
-    n_init: 3
-    matching_threshold: 0.55
-    max_iou_distance: 0.7
-    max_age: 10
-    min_detection_score: 0
-    det_mapping:
-      car: car
-      bus: bus
-      truck: car
 
 enhancer:
   log_level: info

@@ -1,6 +1,7 @@
 from typing import List, Union
 from dataclasses import dataclass
 from collections import defaultdict
+from pathlib import Path
 
 from omegaconf import OmegaConf
 import numpy as np
@@ -67,9 +68,25 @@ class TopViewProcessor(ImageProcessor):
 
         return frame
 
-import pickle, sys
-if __name__ == '__main__':
+def load_configs() -> OmegaConf:
     conf = OmegaConf.load("conf/config.yaml")
+    for dir, subdirs, files in os.walk("conf"):
+        for file in files:
+            if dir == 'conf' and file == 'config.yaml':
+                continue
+            if os.path.splitext(file)[1] == ".yaml":
+                yaml_path = Path(os.path.join(dir, file))
+                sub_conf = OmegaConf.load(yaml_path)
+
+                parts = Path(os.path.splitext(yaml_path)[0]).parts
+                key = '.'.join(parts[1:])
+                OmegaConf.update(conf, key, sub_conf)
+    return conf
+
+
+import pickle, sys, os
+if __name__ == '__main__':
+    conf = load_configs()
 
     with open('camera_etri_test.pickle', 'rb') as f:
         topview, cameras = pickle.load(f)

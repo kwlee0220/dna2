@@ -92,7 +92,7 @@ class Point:
             raise ValueError('invalid right-hand-side:', rhs)
     
     def __repr__(self) -> str:
-        if isinstance(self.xy[0], int):
+        if isinstance(self.xy[0], np.int32):
             return '({},{})'.format(*self.xy)
         else:
             return '({:.1f},{:.1f})'.format(*self.xy)
@@ -155,7 +155,7 @@ class Size2d:
             raise ValueError('invalid right-hand-side:', rhs)
     
     def __repr__(self) -> str:
-        if isinstance(self.wh[0], int):
+        if isinstance(self.wh[0], np.int32):
             return '{}x{}'.format(*self.__wh)
         else:
             return '{:.1f}x{:.1f}'.format(*self.__wh)
@@ -232,6 +232,10 @@ class Box:
         tl = tlwh[0:2]
         wh = tlwh[2:4]
         return Box(tl, tl + wh, wh)
+
+    @staticmethod
+    def from_size(size: Size2d) -> Box:
+        return Box.from_tlbr(np.array([0, 0, size.width, size.height]))
 
     def is_valid(self) -> bool:
         return self.__wh[0] >= 0 and self.__wh[1] >= 0

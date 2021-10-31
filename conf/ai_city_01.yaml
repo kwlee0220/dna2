@@ -1,0 +1,26 @@
+
+camera:
+  id: ai_city:01
+  uri: C:/Temp/data/ai_city/ai_city_01.mp4
+  size: [1280, 960]
+  fps: 10
+  blind_regions:
+    - [7,2,504,115]
+    - [10,591,279,816]
+    - [909,38,1063,138]
+    - [1045,76,1154,155]
+    - [1156,6,1283,287]
+
+tracker:
+  # detector: yolov4
+  detector: file:C:/Temp/data/ai_city/ai_city_01_det.txt
+  model_file: dna/track/deepsort/ckpts/model640.pt
+  n_init: 3
+  matching_threshold: 0.55
+  max_iou_distance: 0.7
+  max_age: 20
+  min_detection_score: 0
+  det_mapping:
+    car: car
+    bus: bus
+    truck: car

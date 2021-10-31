@@ -5,9 +5,8 @@ import psycopg2 as pg2
 from psycopg2.extras import execute_values
 from omegaconf.omegaconf import OmegaConf
 
-from dna.camera import ImageCapture, load_image_capture
+from dna.camera import ImageCapture
 from .types import ResourceSet
-from .camera_info import CameraInfo, CameraInfoSet
 from .local_path import LocalPathSet
 
 
@@ -17,7 +16,7 @@ class DNAPlatform:
         self.conn_parms = {'host': host, 'port': port, 'user': user,
                             'password': password, 'dbname': dbname}
         self.conn = None
-        self.resource_set_dict = {'camera_infos': CameraInfoSet(self), 'local_paths': LocalPathSet(self)}
+        self.resource_set_dict = {'local_paths': LocalPathSet(self)}
 
     @classmethod
     def load(cls, conf_dict) -> DNAPlatform:
@@ -41,13 +40,6 @@ class DNAPlatform:
 
         return rset
 
-    def get_resource(self, rset_id:str, key:Tuple) -> Tuple[CameraInfoSet,Any]:
+    def get_resource(self, rset_id:str, key:Tuple) -> Tuple[ResourceSet,Any]:
         rset = self.get_resource_set(rset_id)
         return rset, rset.get(key)
-
-    def load_image_capture(self, camera_id: str, sync=True) -> ImageCapture:
-        _, camera_info = self.get_resource("camera_infos", (camera_id,))
-        if camera_info is None:
-            raise ValueError(f"unknown camera_id: '{camera_id}'")
-
-        return load_image_capture(camera_info.uri, camera_info.size, sync=sync)

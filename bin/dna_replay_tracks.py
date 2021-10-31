@@ -5,9 +5,8 @@ from typing import List
 from omegaconf import OmegaConf
 import cv2
 
-import dna
-from dna import color, plot_utils
-from dna.camera import ImageCapture, ImageProcessor, load_image_capture
+from dna import color, plot_utils, DNA_CONIFIG_FILE, parse_config_args, load_config
+from dna.camera import Camera, ImageCapture, ImageProcessor
 from dna.platform import DNAPlatform, LocalPath
 
 class TrackShow:
@@ -61,8 +60,8 @@ import sys
 import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description="Replay a localpath on the screen")
-    parser.add_argument("camera", metavar='camera_uri', help="target camera uri")
-    parser.add_argument("--conf", help="DNA framework configuration", default=dna.DNA_CONIFIG_FILE)
+    parser.add_argument("node", metavar='node_id', help="target node_id")
+    parser.add_argument("--conf", help="DNA framework configuration", default=DNA_CONIFIG_FILE)
     parser.add_argument("--no_sync", help="do not sync to fps", action="store_true")
 
     parser.add_argument("--output_video", metavar="file", help="output video file", required=False)
@@ -71,16 +70,16 @@ def parse_args():
 if __name__ == '__main__':
     args, unknown = parse_args()
 
-    conf = OmegaConf.load(args.conf)
-    config_grp = dna.parse_config_args(unknown)
+    conf = load_config(DNA_CONIFIG_FILE, args.node)
+    config_grp = parse_config_args(unknown)
+
+    camera_info = Camera.from_conf(conf.camera)
+
     platform = DNAPlatform.load_from_config(conf.platform)
-
     rset = platform.get_resource_set("local_paths")
-    lpaths = rset.get_all(f"camera_id='{args.camera}'")
+    lpaths = rset.get_all(f"camera_id='{camera_info.camera_id}'")
 
-    _, camera_info = platform.get_resource("camera_infos", (args.camera,))
-
-    cap = load_image_capture(camera_info.uri, sync=not args.no_sync)
+    cap = camera_info.get_capture(sync=not args.no_sync)
     with TrackShowProcessor(cap, lpaths, output_video=args.output_video) as processor:
         from timeit import default_timer as timer
         from datetime import timedelta
