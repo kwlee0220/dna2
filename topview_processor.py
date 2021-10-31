@@ -2,33 +2,36 @@ from typing import List, Union
 from dataclasses import dataclass
 from collections import defaultdict
 from pathlib import Path
+from collections import namedtuple
 
 from omegaconf import OmegaConf
 import numpy as np
 import cv2
 
-from dna import color, Box, plot_utils
-from dna.camera import ImageCapture, ImageProcessor, ImageCaptureType, image_capture_type, load_image_capture
+from dna import Box, DNA_CONIFIG_FILE, parse_config_args, load_config, color
+from dna.camera import ImageCapture, ImageProcessor, Camera
 from dna.track import ObjectTracker, Track, LogFileBasedObjectTracker
 from dna.platform import DNAPlatform
 
 
-def localize_bbox(pt, K=np.eye(3), distort=None, cam_ori=np.eye(3), cam_pos=np.zeros((3, 1)), offset=0.):
-    if len(pt) == 4: # [tl.x, tl.y, br.x, br.y]
-        tl_x, tl_y, br_x, br_y = pt
-        foot_p = [(tl_x + br_x) / 2, br_y]
-        head_p = [(tl_x + br_x) / 2, tl_y]
+_METER_PER_PIXEL = 0.12345679012345678
+_ORIGIN = [126, 503]
+CameraGeometry = namedtuple('CameraGeometry', 'K,distort,ori,pos')
 
-        foot_n, head_n = cv2.undistortPoints(np.array([foot_p, head_p]), K, distort).squeeze(axis=1)
-        foot_c = np.matmul(cam_ori, np.append(foot_n, 1))
-        head_c = np.matmul(cam_ori, np.append(head_n, 1))
+def localize_bbox(pt, geom: CameraGeometry, offset=0.):
+    tl_x, tl_y, br_x, br_y = pt
+    foot_p = [(tl_x + br_x) / 2, br_y]
+    head_p = [(tl_x + br_x) / 2, tl_y]
 
-        scale = (offset - cam_pos[1]) / foot_c[1]
-        position = scale * foot_c + cam_pos
-        height   = scale * (foot_c[1] - head_c[1])
-        distance = scale * np.linalg.norm(foot_c)
-        return (position, height, distance)
-    return None
+    foot_n, head_n = cv2.undistortPoints(np.array([foot_p, head_p]), geom.K, geom.distort).squeeze(axis=1)
+    foot_c = np.matmul(geom.ori, np.append(foot_n, 1))
+    head_c = np.matmul(geom.ori, np.append(head_n, 1))
+
+    scale = (offset - geom.pos[1]) / foot_c[1]
+    position = scale * foot_c + geom.pos
+    height   = scale * (foot_c[1] - head_c[1])
+    distance = scale * np.linalg.norm(foot_c)
+    return (position, height, distance)
 
 def conv_pixel2meter(pt, origin, meter_per_pixel):
     x = (pt[0] - origin[0]) * meter_per_pixel
@@ -42,72 +45,48 @@ def conv_meter2pixel(pt, origin, meter_per_pixel):
     return [u, v]
 
 class TopViewProcessor(ImageProcessor):
-    def __init__(self, capture: ImageCapture, tracker: ObjectTracker, camera_geometry, topview) -> None:
+    def __init__(self, capture: ImageCapture, tracker: ObjectTracker, camera_geometry, map_image) -> None:
         super().__init__(capture, window_name="view")
 
         self.tracker = tracker
         self.geometry = camera_geometry
-        self.convas = cv2.imread(topview['file'])
-        self.topview = topview
+        self.map_image = map_image
 
     def process_image(self, frame: np.ndarray, frame_idx: int, ts) -> np.ndarray:
-        convas = self.convas.copy()
+        convas = self.map_image.copy()
 
         tracks = self.tracker.track(frame, frame_idx, ts)
         for track in tracks:
-            res = localize_bbox(track.location.tlbr, self.geometry['K'], self.geometry['distort'],
-                                self.geometry['ori'], self.geometry['pos'])
+            res = localize_bbox(track.location.tlbr, self.geometry)
             # print(res[0])
 
-            px = np.array(conv_meter2pixel(res[0], self.topview['origin'],
-                                            self.topview['meter_per_pixel'])).astype(int)
-            print(px)
+            px = np.array(conv_meter2pixel(res[0], _ORIGIN, _METER_PER_PIXEL)).astype(int)
             cv2.circle(convas, px, 5, color.RED, -1)
         cv2.imshow("output", convas)
         cv2.waitKey(1)
 
         return frame
 
-def load_configs() -> OmegaConf:
-    conf = OmegaConf.load("conf/config.yaml")
-    for dir, subdirs, files in os.walk("conf"):
-        for file in files:
-            if dir == 'conf' and file == 'config.yaml':
-                continue
-            if os.path.splitext(file)[1] == ".yaml":
-                yaml_path = Path(os.path.join(dir, file))
-                sub_conf = OmegaConf.load(yaml_path)
-
-                parts = Path(os.path.splitext(yaml_path)[0]).parts
-                key = '.'.join(parts[1:])
-                OmegaConf.update(conf, key, sub_conf)
-    return conf
-
-
 import pickle, sys, os
 if __name__ == '__main__':
-    conf = load_configs()
+    # args, unknown = parse_args()
+    # config_grp = parse_config_args(unknown)
 
+    conf = load_config(DNA_CONIFIG_FILE, 'etri_05')
+    camera_info = Camera.from_conf(conf.camera)
+    cap = camera_info.get_capture(sync=True)
     with open('camera_etri_test.pickle', 'rb') as f:
         topview, cameras = pickle.load(f)
-    if not topview or not cameras:
-        sys.exit('Error: The camera file contains no camera information.')
+    # if not topview or not cameras:
+    #     sys.exit('Error: The camera file contains no camera information.')
 
-    topview['convas'] = cv2.imread(topview['file'])
+    with open('data/camera_geoms/etri_05.pickle', 'rb') as f:
+        geom = pickle.load(f)
 
-    uri = "etri:06"
-    cap_type = image_capture_type(uri)
-    if cap_type == ImageCaptureType.PLATFORM:
-        platform = DNAPlatform.load_from_config(conf.platform)
-        _, camera_info = platform.get_resource("camera_infos", (uri,))
-        uri = camera_info.uri
-        blind_regions = camera_info.blind_regions
-    else:
-        blind_regions = None
-    cap = load_image_capture(uri)
+    map_image = cv2.imread('data/ETRI.png')
 
     tracker = LogFileBasedObjectTracker("C:/Temp/data/etri/etri_05_track.txt")
-    with TopViewProcessor(cap, tracker, cameras[0], topview) as processor:
+    with TopViewProcessor(cap, tracker, geom, map_image) as processor:
         from timeit import default_timer as timer
         from datetime import timedelta
 

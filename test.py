@@ -1,42 +1,33 @@
 
+from collections import namedtuple
 from datetime import datetime
 from pathlib import Path
 
 import cv2
+import pickle
 
 import math
 import numpy as np
 
-from dna import Point, Size2i, Size2d
-from dna.platform import CameraInfo, DNAPlatform, LocalPath
-from dna.camera import DefaultImageCapture, ImageProcessor, VideoFileCapture, SyncImageCapture
+from dna.enhancer.global_transformer import CameraGeometry
 
-# platform = DNAPlatform()
-# platform.connect()
+def _to_geometry(camera) -> CameraGeometry:
+    return CameraGeometry(camera['K'], camera['distort'], camera['ori'], camera['pos'])
 
-# camera_info_rset = platform.get_resource_set('camera_infos')
-# camera_info = camera_info_rset.get(("ai_city:9",))
-# max_diff = camera_info.size / 500
-# print(camera_info, max_diff)
+with open('camera_etri_test.pickle', 'rb') as f:
+    topview, cameras = pickle.load(f)
 
-# local_paths = platform.get_resource_set('local_paths')
-# path: LocalPath = local_paths.get(('ai_city:9', 228))
-# print(path)
+with open('etri_04.pickle', 'wb') as f:
+    pickle.dump(_to_geometry(cameras[0]), f)
 
-# cap = DefaultImageCapture("rtsp://admin:dnabased24@129.254.82.33:558/LiveChannel/3/media.smp",
-#                     target_size=Size2i(800,600))
-cap = VideoFileCapture(Path("C:/Temp/data/cam_9.mp4"), sync=True)
-# cap = VideoFileCapture(Path("C:/Temp/xxx.mp4"), sync=True)
-cap = SyncImageCapture(cap)
-# with ImageProcessor(cap, window_name="output") as proc:
-#     proc.run()
-cap.open()
-while cap.is_open():
-    _, frame_idx, frame = cap.capture()
-    print(frame_idx)
+with open('etri_05.pickle', 'wb') as f:
+    pickle.dump(_to_geometry(cameras[1]), f)
 
-    cv2.imshow("output", frame)
-    key = cv2.waitKey(1000) & 0xFF
-    if key == ord('q'):
-        break
-cap.close()
+with open('etri_05.pickle', 'rb') as f:
+    o = pickle.load(f)
+
+with open('etri_06.pickle', 'wb') as f:
+    pickle.dump(_to_geometry(cameras[2]), f)
+
+with open('etri_07.pickle', 'wb') as f:
+    pickle.dump(_to_geometry(cameras[3]), f)

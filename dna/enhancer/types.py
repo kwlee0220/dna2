@@ -14,6 +14,7 @@ class TrackEvent:
     camera_id: str
     luid: int
     location: Box
+    world_pos: np.ndarray   # (x, y, z)
     frame_index: int
     ts: float
     
