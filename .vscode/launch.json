@@ -58,7 +58,7 @@
             "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
                 "etri_061",
-                "--begin_frame", "457",
+                "--begin_frame", "190",
                 "--output", "C:/Temp/etri_061_track.txt",
                 "--output_video", "C:/Temp/etri_061_track.mp4",
                 "--show", 
