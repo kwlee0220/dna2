@@ -25,6 +25,7 @@ def parse_args():
                         help="output video file", required=False)
     parser.add_argument("--show_progress", help="show progress bar.", action="store_true")
     parser.add_argument("--show", help="show detections.", action="store_true")
+    parser.add_argument("--show_blind_regions", help="show blind regions.", action="store_true")
     return parser.parse_known_args()
 
 
@@ -44,6 +45,7 @@ if __name__ == '__main__':
     win_name = camera_info.camera_id if args.show else None
     with ObjectTrackingProcessor(cap, tracker, track_writer,
                                 window_name=win_name, output_video=args.output_video,
+                                show_blind_regions=args.show_blind_regions,
                                 show_progress=args.show_progress) as processor:
         from timeit import default_timer as timer
         from datetime import timedelta

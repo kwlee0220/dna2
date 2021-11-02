@@ -22,7 +22,7 @@ class ObjectDetectingProcessor(ImageProcessor):
         self.output = output
         self.out_handle = None
 
-    def on_started(self) -> None:
+    def on_started(self, capture) -> None:
         if self.output:
             self.out_handle = open(self.output, 'w')
         return self

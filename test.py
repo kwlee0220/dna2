@@ -9,7 +9,7 @@ import pickle
 import math
 import numpy as np
 
-from dna.enhancer.global_transformer import CameraGeometry
+from dna.enhancer.world_transform import CameraGeometry
 
 def _to_geometry(camera) -> CameraGeometry:
     return CameraGeometry(camera['K'], camera['distort'], camera['ori'], camera['pos'])

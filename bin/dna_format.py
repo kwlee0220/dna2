@@ -9,11 +9,14 @@ from psycopg2.extras import execute_values
 from dna import  DNA_CONIFIG_FILE, parse_config_args, load_config
 from dna.platform import DNAPlatform
 
+
 _SQL_CREATE_TRACK_EVENTS = """
 create table track_events (
     camera_id varchar not null,
     luid bigint not null,
     bbox box not null,
+    world_coord geometry(pointz),
+    distance real,
     frame_index bigint not null,
     ts timestamp not null
 )

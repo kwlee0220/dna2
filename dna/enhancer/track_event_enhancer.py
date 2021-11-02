@@ -9,12 +9,10 @@ from omegaconf import OmegaConf
 from dna import Box, get_logger
 from dna.track import Track, TrackState, ObjectTracker
 from dna.track.track_callbacks import TrackerCallback
-from .types import TrackEvent
+from .types import TrackEvent, end_of_track_event
 
 
 _CHANNEL = "track_events"
-
-
 @dataclass(unsafe_hash=True)
 class Session:
     state: TrackState
@@ -39,7 +37,7 @@ class TrackEventEnhancer(TrackerCallback):
 
     def track_started(self, tracker: ObjectTracker) -> None: pass
     def track_stopped(self, tracker: ObjectTracker) -> None:
-        stop = TrackEvent(camera_id=self.camera_id, luid=None, location=None, frame_index=None, ts=None)
+        stop = end_of_track_event(self.camera_id)
         self.pubsub.publish(_CHANNEL, stop)
         self.sessions.clear()
         self.queue.task_done()
@@ -96,5 +94,6 @@ class TrackEventEnhancer(TrackerCallback):
     def __publish(self, track):
         location = None if track.is_deleted() else track.location
         ev = TrackEvent(camera_id=self.camera_id, luid=track.id, location=location,
+                            world_coord=None, distance=None,
                             frame_index=track.frame_index, ts=track.ts)
         self.pubsub.publish(_CHANNEL, ev)

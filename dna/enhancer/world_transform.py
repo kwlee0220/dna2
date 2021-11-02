@@ -1,24 +1,42 @@
 from typing import List, Union
 from collections import namedtuple
 
+import pickle
 from queue import Queue
 from omegaconf import OmegaConf
 import cv2
 import numpy as np
+from shapely.geometry import Point as ShapelyPoint
 
 from dna.platform import DNAPlatform
-from .types import TrackEvent
+from .types import TrackEvent, end_of_track_event
+from .event_processor import EventProcessor
 
 CameraGeometry = namedtuple('CameraGeometry', 'K,distort,ori,pos')
 
 
-class WorldTransform:
-    def __init__(self, mqueue: Queue, camera_geometry) -> None:
-        self.mqueue = mqueue
-        self.geometry = camera_geometry
+_CHANNEL = "world_coords"
+class WorldTransform(EventProcessor):
+    def __init__(self, camera_id, pubsub, in_queue: Queue, conf: OmegaConf) -> None:
+        self.camera_id = camera_id
+        self.in_queue = in_queue
+        self.pubsub = pubsub
+        with open(conf.file, 'rb') as f:
+            self.geometry = pickle.load(f)
+
+    def close(self) -> None:
+        self.pubsub.publish(_CHANNEL, end_of_track_event(self.camera_id))
+
+    def subscribe(self) -> Queue:
+        return self.pubsub.subscribe(_CHANNEL)
 
     def handle_event(self, ev: TrackEvent) -> None:
-        pos, height, dist = self._localize_bbox(ev.location.tlbr)
+        wcoord, height, dist = self._localize_bbox(ev.location.tlbr)
+
+        enhanced = TrackEvent(ev.camera_id, ev.luid, ev.location,
+                                world_coord=ShapelyPoint(wcoord), distance=dist,
+                                frame_index=ev.frame_index, ts=ev.ts)
+        self.pubsub.publish(_CHANNEL, enhanced)
 
     def _localize_bbox(self, tlbr, offset=0):
         tl_x, tl_y, br_x, br_y = tlbr

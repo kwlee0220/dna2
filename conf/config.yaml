@@ -10,10 +10,10 @@ platform:
 enhancer:
   log_level: info
 
-event_uploader:
-  batch_size: 100
+  event_uploader:
+    batch_size: 100
 
-path_uploader:
-  min_path_count: 10
-  batch_size: 10
-  max_pending_sec: 5
+  path_uploader:
+    min_path_count: 10
+    batch_size: 10
+    max_pending_sec: 5

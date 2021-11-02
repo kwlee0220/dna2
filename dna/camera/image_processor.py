@@ -30,7 +30,7 @@ class ImageProcessor(metaclass=ABCMeta):
     def fps_measured(self) -> float:
         return self.__fps_measured
 
-    def on_started(self) -> None:
+    def on_started(self, capture: ImageCapture) -> None:
         pass
 
     def on_stopped(self) -> None:
@@ -45,7 +45,7 @@ class ImageProcessor(metaclass=ABCMeta):
     def __enter__(self):
         self.__cap.open()
         try:
-            self.on_started()
+            self.on_started(self.__cap)
             if self.output_video:
                 fourcc = None
                 ext = self.output_video.suffix.lower()

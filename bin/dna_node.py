@@ -5,6 +5,7 @@ import sys
 
 from timeit import default_timer as timer
 from datetime import timedelta
+from dna.enhancer.world_transform import WorldTransform
 from pubsub import PubSub, Queue
 from omegaconf import OmegaConf
 import numpy as np
@@ -50,19 +51,24 @@ if __name__ == '__main__':
         domain = Box.from_size(camera_info.size)
         tracker = DeepSORTTracker(detector, domain, conf.tracker, blind_regions=camera_info.blind_regions)
 
+    platform = DNAPlatform.load_from_config(conf.platform)
+
     pubsub = PubSub()
     enhancer = TrackEventEnhancer(pubsub, camera_info.camera_id, conf.enhancer)
 
-    platform = DNAPlatform.load_from_config(conf.platform)
-    te_upload = TrackEventUploader(platform, enhancer.subscribe(), conf.event_uploader)
-    thread = Thread(target=te_upload.run, args=tuple())
+    wtrans = WorldTransform(camera_info.camera_id, pubsub, enhancer.subscribe(), conf.camera_geometry)
+    thread = Thread(target=wtrans.run, args=tuple())
     thread.start()
 
-    path_upload = LocalPathUploader(platform, enhancer.subscribe(), conf.path_uploader)
+    path_upload = LocalPathUploader(platform, wtrans.subscribe(), conf.enhancer.path_uploader)
     thread = Thread(target=path_upload.run, args=tuple())
     thread.start()
 
-    win_name = args.camera if args.show else None
+    te_upload = TrackEventUploader(platform, wtrans.subscribe(), conf.enhancer.event_uploader)
+    thread = Thread(target=te_upload.run, args=tuple())
+    thread.start()
+
+    win_name = camera_info.camera_id if args.show else None
     with ObjectTrackingProcessor(cap, tracker, enhancer, window_name=win_name) as processor:
         started = timer()
         frame_count = processor.run()

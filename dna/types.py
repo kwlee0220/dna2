@@ -106,6 +106,9 @@ class Size2d:
     def from_np(cls, wh: np.ndarray) -> Point:
         return Size2d(wh[0], wh[1])
 
+    def as_tuple(self) -> Tuple[Union[int, float],Union[int, float]]:
+        return tuple(self.__wh)
+
     def is_valid(self) -> bool:
         return self.__wh[0] >= 0 and self.__wh[1] >= 0
 
@@ -128,7 +131,7 @@ class Size2d:
         return Size2d.from_np(np.abs(self.__wh))
 
     def to_size2i(self):
-        return Size2i(np.rint(self.wh).astype(int))
+        return Size2i.from_np(np.rint(self.wh).astype(int))
 
     def __sub__(self, rhs) -> Size2d:
         if isinstance(rhs, Size2d) or isinstance(rhs, Size2i):

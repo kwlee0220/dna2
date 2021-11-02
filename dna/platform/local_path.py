@@ -3,12 +3,12 @@ from dataclasses import dataclass
 from typing import List, Tuple
 
 import itertools
-from datetime import datetime
 import numpy as np
 from psycopg2.extras import execute_values
+from shapely.geometry import LineString
+from shapely import wkb, ops
 
-from dna import Point, Box
-from dna.enhancer.types import TrackEvent
+from dna import Point
 from .types import ResourceSet
 from .utils import parse_point_list
 
@@ -21,19 +21,21 @@ class LocalPath:
     first_frame: int    # 3
     last_frame: int     # 4
     continuation: bool  # 5, true if this is not the last block. false if this is the last block
-    points: List[Point]   # 6
+    points: List[Point] # 6
+    line: LineString    # 7
 
     def serialize(self):
         points_expr =','.join(['({},{})'.format(*np.rint(tp.xy).astype(int)) for tp in self.points])
         points_expr = "[{}]".format(points_expr)
 
         return (self.camera_id, self.luid, len(self.points), self.length,
-                self.first_frame, self.last_frame, self.continuation, points_expr)
+                self.first_frame, self.last_frame, self.continuation, points_expr, self.line.wkb_hex)
 
     @classmethod
     def deserialize(cls, tup):
         points = list(parse_point_list(tup[7][1:-1]))
-        return LocalPath(camera_id=tup[0], luid=tup[1], points=points, length=tup[3],
+        line = wkb.loads(tup[8], hex=True)
+        return LocalPath(camera_id=tup[0], luid=tup[1], points=points, length=tup[3], line=line,
                             first_frame=tup[4], last_frame=tup[5], continuation=tup[6])
 
     @staticmethod
@@ -50,9 +52,10 @@ class LocalPath:
             for traj in paths:
                 concated.extend(traj.points)
             length = sum([pt.distance_to(next_pt) for pt, next_pt in zip(concated, concated[1:])], 0)
+            merged_line = ops.linemerge([p.line for p in paths])
 
             return LocalPath(first.camera_id, first.luid, length,
-                                first.first_frame, last.last_frame, False, concated)
+                                first.first_frame, last.last_frame, False, concated, merged_line)
 
     def __repr__(self) -> str:
         return (f"LocalPath(camera_id={self.camera_id}, luid={self.luid}, "
@@ -60,23 +63,23 @@ class LocalPath:
 
 class LocalPathSet(ResourceSet):
     __SQL_GET = """
-        select camera_id, luid, point_count, length, first_frame, last_frame, continuation, points
+        select camera_id, luid, point_count, length, first_frame, last_frame, continuation, points, line
         from local_paths
         where camera_id=%s and luid=%s
         order by first_frame
     """
     __SQL_GET_ALL = """
-        select camera_id, luid, point_count, length, first_frame, last_frame, continuation, points
+        select camera_id, luid, point_count, length, first_frame, last_frame, continuation, points, line
         from local_paths {} {} {}
     """
     __SQL_INSERT = """
         insert into local_paths(camera_id, luid, point_count, length,
-                                first_frame, last_frame, continuation, points)
-                            values (%s, %s, %s, %s, %s, %s, %s, %s)
+                                first_frame, last_frame, continuation, points, line)
+                            values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
     __SQL_INSERT_MANY = """
         insert into local_paths(camera_id, luid, point_count, length,
-                                first_frame, last_frame, continuation, points) values %s
+                                first_frame, last_frame, continuation, points, line) values %s
     """
     __SQL_REMOVE = "delete from local_paths where camera_id=%s and luid=%s"
     __SQL_REMOVE_ALL = "delete from local_paths"
@@ -89,7 +92,8 @@ class LocalPathSet(ResourceSet):
             first_frame int not null,
             last_frame int not null,
             continuation boolean not null,
-            points path not null
+            points path not null,
+            line geometry(linestringz)
         )
     """
     __SQL_CREATE_INDEX = "create index local_path_idx on local_paths(camera_id, luid)"

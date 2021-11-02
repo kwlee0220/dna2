@@ -7,6 +7,7 @@ import psycopg2 as pg2
 from psycopg2.extras import execute_values
 from queue import Queue
 from omegaconf import OmegaConf
+from shapely.geometry import LineString
 
 from dna import Point, get_logger
 import dna.utils as utils
@@ -22,6 +23,7 @@ class Session:
         self.luid = luid
 
         self.points = []
+        self.world_coords = []
         self.first_frame = -1
         self.last_frame = -1
         self.length = 0
@@ -37,13 +39,17 @@ class Session:
         else:
             self.length += pt.distance_to(self.points[-1])
         self.points.append(pt)
+        self.world_coords.append(ev.world_coord)
         self.last_frame = ev.frame_index
 
-    def build_local_path(self, cont: bool=False) -> LocalPath:
+    def build_local_path(self, cont: TrackEvent=None) -> LocalPath:
+        if cont:
+            self.world_coords.append(cont.world_coord)
         return LocalPath(camera_id=self.camera_id, luid=self.luid,
                             points=self.points, length=self.length,
+                            line=LineString(self.world_coords),
                             first_frame=self.first_frame, last_frame=self.last_frame,
-                            continuation=cont)
+                            continuation=cont is not None)
 
 class LocalPathUploader:
     def __init__(self, platform:DNAPlatform, mqueue: Queue, conf: OmegaConf) -> None:
@@ -80,7 +86,7 @@ class LocalPathUploader:
 
         if ev.location: # ordinary TrackEvent
             if session.is_too_long():   # if session keeps too many points
-                path = session.build_local_path(True)
+                path = session.build_local_path(ev)
                 self.upload(path)
 
                 # refresh the current session

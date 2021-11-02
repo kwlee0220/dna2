@@ -2,7 +2,7 @@
 camera:
   id: etri_live:07
   uri: rtsp://admin:dnabased24@129.254.82.33:558/LiveChannel/6/media.smp
-  size: [1280, 720]
+  size: [1920, 1080]
   fps: 10
   blind_regions:
 
@@ -18,3 +18,6 @@ tracker:
     car: car
     bus: bus
     truck: car
+
+camera_geometry:
+  file: C:\development\dna\data\camera_geoms\etri_07.pickle

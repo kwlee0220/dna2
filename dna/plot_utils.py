@@ -8,13 +8,13 @@ from dna import Box, Point
 def draw_line(mat, from_pt: Point, to_pt: Point, color, line_thickness=2) -> np.ndarray:
     return draw_line_raw(mat, from_pt.xy.astype(int), to_pt.xy.astype(int), color, line_thickness)
 
-def draw_line_raw(mat, from_pt: List[int], to_pt: List[int], color, line_thickness=2) -> np.ndarray:
+def draw_line_raw(mat, from_pt, to_pt, color, line_thickness=2) -> np.ndarray:
     return cv2.line(mat, from_pt, to_pt, color, line_thickness)
 
-def draw_line_string_raw(mat, pts: List[List[int]], color, line_thickness=2) -> np.ndarray:
+def draw_line_string_raw(convas, pts: List[List[int]], color, line_thickness=2) -> np.ndarray:
     for pt1, pt2 in zip(pts, pts[1:]):
-        mat = draw_line_raw(mat, pt1, pt2, color, line_thickness)
-    return mat
+        convas = draw_line_raw(convas, pt1, pt2, color, line_thickness)
+    return convas
 
 def draw_line_string(mat, pts: List[Point], color, line_thickness=2) -> np.ndarray:
     return draw_line_string_raw(mat, [pt.xy.astype(int) for pt in pts], color, line_thickness)

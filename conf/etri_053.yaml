@@ -1,13 +1,19 @@
 
 camera:
-  id: etri_live:05
-  uri: rtsp://admin:dnabased24@129.254.82.33:558/LiveChannel/4/media.smp
+  id: etri:053
+  uri: C:/Temp/data/etri/etri_053.mp4
   size: [1920, 1080]
   fps: 10
   blind_regions:
+    - [-17,-3,727,391]
+    - [719,29,1904,249]
+    - [1307,232,1915,398]
+    - [-5,828,1235,1082]
+    - [1643, 598, 1930, 894]
 
 tracker:
-  detector: yolov4
+  # detector: yolov4
+  detector: file:C:/Temp/data/etri/etri_053_det.txt
   model_file: dna/track/deepsort/ckpts/model640.pt
   n_init: 3
   matching_threshold: 0.55

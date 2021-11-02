@@ -252,7 +252,7 @@ def matching_by_close_distance(dist_matrix, tracks, detections, track_indices):
 _COMBINED_METRIC_THRESHOLD = 0.55
 _COMBINED_METRIC_THRESHOLD_4L = 0.45
 _COMBINED_DIST_THRESHOLD = 67
-_COMBINED_DIST_THRESHOLD_4_LARGE = 300
+_COMBINED_DIST_THRESHOLD_4_LARGE = 310
 _COMBINED_INFINITE = 9.99
 def combine_cost_matrices(metric_costs, dist_costs, tracks, detections):
     dists_mod = dist_costs / _COMBINED_DIST_THRESHOLD

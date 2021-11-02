@@ -1,5 +1,5 @@
 
-from dna import Box, DNA_CONIFIG_FILE, parse_config_args, load_config, replace_args
+from dna import Box, DNA_CONIFIG_FILE, parse_config_args, load_config
 from dna.camera import Camera
 from dna.det import DetectorLoader, ObjectDetectingProcessor
 

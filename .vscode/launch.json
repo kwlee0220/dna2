@@ -7,7 +7,7 @@
         { "name": "Show Video",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_show.py",
-            "args": [ "etri_05" ]
+            "args": [ "etri_live_04" ]
         },
         { "name": "Detect Video (AI_CITY)",
             "type": "python", "request": "launch", "console": "integratedTerminal",
@@ -24,11 +24,11 @@
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_detect.py",
             "args": [
-                "etri_05",
-                "--output", "C:/Temp/etri_05_det.txt",
-                "--output_video", "C:/Temp/etri_05_det.mp4",
-                // "--show_progress",
-                "--show",
+                "etri_04",
+                "--output", "C:/Temp/etri_04_det.txt",
+                "--output_video", "C:/Temp/etri_04_det.mp4",
+                "--show_progress",
+                // "--show",
             ]
         },
         { "name": "Detect Video (crossroads)",
@@ -57,11 +57,13 @@
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
-                "etri_06",
-                "--output", "C:/Temp/etri_06_track.txt",
-                "--output_video", "C:/Temp/etri_06_track.mp4",
-                // "--show", 
-                "--show_progress",
+                "etri_061",
+                "--begin_frame", "457",
+                "--output", "C:/Temp/etri_061_track.txt",
+                "--output_video", "C:/Temp/etri_061_track.mp4",
+                "--show", 
+                // "--show_progress",
+                "--show_blind_regions", 
             ]
         },
         {  "name": "Track Video (crossroads)",
@@ -85,7 +87,8 @@
                 // "ai_city_09", "--track_file", "C:/Temp/data/ai_city/ai_city_09_track.txt",
                 // "ai_city_11", "--track_file", "C:/Temp/data/ai_city/ai_city_11_track.txt",
                 // "etri_05", "--track_file", "C:/Temp/data/etri/etri_05_track.txt",
-                "etri_06", "--track_file", "C:/Temp/data/etri/etri_06_track.txt",
+                // "etri_06", "--track_file", "C:/Temp/data/etri/etri_06_track.txt",
+                "etri_041", "--track_file", "C:/Temp/data/etri/etri_041_track.txt",
                 // "cross_01", "--track_file", "C:/Temp/data/crossroads/cross_01_track.txt",
                 // "cross_02", "--track_file", "C:/Temp/data/crossroads/cross_02_track.txt",
                 // "cross_03", "--track_file", "C:/Temp/data/crossroads/cross_03_track.txt",
@@ -103,8 +106,17 @@
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_replay_local_path.py",
             "args": [
-                "etri_06",
-                "--id", "73",
+                "etri_041",
+                "--id", "5",
+                "--output_video", "C:/Temp/local_path.mp4",
+            ]
+        },
+        { "name": "Replay a World Path",
+            "type": "python", "request": "launch", "console": "integratedTerminal",
+            "program": "${workspaceFolder}/bin/dna_replay_world_path.py",
+            "args": [
+                "etri_041",
+                "--id", "4",
                 "--output_video", "C:/Temp/local_path.mp4",
             ]
         },
@@ -131,11 +143,11 @@
         { "name": "Add a blind region",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/add_blind_region.py",
-            "args": [ "etri:5", "--begin_frame", "627", ]
+            "args": [ "etri_061", "--begin_frame", "2425", ]
         },
         { "name": "Format",
             "type": "python", "request": "launch", "console": "integratedTerminal",
-            "program": "${workspaceFolder}/create_schema.py",
+            "program": "${workspaceFolder}/bin/dna_format.py",
             "args": []
         },
         { "name": "Current File",
@@ -145,8 +157,15 @@
         },
         { "name": "Test",
             "type": "python", "request": "launch", "console": "integratedTerminal",
-            "program": "${workspaceFolder}/test.py",
-            "args": []
+            "program": "${workspaceFolder}/tile_video.py",
+            "args": [
+                "C:/Temp/data/etri/etri_041_track.mp4",
+                "C:/Temp/data/etri/etri_051_track.mp4",
+                "C:/Temp/data/etri/etri_061_track.mp4",
+                "C:/Temp/data/etri/etri_071_track.mp4",
+                "--skip", "3",
+                "--output_video", "C:/Temp/xxx.mp4"
+            ]
         },
     ]
 }

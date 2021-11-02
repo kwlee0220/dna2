@@ -11,17 +11,21 @@ from .video_file_capture import VideoFileCapture
 
 
 class Camera:
-    def __init__(self, camera_id: str, uri: str, size: Size2d, fps: int, blind_regions: List[Box]) -> None:
+    def __init__(self, camera_id: str, uri: str, size: Size2d, fps: int,
+                blind_regions: List[Box]=None) -> None:
         self.camera_id = camera_id
         self.uri = uri
         self.size = size
         self.fps = fps
-        self.blind_regions = blind_regions
+        self.blind_regions = blind_regions if blind_regions else []
         
     @staticmethod
     def from_conf(conf: OmegaConf) -> Camera:
         size = Size2d.from_np(np.array(conf.size, dtype=np.int32))
-        blind_regions = [Box.from_tlbr(np.array(region, dtype=np.int32)) for region in conf.blind_regions]
+        if conf.get("blind_regions", None):
+            blind_regions = [Box.from_tlbr(np.array(region, dtype=np.int32)) for region in conf.blind_regions]
+        else:
+            blind_regions = []
 
         return Camera(conf.id, conf.uri, size, conf.fps, blind_regions)
         

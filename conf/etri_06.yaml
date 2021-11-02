@@ -23,3 +23,6 @@ tracker:
     car: car
     bus: bus
     truck: car
+
+camera_geometry:
+  file: C:\development\dna\data\camera_geoms\etri_06.pickle
