@@ -81,43 +81,6 @@ def min_cost_matching(distance_metric, max_distance, tracks, detections, track_i
 
     return matches, unmatched_tracks, unmatched_detections
 
-# # kwlee
-# def find_track_info_from_matches(matches, tracks, target_ids, track_indices, det_indices, matrix):
-#     for m in matches:
-#         track_idx = m[0]
-#         track = tracks[track_idx]
-#         if track.track_id in target_ids:
-#             row_idx = track_indices.index(track_idx)
-#             row = matrix[row_idx]
-#             return track, reorder_matrix_row(row, det_indices)
-#     return None, None
-
-# # kwlee
-# def find_from_unmatched_tracks(unmatched_tracks, tracks, target_ids, track_indices, det_indices, matrix):
-#     for track_idx in unmatched_tracks:
-#         track = tracks[track_idx]
-#         if track.track_id in target_ids:
-#             row_idx = track_indices.index(track_idx)
-#             row = matrix[row_idx]
-#             return track, reorder_matrix_row(row, det_indices)
-#     return None, None
-
-# # kwlee
-# def reorder_matrix_row(row, detection_indices):
-#     pairs = sorted([(idx, v) for idx, v in enumerate(detection_indices)], key=lambda t: t[1])
-#     ordereds = [row[pair[0]] for pair in pairs]
-#     return ordereds
-
-# # kwlee
-# def track_str(track):
-#     return f"{track.track_id}:{track.age}({track.hits})"
-# def row_str(row):
-#     return [round(v,3) if v < 10 else '' for v in row]
-
-# # kwlee
-# def get_track_info(idx, track_indices, tracks):
-#     return tracks[idx], track_indices.index(idx)
-
 def matching_cascade(distance_metric, max_distance, cascade_depth, tracks, detections,
                     track_indices=None, detection_indices=None):
     """Run matching cascade.
@@ -205,32 +168,37 @@ def gate_cost_matrix(kf, cost_matrix, tracks, detections, track_indices, detecti
         cost_matrix[row, gating_distance > gating_threshold] = gated_cost
     return cost_matrix
 
-def find_bottom2_indexes(values):
-    count = len(values)
+# kwlee
+def find_bottom2_indexes(values, indices):
+    count = len(indices)
     if count > 2:
-        return np.argpartition(values, 2)[:2]
+        rvals = [values[i] for i in indices]
+        idx1, idx2 = np.argpartition(rvals, 2)[:2]
+        return [indices[idx1], indices[idx2]]
     elif count == 2:
-        return [0, 1] if values[0] <= values[1] else [1, 0]
+        return [indices[0], indices[1]] if values[indices[0]] <= values[indices[1]] else [indices[1], indices[0]]
     else:
-        return [0, None]
+        return [indices[0], None]
 
-    # kwlee
+# kwlee
 _CLOSE_DIST_THRESHOLD = 21
 _INFINIT_DIST = 9999
 def matching_by_close_distance(dist_matrix, tracks, detections, track_indices, detection_indices=None):
-    matches = []
-    unmatched_detections = detection_indices if detection_indices else list(range(len(detections)))
-    ndets = len(detections)
-    if ndets <= 0:
-        return matches, track_indices, unmatched_detections
+    if not detection_indices:
+        detection_indices = list(range(len(detections)))
+        
+    if len(detection_indices) <= 0:
+        return [], track_indices, detection_indices
 
-    dist_matrix = dist_matrix.copy()
+    matches = []
     unmatched_tracks = track_indices.copy()
+    unmatched_detections = detection_indices.copy()
+    dist_matrix = dist_matrix.copy()
     for tidx in track_indices:
         track = tracks[tidx]
 
         dists = dist_matrix[tidx,:]
-        idxes = find_bottom2_indexes(dists)
+        idxes = find_bottom2_indexes(dists, detection_indices)
         if idxes[1]:
             v1, v2 = tuple(dists[idxes])
         else:
