@@ -1,5 +1,5 @@
 
-from dna import Box, DNA_CONIFIG_FILE, parse_config_args, load_config
+from dna import Box, color, DNA_CONIFIG_FILE, parse_config_args, load_config
 from dna.camera import Camera
 from dna.det import DetectorLoader, ObjectDetectingProcessor
 
@@ -33,8 +33,9 @@ if __name__ == '__main__':
     
     detector = DetectorLoader.load(args.detector)
     win_name = camera_info.camera_id if args.show else None
-    with ObjectDetectingProcessor(cap, detector, window_name=win_name, output_video=args.output_video,
-                                    output=args.output, show_progress=args.show_progress) as processor:
+    with ObjectDetectingProcessor(cap, detector, window_name=win_name,
+                                    output_video=args.output_video, output=args.output,
+                                    show_progress=args.show_progress) as processor:
         from timeit import default_timer as timer
         from datetime import timedelta
         started = timer()

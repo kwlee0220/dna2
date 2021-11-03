@@ -46,6 +46,7 @@ class Tracker:
         self.max_age = max_age
         self.n_init = n_init
         self.blind_regions = blind_regions
+        self.new_track_iou_threshold = 0.55
 
         self.kf = kalman_filter.KalmanFilter()
         self.tracks = []
@@ -84,7 +85,24 @@ class Tracker:
             else:
                 track.mark_deleted()
 
-        for detection_idx in unmatched_detections:
+        # kwlee
+        # unmatched detection 중에서 다른 detection과 일정부분 이상 겹치는 경우에는
+        # 새로운 track으로 간주하지 않는다.
+        new_track_candidates = unmatched_detections.copy()
+        if len(unmatched_detections) > 0 and len(detections) > 1:
+            det_boxes = [Box.from_tlbr(d.to_tlbr()) for d in detections]
+            for didx in unmatched_detections:
+                unmatched = det_boxes[didx]
+                for idx, det in enumerate(det_boxes):
+                    if idx != didx:
+                        inter = unmatched.intersection(det)
+                        r1 = inter.area()/unmatched.area()
+                        r2 = inter.area()/det.area()
+                        if r1 >= self.new_track_iou_threshold or r2 >= self.new_track_iou_threshold:
+                            new_track_candidates.remove(didx)
+                            break
+
+        for detection_idx in new_track_candidates:
             track = self._initiate_track(detections[detection_idx])
             self.tracks.append(track)
             self._next_id += 1
@@ -133,23 +151,39 @@ class Tracker:
         dist_cost = self.distance_cost(self.tracks, detections)
         if dna.DEBUG_PRINT_COST:
             self.print_dist_cost(dist_cost, 999)
-        matches, unmatched_tracks, unmatched_detections \
+        # STEP 1: active한 track에 독점적으로 가까운 detection이 존재하면, association시킨다.
+        matches, unmatched_hot_tracks, unmatched_detections \
              = linear_assignment.matching_by_close_distance(dist_cost, self.tracks, detections, hot_tracks)
-        unmatched_tracks += tlost_tracks
+        unmatched_tracks = unmatched_hot_tracks + tlost_tracks
 
         if (len(unmatched_tracks) > 0 or len(unconfirmed_tracks) > 0) and len(unmatched_detections) > 0:
             metric_cost = self.metric_cost(self.tracks, detections)
             cmatrix = linear_assignment.combine_cost_matrices(metric_cost, dist_cost, self.tracks, detections)
             if dna.DEBUG_PRINT_COST:
-                self.print_metrix_cost(metric_cost)
+                self.print_metrix_cost(metric_cost, unmatched_tracks+unconfirmed_tracks)
                 print("-----------------------------------")
-                self.print_metrix_cost(cmatrix)
+                self.print_metrix_cost(cmatrix, unmatched_tracks+unconfirmed_tracks)
 
             unmatched_tracks_2 = []
             if len(unmatched_tracks) > 0:
+                # STEP 2
                 matches_1, unmatched_tracks, unmatched_detections =\
                     linear_assignment.matching_by_total_cost(cmatrix, unmatched_tracks, unmatched_detections)
                 matches += matches_1
+
+                # 만일 STEP 1에서 가까운 detection이 존재했지만, 해당 detection 독점적이지 아니어서 association되지
+                # 못해 binding되지 못했지만, STEP 2 과정에서 경쟁하던 track이 다른 detection에 association되어
+                # 이제는 독점적으로 된 경우를 처리한다.
+                matched_hot_tracks = [m[0] for m in matches_1 if m[0] in unmatched_hot_tracks]
+                unmatched_hot_tracks = [tidx for tidx in unmatched_hot_tracks if tidx not in matched_hot_tracks]
+                if len(unmatched_hot_tracks) > 0 and len(unmatched_detections) > 0:
+                    matches_h, unmatched_hot_tracks, unmatched_detections \
+                        = linear_assignment.matching_by_close_distance(dist_cost, self.tracks, detections,
+                                                                        unmatched_hot_tracks, unmatched_detections)
+                    matches += matches_h
+                    for m in matches_h:
+                        unmatched_tracks.remove(m[0])
+
             if len(unconfirmed_tracks) > 0 and len(unmatched_detections) > 0:
                 matches_2, unmatched_tracks_2, unmatched_detections =\
                     linear_assignment.matching_by_total_cost(cmatrix, unconfirmed_tracks, unmatched_detections)
@@ -186,6 +220,8 @@ class Tracker:
             for row, track in enumerate(tracks):
                 dist_matrix[row, :] = self.kf.gating_distance(track.mean, track.covariance,
                                                                 measurements, only_position)
+                # print(dist_matrix[row, :])
+                # print(self.kf.gating_distance(track.mean, track.covariance, measurements, True))
         return dist_matrix
 
     # kwlee
@@ -211,13 +247,16 @@ class Tracker:
             dist_str = ', '.join([f"{v:3d}" for v in dists])
             print(f"{track_str}: {dist_str}")
 
-    def print_metrix_cost(self, metric_cost):
+    def print_metrix_cost(self, metric_cost, task_indices=None):
+        if not task_indices:
+            task_indices = list(range(len(self.tracks)))
         for tidx, track in enumerate(self.tracks):
             costs = [round(v, 2) for v in metric_cost[tidx]]
             track_str = f"{tidx:02d}: {track.track_id:03d}({track.state},{track.time_since_update:02d})"
             # dist_str = ', '.join([f"{v:.2f}" for v in costs])
             dist_str = ', '.join([_pattern(i,v) for i, v in enumerate(costs)])
-            print(f"{track_str}: {dist_str}")
+            tag = '*' if tidx in task_indices else ' '
+            print(f"{tag}{track_str}: {dist_str}")
 
 def _pattern(i,v):
     if v == 9.99:
