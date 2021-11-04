@@ -57,13 +57,13 @@
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
-                "etri_041",
-                // "--begin_frame", "210",
-                "--output", "C:/Temp/etri_041_track.txt",
-                "--output_video", "C:/Temp/etri_041_track.mp4",
-                // "--show", 
-                "--show_progress",
-                // "--show_blind_regions", 
+                "etri_063",
+                "--begin_frame", "3300",
+                "--output", "C:/Temp/etri_063_track.txt",
+                "--output_video", "C:/Temp/etri_063_track.mp4",
+                "--show", 
+                // "--show_progress",
+                "--show_blind_regions", 
             ]
         },
         {  "name": "Track Video (crossroads)",
@@ -143,7 +143,7 @@
         { "name": "Add a blind region",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/add_blind_region.py",
-            "args": [ "etri_061", "--begin_frame", "2425", ]
+            "args": [ "etri_063", "--begin_frame", "145", ]
         },
         { "name": "Format",
             "type": "python", "request": "launch", "console": "integratedTerminal",

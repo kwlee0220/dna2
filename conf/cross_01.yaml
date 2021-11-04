@@ -6,6 +6,11 @@ camera:
   fps: 15
   blind_regions:
     - [502,-9,1568,175]
+    - [1590, 656, 1925, 1084]
+    - [1724, 301, 1925, 1083]
+    - [-3, -2, 695, 339]
+    - [-3, 538, 623, 1084]
+    - [-1, 772, 1921, 1081]
 
 tracker:
   # detector: yolov4
@@ -20,3 +25,4 @@ tracker:
     car: car
     bus: bus
     truck: car
+  log_level: info

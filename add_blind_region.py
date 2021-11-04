@@ -6,7 +6,7 @@ import numpy as np
 import threading
 import time
 
-from dna import color, Point, Box, DNA_CONIFIG_FILE, parse_config_args, load_config
+from dna import color, Point, Box, Size2i, DNA_CONIFIG_FILE, parse_config_args, load_config
 from dna.camera import Camera, ImageCapture
 from dna.platform import DNAPlatform
 

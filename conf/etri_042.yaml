@@ -17,12 +17,13 @@ tracker:
   n_init: 3
   matching_threshold: 0.55
   max_iou_distance: 0.7
-  max_age: 30
+  max_age: 60
   min_detection_score: 0
   det_mapping:
     car: car
     bus: bus
     truck: car
+  log_level: info
 
 camera_geometry:
   file: C:\development\dna\data\camera_geoms\etri_04.pickle

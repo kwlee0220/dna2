@@ -219,7 +219,7 @@ def matching_by_close_distance(dist_matrix, tracks, detections, track_indices, d
 
 _COMBINED_METRIC_THRESHOLD = 0.55
 _COMBINED_METRIC_THRESHOLD_4L = 0.45
-_COMBINED_DIST_THRESHOLD = 67
+_COMBINED_DIST_THRESHOLD = 75
 _COMBINED_DIST_THRESHOLD_4_LARGE = 310
 _COMBINED_INFINITE = 9.99
 import math
@@ -227,15 +227,15 @@ def combine_cost_matrices(metric_costs, dist_costs, tracks, detections):
     # dists_mod = dist_costs / _COMBINED_DIST_THRESHOLD
 
     # time_since_update 에 따른 가중치 보정
-    weights = list(map(lambda t: math.log(t.time_since_update), tracks))
+    weights = list(map(lambda t: math.log10(t.time_since_update), tracks))
     weighted_dist_costs = dist_costs.copy()
     for tidx, track in enumerate(tracks):
         if weights[tidx] > 0:
             weighted_dist_costs[tidx,:] = dist_costs[tidx,:] * weights[tidx]
     dists_mod = weighted_dist_costs / _COMBINED_DIST_THRESHOLD
 
-    # temporary lost 횟수를 통한 가중치 계산
-    tsu = np.array([0.2*t.time_since_update/20 for t in tracks])
+    # # temporary lost 횟수를 통한 가중치 계산
+    # tsu = np.array([0.2*t.time_since_update/20 for t in tracks])
 
     matrix = np.zeros((len(tracks), len(detections)))
     invalid = np.zeros((len(tracks), len(detections)), dtype=bool)
@@ -256,7 +256,7 @@ def combine_cost_matrices(metric_costs, dist_costs, tracks, detections):
         else:
             # detection의 크기가 작으면 외형을 이용한 검색이 의미가 작으므로, track과 detection사이의 거리
             # 정보에 보다 많은 가중치를 부여한다.
-            matrix[:,didx] = 0.2*metric_costs[:,didx] + 0.6*dists_mod[:,didx] + tsu
+            matrix[:,didx] = 0.2*metric_costs[:,didx] + 0.8*dists_mod[:,didx]
             invalid[:,didx] = np.logical_or(metric_costs[:,didx] > _COMBINED_METRIC_THRESHOLD,
                                             weighted_dist_costs[:,didx] > _COMBINED_DIST_THRESHOLD)
     matrix[invalid] = _COMBINED_INFINITE

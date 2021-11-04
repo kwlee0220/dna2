@@ -1,21 +1,19 @@
 from datetime import datetime
 from typing import List, Union
 from pathlib import Path
+import sys
 
 import numpy as np
 import cv2
-
-import sys
-
 from omegaconf.omegaconf import OmegaConf
+import logging
 
 FILE = Path(__file__).absolute()
 DEEPSORT_DIR = str(FILE.parents[0] / 'deepsort')
 if not DEEPSORT_DIR in sys.path:
     sys.path.append(DEEPSORT_DIR)
 
-import dna
-from dna import Box, utils
+from dna import Box, utils, get_logger
 from dna.det import ObjectDetector, Detection
 from . import Track, TrackState, DetectionBasedObjectTracker
 from .deepsort.deepsort import deepsort_rbc
@@ -47,6 +45,11 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
                                     n_init=int(tracker_conf.n_init), blind_regions=blind_regions)
         self.blind_regions = blind_regions
         self.__last_frame_detections = []
+
+        level_name = tracker_conf.get("log_level", "info").upper()
+        level = logging.getLevelName(level_name)
+        logger = get_logger("dna.track.deep_sort")
+        logger.setLevel(level)
         
     @property
     def detector(self) -> ObjectDetector:

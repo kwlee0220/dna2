@@ -1,13 +1,21 @@
 # vim: expandtab:ts=4:sw=4
 from __future__ import absolute_import
+import enum
+
+import logging
+
 from dna.track.deepsort.detection import Detection
 import dna
+from dna import get_logger
 import numpy as np
 from dna.types import Box
 import kalman_filter
 import linear_assignment
 import iou_matching
 from track import Track
+
+_logger = get_logger("dna.track.deep_sort")
+_OVERLAP_RATIO_THRESHOLD = 0.8
 
 class Tracker:
     """
@@ -100,6 +108,8 @@ class Tracker:
                         r2 = inter.area()/det.area()
                         if r1 >= self.new_track_iou_threshold or r2 >= self.new_track_iou_threshold:
                             new_track_candidates.remove(didx)
+                            _logger.info((f"remove unmatched detections that overlap with a track: "
+                                            f"FRAME[{dna.DEBUG_FRAME_IDX}], det=[{didx}"))
                             break
 
         for detection_idx in new_track_candidates:
@@ -139,6 +149,22 @@ class Tracker:
         self.metric.partial_fit(np.asarray(features), np.asarray(targets), active_targets)
 
         return delete_tracks
+
+    def _remove_overlaps(self, targets, detections, target_indices, candidate_indices):
+        candidate_boxes = np.array([Box.from_tlbr(detections[didx].to_tlbr()) for didx in candidate_indices])
+
+        overlaps = set()
+        for tidx in target_indices:
+            box = Box.from_tlbr(targets[tidx].to_tlbr())
+            for i, b in enumerate(candidate_boxes):
+                ratio = max(box.overlap_ratio(b))
+                if ratio > _OVERLAP_RATIO_THRESHOLD:
+                    overlaps.add(candidate_indices[i])
+                    if _logger.isEnabledFor(logging.INFO):
+                        _logger.info((f"remove hot-track[{target_indices[tidx]}]'s overlaps: "
+                                        f"det={candidate_indices[i]}, ratio={ratio:.3f} FRAME[{dna.DEBUG_FRAME_IDX}]"))
+        non_overlaps = set(candidate_indices) - overlaps
+        return list(non_overlaps)
         
     def _match(self, detections):
         # Split track set into confirmed and unconfirmed tracks.q
@@ -155,6 +181,11 @@ class Tracker:
         matches, unmatched_hot_tracks, unmatched_detections \
              = linear_assignment.matching_by_close_distance(dist_cost, self.tracks, detections, hot_tracks)
         unmatched_tracks = unmatched_hot_tracks + tlost_tracks
+
+        # active track과 binding된 detection과 상당히 겹치는 detection들을 제거한다.
+        if len(matches) > 0 and len(unmatched_detections) > 0:
+            matched_dets = [m[1] for m in matches]
+            unmatched_detections = self._remove_overlaps(detections, detections, matched_dets, unmatched_detections)
 
         if (len(unmatched_tracks) > 0 or len(unconfirmed_tracks) > 0) and len(unmatched_detections) > 0:
             metric_cost = self.metric_cost(self.tracks, detections)
