@@ -2,6 +2,7 @@ from re import L
 from dna import det
 from cv2 import determinant
 import dna
+from dna import Size2d
 from dna.utils import draw_ds_detections, draw_ds_tracks
 import nn_matching
 from .tracker import Tracker 
@@ -43,7 +44,7 @@ def get_gaussian_mask():
 
 class deepsort_rbc():
 	def __init__(self, domain: Box, wt_path, matching_threshold=0.5, max_iou_distance=0.7,
-					max_age=40, n_init=3, blind_regions=[]):
+					max_age=40, n_init=3, min_size=Size2d(30, 30), blind_regions=[]):
 		self.domain = domain
 
 		#loading this encoder is slow, should be done only once.
@@ -56,7 +57,7 @@ class deepsort_rbc():
 
 		self.metric = nn_matching.NearestNeighborDistanceMetric("cosine", matching_threshold , 100)
 		self.tracker= Tracker(domain, self.metric, max_iou_distance=max_iou_distance,
-								max_age=max_age, n_init=n_init, blind_regions=blind_regions)
+								max_age=max_age, n_init=n_init, min_size=min_size, blind_regions=blind_regions)
 
 		self.gaussian_mask = get_gaussian_mask().cuda()
 

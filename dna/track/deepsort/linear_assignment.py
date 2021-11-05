@@ -183,8 +183,10 @@ def find_bottom2_indexes(values, indices):
 # kwlee
 _CLOSE_DIST_THRESHOLD = 21
 _INFINIT_DIST = 9999
-def matching_by_close_distance(dist_matrix, tracks, detections, track_indices, detection_indices=None):
-    if not detection_indices:
+def matching_by_close_distance(dist_matrix, threshold, tracks, detections, track_indices=None, detection_indices=None):
+    if track_indices is None:
+        track_indices = list(range(len(tracks)))
+    if detection_indices is None:
         detection_indices = list(range(len(detections)))
         
     if len(detection_indices) <= 0:
@@ -193,27 +195,28 @@ def matching_by_close_distance(dist_matrix, tracks, detections, track_indices, d
     matches = []
     unmatched_tracks = track_indices.copy()
     unmatched_detections = detection_indices.copy()
-    dist_matrix = dist_matrix.copy()
     for tidx in track_indices:
         track = tracks[tidx]
 
         dists = dist_matrix[tidx,:]
-        idxes = find_bottom2_indexes(dists, detection_indices)
+        idxes = find_bottom2_indexes(dists, unmatched_detections)
         if idxes[1]:
             v1, v2 = tuple(dists[idxes])
         else:
-            v1, v2 = dists[idxes[0]], _INFINIT_DIST
+            v1, v2 = dists[idxes[0]], threshold+0.01
 
-        if v1 < _CLOSE_DIST_THRESHOLD and v1*2 < v2:
+        if v1 < threshold and v1*2 < v2:
             det_idx = idxes[0]
             dists2 = dist_matrix[unmatched_tracks, det_idx]
-            cnt = len(dists2[np.where(dists2 < _CLOSE_DIST_THRESHOLD)])
+            cnt = len(dists2[np.where(dists2 < threshold)])
             if cnt <= 1:
                 matches.append((tidx, idxes[0]))
                 unmatched_tracks.remove(tidx)
                 unmatched_detections.remove(idxes[0])
-                dist_matrix[:,idxes[0]] = _INFINIT_DIST
-                continue
+                if len(unmatched_detections) == 0:
+                    break
+                else:
+                    continue
     
     return matches, unmatched_tracks, unmatched_detections
 
@@ -227,7 +230,7 @@ def combine_cost_matrices(metric_costs, dist_costs, tracks, detections):
     # dists_mod = dist_costs / _COMBINED_DIST_THRESHOLD
 
     # time_since_update 에 따른 가중치 보정
-    weights = list(map(lambda t: math.log10(t.time_since_update), tracks))
+    weights = list(map(lambda t: math.log10(t.time_since_update)+1, tracks))
     weighted_dist_costs = dist_costs.copy()
     for tidx, track in enumerate(tracks):
         if weights[tidx] > 0:
@@ -267,7 +270,8 @@ def _remove_by_index(list, idx):
     removed = list[idx]
     return removed, (list[:idx] + list[idx+1:])
 
-def matching_by_total_cost(cost_matrix, track_indices, detection_indices, threshold=0.7):
+_MAX_MIXED_COST = 0.54
+def matching_by_total_cost(cost_matrix, track_indices, detection_indices, threshold=_MAX_MIXED_COST):
     if len(track_indices) <= 1 and len(detection_indices) <= 1:
         if cost_matrix[track_indices[0], detection_indices[0]] <= threshold:
             return [(track_indices[0], detection_indices[0])], [], []
@@ -306,4 +310,30 @@ def matching_by_total_cost(cost_matrix, track_indices, detection_indices, thresh
             unmatched_tracks.remove(tidx)
             unmatched_detections.remove(didx)
     
+    return matches, unmatched_tracks, unmatched_detections
+
+
+from dna import Box
+from dna.track.deepsort.utils import find_overlaps
+def matching_by_overlap(min_overlap_ratio, tracks, detections, track_indices=None, detection_indices=None):
+    if not track_indices:
+        track_indices = list(range(len(tracks)))
+    if not detection_indices:
+        detection_indices = list(range(len(detections)))
+
+    matches = []
+    unmatched_tracks = track_indices.copy()
+    unmatched_detections = detection_indices.copy()
+    dets = [Box.from_tlbr(detections[didx].to_tlbr()) for didx in detection_indices]
+    for tidx in track_indices:
+        box = Box.from_tlbr(tracks[tidx].to_tlbr())
+        ov_idxes = [(detection_indices[i], r) for i, r in find_overlaps(box, dets, min_overlap_ratio)]
+        if len(ov_idxes) > 0:
+            ov = sorted(ov_idxes, key=lambda ov: ov[1], reverse=True)[0]
+            matches.append((tidx, ov[0]))
+            unmatched_tracks.remove(tidx)
+            unmatched_detections.remove(ov[0])
+            if len(unmatched_detections) == 0:
+                break
+
     return matches, unmatched_tracks, unmatched_detections

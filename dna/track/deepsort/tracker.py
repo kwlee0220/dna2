@@ -1,21 +1,27 @@
 # vim: expandtab:ts=4:sw=4
 from __future__ import absolute_import
+from typing import List, Union, Tuple
 import enum
 
 import logging
 
+from numpy.linalg import det
+
 from dna.track.deepsort.detection import Detection
+from .utils import find_overlaps, overlap_ratio, project
 import dna
 from dna import get_logger
 import numpy as np
-from dna.types import Box
+from dna.types import Box, Size2d
 import kalman_filter
 import linear_assignment
 import iou_matching
 from track import Track
 
 _logger = get_logger("dna.track.deep_sort")
+_HOT_CLOSE_THRESHOLD = 21
 _OVERLAP_RATIO_THRESHOLD = 0.8
+_MIN_OVERLAP_RATIO = 0.75
 
 class Tracker:
     """
@@ -47,12 +53,13 @@ class Tracker:
 
     """
 
-    def __init__(self, domain, metric, max_iou_distance=0.7, max_age=40, n_init=3, blind_regions=[]):
+    def __init__(self, domain, metric, max_iou_distance=0.7, max_age=40, n_init=3, min_size=Size2d(25, 25), blind_regions=[]):
         self.domain = domain
         self.metric = metric
         self.max_iou_distance = max_iou_distance
         self.max_age = max_age
         self.n_init = n_init
+        self.min_size = min_size
         self.blind_regions = blind_regions
         self.new_track_iou_threshold = 0.55
 
@@ -79,14 +86,12 @@ class Tracker:
 
         for track_idx in unmatched_tracks:
             # kwlee
-            # track 영역이 image 전체의 영역에서 1/3 이상 벗어난 경우에는
+            # track 영역이 image 전체의 영역에서 1/4 이상 벗어난 경우에는
             # 더 이상 추적하지 않는다.
             track = self.tracks[track_idx]
             bbox = Box.from_tlbr(track.to_tlbr())
             if bbox.is_valid():
-                intersection = self.domain.intersection(bbox)
-                inter_area = intersection.area() if intersection else 0
-                if (inter_area / bbox.area()) < 2/3:
+                if overlap_ratio(bbox, self.domain) < 3/4:
                     track.mark_deleted()
                 else:
                     track.mark_missed()
@@ -95,24 +100,29 @@ class Tracker:
 
         # kwlee
         # unmatched detection 중에서 다른 detection과 일정부분 이상 겹치는 경우에는
-        # 새로운 track으로 간주하지 않는다.
-        new_track_candidates = unmatched_detections.copy()
+        # 새로운 track으로 간주되지 않게하기 위해 제거한다.
         if len(unmatched_detections) > 0 and len(detections) > 1:
             det_boxes = [Box.from_tlbr(d.to_tlbr()) for d in detections]
-            for didx in unmatched_detections:
-                unmatched = det_boxes[didx]
-                for idx, det in enumerate(det_boxes):
-                    if idx != didx:
-                        inter = unmatched.intersection(det)
-                        r1 = inter.area()/unmatched.area()
-                        r2 = inter.area()/det.area()
-                        if r1 >= self.new_track_iou_threshold or r2 >= self.new_track_iou_threshold:
-                            new_track_candidates.remove(didx)
-                            _logger.info((f"remove unmatched detections that overlap with a track: "
-                                            f"FRAME[{dna.DEBUG_FRAME_IDX}], det=[{didx}"))
-                            break
 
-        for detection_idx in new_track_candidates:
+            def has_better_overlap(didx):
+                def is_better(ov):
+                    return ov[0] != didx \
+                            and (ov[0] not in unmatched_detections \
+                                or detections[ov[0]].confidence > detections[didx].confidence)
+
+                box = det_boxes[didx]
+                ovs = list(filter(is_better, find_overlaps(box, det_boxes, self.new_track_iou_threshold)))
+                if len(ovs) > 0:
+                    _logger.debug((f"remove an unmatched detection that overlaps with better one: "
+                                    f"removed={didx}, better={ovs[0][0]}, ratio={ovs[0][1]:.2f}, "
+                                    f"frame={dna.DEBUG_FRAME_IDX}"))
+                    return True
+                else:
+                    return False
+
+            unmatched_detections = [didx for didx in unmatched_detections if not has_better_overlap(didx)]
+
+        for detection_idx in unmatched_detections:
             track = self._initiate_track(detections[detection_idx])
             self.tracks.append(track)
             self._next_id += 1
@@ -124,9 +134,12 @@ class Tracker:
                 i = self.n_init
             if not track.is_deleted():
                 tbox = Box.from_tlbr(track.to_tlbr())
-                for r in self.blind_regions:
-                    if r.contains(tbox):
-                        track.mark_deleted()
+                if tbox.width() < self.min_size.width and tbox.height() < self.min_size.height:
+                    track.mark_deleted()
+                else:
+                    for r in self.blind_regions:
+                        if r.contains(tbox):
+                            track.mark_deleted()
 
         delete_tracks = [t for t in self.tracks if t.is_deleted()]
         self.tracks = [t for t in self.tracks if not t.is_deleted()]
@@ -151,51 +164,51 @@ class Tracker:
         return delete_tracks
 
     def _remove_overlaps(self, targets, detections, target_indices, candidate_indices):
-        candidate_boxes = np.array([Box.from_tlbr(detections[didx].to_tlbr()) for didx in candidate_indices])
+        candidate_boxes = [Box.from_tlbr(detections[didx].to_tlbr()) for didx in candidate_indices]
 
         overlaps = set()
         for tidx in target_indices:
             box = Box.from_tlbr(targets[tidx].to_tlbr())
-            for i, b in enumerate(candidate_boxes):
-                ratio = max(box.overlap_ratio(b))
-                if ratio > _OVERLAP_RATIO_THRESHOLD:
-                    overlaps.add(candidate_indices[i])
-                    if _logger.isEnabledFor(logging.INFO):
-                        _logger.info((f"remove hot-track[{target_indices[tidx]}]'s overlaps: "
-                                        f"det={candidate_indices[i]}, ratio={ratio:.3f} FRAME[{dna.DEBUG_FRAME_IDX}]"))
+            ovs = find_overlaps(box, candidate_boxes, _OVERLAP_RATIO_THRESHOLD)
+            if len(ovs) > 0:
+                ov_idxes = [candidate_indices[idx] for idx in project(ovs, 0)]
+                overlaps.update(ov_idxes)
+                if _logger.isEnabledFor(logging.DEBUG):
+                    ov_str = ",".join([f"{candidate_indices[i]}({r:.2f})" for i, r in ovs])
+                    _logger.debug((f"remove hot-track[{tidx}]'s overlaps: "
+                                    f"track={targets[tidx]}, det={ov_str}, frame={dna.DEBUG_FRAME_IDX}"))
         non_overlaps = set(candidate_indices) - overlaps
         return list(non_overlaps)
         
     def _match(self, detections):
         # Split track set into confirmed and unconfirmed tracks.q
         hot_tracks = [i for i, t in enumerate(self.tracks) if t.is_confirmed() and t.time_since_update <= 1]
-        tlost_tracks = [i for i, t in enumerate(self.tracks) if t.is_confirmed() and t.time_since_update > 1]
+        temp_lost_tracks = [i for i, t in enumerate(self.tracks) if t.is_confirmed() and t.time_since_update > 1]
         unconfirmed_tracks = [i for i, t in enumerate(self.tracks) if not t.is_confirmed()]
 
-        # ##############################################################################################
-        # # kwlee
         dist_cost = self.distance_cost(self.tracks, detections)
         if dna.DEBUG_PRINT_COST:
             self.print_dist_cost(dist_cost, 999)
+
         # STEP 1: active한 track에 독점적으로 가까운 detection이 존재하면, association시킨다.
         matches, unmatched_hot_tracks, unmatched_detections \
-             = linear_assignment.matching_by_close_distance(dist_cost, self.tracks, detections, hot_tracks)
-        unmatched_tracks = unmatched_hot_tracks + tlost_tracks
+             = linear_assignment.matching_by_close_distance(dist_cost, _HOT_CLOSE_THRESHOLD,
+                                                            self.tracks, detections, hot_tracks)
+        unmatched_tracks = unmatched_hot_tracks + temp_lost_tracks
 
         # active track과 binding된 detection과 상당히 겹치는 detection들을 제거한다.
         if len(matches) > 0 and len(unmatched_detections) > 0:
-            matched_dets = [m[1] for m in matches]
-            unmatched_detections = self._remove_overlaps(detections, detections, matched_dets, unmatched_detections)
+            matched_dets = project(matches, 1)
+            unmatched_detections = self._remove_overlaps(detections, detections,
+                                                        matched_dets, unmatched_detections)
 
         if (len(unmatched_tracks) > 0 or len(unconfirmed_tracks) > 0) and len(unmatched_detections) > 0:
             metric_cost = self.metric_cost(self.tracks, detections)
             cmatrix = linear_assignment.combine_cost_matrices(metric_cost, dist_cost, self.tracks, detections)
             if dna.DEBUG_PRINT_COST:
-                self.print_metrix_cost(metric_cost, unmatched_tracks+unconfirmed_tracks)
-                print("-----------------------------------")
-                self.print_metrix_cost(cmatrix, unmatched_tracks+unconfirmed_tracks)
+                self.print_metrix_cost(metric_cost, unmatched_tracks+unconfirmed_tracks, unmatched_detections)
+                self.print_metrix_cost(cmatrix, unmatched_tracks+unconfirmed_tracks, unmatched_detections)
 
-            unmatched_tracks_2 = []
             if len(unmatched_tracks) > 0:
                 # STEP 2
                 matches_1, unmatched_tracks, unmatched_detections =\
@@ -209,19 +222,34 @@ class Tracker:
                 unmatched_hot_tracks = [tidx for tidx in unmatched_hot_tracks if tidx not in matched_hot_tracks]
                 if len(unmatched_hot_tracks) > 0 and len(unmatched_detections) > 0:
                     matches_h, unmatched_hot_tracks, unmatched_detections \
-                        = linear_assignment.matching_by_close_distance(dist_cost, self.tracks, detections,
+                        = linear_assignment.matching_by_close_distance(dist_cost, _HOT_CLOSE_THRESHOLD,
+                                                                        self.tracks, detections,
                                                                         unmatched_hot_tracks, unmatched_detections)
                     matches += matches_h
                     for m in matches_h:
                         unmatched_tracks.remove(m[0])
 
             if len(unconfirmed_tracks) > 0 and len(unmatched_detections) > 0:
-                matches_2, unmatched_tracks_2, unmatched_detections =\
-                    linear_assignment.matching_by_total_cost(cmatrix, unconfirmed_tracks, unmatched_detections)
+                matches_0, unmatched_unconfirmed_tracks, unmatched_detections =\
+                        linear_assignment.matching_by_close_distance(cmatrix, 0.2, self.tracks, detections,
+                                                                        unconfirmed_tracks, unmatched_detections)
+                matches += matches_0
+            else:
+                unmatched_unconfirmed_tracks = unconfirmed_tracks
+
+            if len(unmatched_unconfirmed_tracks) > 0 and len(unmatched_detections) > 0:
+                matches_2, unmatched_unconfirmed_tracks, unmatched_detections =\
+                    linear_assignment.matching_by_total_cost(cmatrix, unmatched_unconfirmed_tracks, unmatched_detections)
                 matches += matches_2
-                unmatched_tracks += unmatched_tracks_2
+                unmatched_tracks += unmatched_unconfirmed_tracks
         else:
             unmatched_tracks += unconfirmed_tracks
+
+        if len(unmatched_tracks) > 0 and len(unmatched_detections) > 0:
+            matches_o, unmatched_tracks, unmatched_detections \
+                = linear_assignment.matching_by_overlap(_MIN_OVERLAP_RATIO, self.tracks, detections,
+                                                        unmatched_tracks, unmatched_detections)
+            matches += matches_o
 
         if len(unmatched_tracks) > 0 and len(unmatched_detections) > 0:
             matches_2, unmatched_tracks, unmatched_detections = \
@@ -275,12 +303,23 @@ class Tracker:
         for tidx, track in enumerate(self.tracks):
             dists = [int(round(v)) for v in dist_cost[tidx]]
             track_str = f"{tidx:02d}: {track.track_id:03d}({track.state},{track.time_since_update:02d})"
-            dist_str = ', '.join([f"{v:3d}" for v in dists])
+            dist_str = ', '.join([f"{v:3d}" if v != trim_overflow else "   " for v in dists])
             print(f"{track_str}: {dist_str}")
 
-    def print_metrix_cost(self, metric_cost, task_indices=None):
+    def print_metrix_cost(self, metric_cost, task_indices=None, detection_indices=None):
         if not task_indices:
             task_indices = list(range(len(self.tracks)))
+        if not detection_indices:
+            detection_indices = list(range(metric_cost.shape[1]))
+
+        col_exprs = []
+        for c in range(metric_cost.shape[1]):
+            if c in detection_indices:
+                col_exprs.append(f"{c:-5d}")
+            else:
+                col_exprs.append("-----")
+        print("              ", ",".join(col_exprs))
+
         for tidx, track in enumerate(self.tracks):
             costs = [round(v, 2) for v in metric_cost[tidx]]
             track_str = f"{tidx:02d}: {track.track_id:03d}({track.state},{track.time_since_update:02d})"

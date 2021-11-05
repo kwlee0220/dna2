@@ -7,6 +7,9 @@ platform:
     user: postgres
     password: dna2021
 
+tracker:
+  min_size: [30, 30]
+
 enhancer:
   log_level: info
 

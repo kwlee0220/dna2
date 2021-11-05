@@ -13,7 +13,7 @@ DEEPSORT_DIR = str(FILE.parents[0] / 'deepsort')
 if not DEEPSORT_DIR in sys.path:
     sys.path.append(DEEPSORT_DIR)
 
-from dna import Box, utils, get_logger
+from dna import Box, Size2d, utils, get_logger
 from dna.det import ObjectDetector, Detection
 from . import Track, TrackState, DetectionBasedObjectTracker
 from .deepsort.deepsort import deepsort_rbc
@@ -31,6 +31,7 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
         self.__detector = detector
         self.det_dict = tracker_conf.det_mapping
         self.domain = domain
+        self.min_size = Size2d.from_np(tracker_conf.min_size)
         self.min_detection_score = tracker_conf.min_detection_score
 
         wt_path = Path(tracker_conf.model_file)
@@ -42,7 +43,9 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
                                     matching_threshold=tracker_conf.matching_threshold,
                                     max_iou_distance=tracker_conf.max_iou_distance,
                                     max_age=int(tracker_conf.max_age),
-                                    n_init=int(tracker_conf.n_init), blind_regions=blind_regions)
+                                    n_init=int(tracker_conf.n_init),
+                                    min_size=self.min_size,
+                                    blind_regions=blind_regions)
         self.blind_regions = blind_regions
         self.__last_frame_detections = []
 
@@ -66,10 +69,15 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
             return None
 
     def track(self, frame, frame_idx:int, ts:datetime) -> List[Track]:
+        def is_valid_det(det):
+            return det.score >= self.min_detection_score \
+                    and det.bbox.width() >= self.min_size.width \
+                    and det.bbox.height() >= self.min_size.height
+
         dets = self.detector.detect(frame, frame_index=frame_idx)
 
-        # 일정 점수 이하의 detection은 버린다
-        dets = [det for det in dets if det.score >= self.min_detection_score]
+        # 일정 점수 이하의 detection과 일정 크기 이하의 detection들은 버린다
+        dets = list(filter(is_valid_det, dets))
 
         # 검출 물체 중 관련있는 label의 detection만 사용한다.
         if self.det_dict:
