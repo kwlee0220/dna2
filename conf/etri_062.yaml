@@ -16,15 +16,16 @@ tracker:
   # detector: yolov4
   detector: file:C:/Temp/data/etri/etri_062_det.txt
   model_file: dna/track/deepsort/ckpts/model640.pt
-  n_init: 9
+  n_init: 5
   matching_threshold: 0.55
   max_iou_distance: 0.7
   max_age: 30
   min_detection_score: 0
+  min_size: [30, 20]
   det_mapping:
     car: car
     bus: bus
     truck: car
 
 camera_geometry:
-  file: C:\development\dna\data\camera_geoms\etri_06.pickle
+  file: C:\development\dna\dna\data\camera_geoms\etri_06.pickle

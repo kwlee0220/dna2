@@ -4,7 +4,7 @@ from pathlib import Path
 
 from omegaconf import OmegaConf
 
-from .types import Point, Size2d, Box, Size2i
+from .types import Point, Size2d, Box
 from .utils import get_logger
 
 DNA_HOME = Path(os.environ.get('DNA_HOME', '.'))
@@ -12,8 +12,8 @@ DNA_CONIFIG_FILE = DNA_HOME / 'conf' / 'config.yaml'
 
 DEBUG_FRAME_IDX = -1
 DEBUG_SHOW_IMAGE = False
-DEBUG_PRINT_COST = False
-DEBUG_START_FRAME = 1042
+DEBUG_PRINT_COST = DEBUG_SHOW_IMAGE
+DEBUG_START_FRAME = 2869
 DEBUG_TARGET_TRACKS = None
 
 

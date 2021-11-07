@@ -69,15 +69,8 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
             return None
 
     def track(self, frame, frame_idx:int, ts:datetime) -> List[Track]:
-        def is_valid_det(det):
-            return det.score >= self.min_detection_score \
-                    and det.bbox.width() >= self.min_size.width \
-                    and det.bbox.height() >= self.min_size.height
-
+        # detector를 통해 match 대상 detection들을 얻는다.
         dets = self.detector.detect(frame, frame_index=frame_idx)
-
-        # 일정 점수 이하의 detection과 일정 크기 이하의 detection들은 버린다
-        dets = list(filter(is_valid_det, dets))
 
         # 검출 물체 중 관련있는 label의 detection만 사용한다.
         if self.det_dict:
@@ -88,15 +81,33 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
                     new_dets.append(Detection(det.bbox, label, det.score))
             dets = new_dets
 
-        # Blind 영역에 포함되지 않은 detection만 사용한다.
-        if self.blind_regions:
-            for region in self.blind_regions:
-                dets = [det for det in dets if not region.contains(det.bbox)]
+        detections = []
+        small_dets = []
+        for det in dets:
+            # 일정 크기 이하의 detection들은 무시한다.
+            box_size = det.bbox.size().to_int()
+            if box_size.width < self.min_size.width or box_size.height < self.min_size.height:
+                small_dets.append(det)
+                continue
 
-        self.__last_frame_detections = dets
+            # 일정 점수 이하의 detection들은 무시한다.
+            if det.score < self.min_detection_score:
+                continue
+
+            # Blind 영역에 포함되지 않은 detection만 사용한다.
+            is_blind = False
+            for region in self.blind_regions:
+                if region.contains(det.bbox):
+                    is_blind = True
+                    break
+            if is_blind:
+                continue
+            detections.append(det)
+
+        self.__last_frame_detections = detections
         boxes, scores = self.split_boxes_scores(self.__last_frame_detections)
 
-        tracker, deleted_tracks = self.deepsort.run_deep_sort(frame.astype(np.uint8), boxes, scores)
+        tracker, deleted_tracks = self.deepsort.run_deep_sort(frame.astype(np.uint8), boxes, scores, small_dets)
 
         active_tracks = [self.to_dna_track(ds_track, frame_idx, ts) for ds_track in tracker.tracks]
         deleted_tracks = [self.to_dna_track(ds_track, frame_idx, ts) for ds_track in deleted_tracks]

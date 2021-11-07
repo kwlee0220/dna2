@@ -4,7 +4,7 @@ from datetime import datetime
 
 import numpy as np
 
-from dna import Size2i
+from dna import Size2d
 
 
 class ImageCapture(metaclass=ABCMeta):
@@ -31,11 +31,11 @@ class ImageCapture(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def size(self) -> Size2i:
+    def size(self) -> Size2d:
         """Returns the size of the images that this ImageCapture captures.
 
         Returns:
-            Size2i: (width, height)
+            Size2d: (width, height)
         """
         pass
 

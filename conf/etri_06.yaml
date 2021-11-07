@@ -19,6 +19,7 @@ tracker:
   max_iou_distance: 0.7
   max_age: 30
   min_detection_score: 0
+  min_size: [30, 22]
   det_mapping:
     car: car
     bus: bus

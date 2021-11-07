@@ -4,14 +4,14 @@ import time
 import numpy as np
 import cv2
 
-from dna import Size2i
+from dna import Size2d
 from .image_capture import ImageCapture
 
-_INIT_SIZE = Size2i(-1, -1)
+_INIT_SIZE = Size2d(-1, -1)
 
 
 class VideoCaptureHandle:
-    def __init__(self, uri:str, target_size :Size2i=None) -> None:
+    def __init__(self, uri:str, target_size :Size2d=None) -> None:
         self.uri = uri
         self.cap = None     # None on if it is closed
         self.fps = -1
@@ -22,7 +22,7 @@ class VideoCaptureHandle:
     def is_open(self) -> bool:
         return self.cap is not None
 
-    def open(self) -> Tuple[cv2.VideoCapture, Size2i, int]:
+    def open(self) -> Tuple[cv2.VideoCapture, Size2d, int]:
         if self.is_open():
             raise ValueError(f"{self.__class__.__name__}: invalid state (opened already)")
 
@@ -36,7 +36,7 @@ class VideoCaptureHandle:
 
         width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        src_size = Size2i(width, height)
+        src_size = Size2d(width, height)
         if self.size == _INIT_SIZE:
             self.size = src_size
         elif self.size.area() < src_size.area():

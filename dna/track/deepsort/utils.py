@@ -3,6 +3,15 @@ from typing import List, Union, Tuple
 import numpy as np
 
 
+def all_indices(values):
+    return list(range(len(values)))
+
+def intersection(list1, list2):
+    return [v for v in list1 if v in list2]
+
+def subtract(list1, list2):
+    return [v for v in list1 if v not in list2]
+
 def boxes_distance(tlbr1, tlbr2):
     delta1 = tlbr1[0,3] - tlbr2[2,1]
     delta2 = tlbr2[0,3] - tlbr2[2,1]
@@ -11,21 +20,34 @@ def boxes_distance(tlbr1, tlbr2):
     dist = np.linalg.norm(np.concatenate([u, v]))
     return dist
 
-def overlap_ratio(box1, box2) -> Tuple[float,float]:
+def overlap_ratios(box1, box2) -> Tuple[float,float,float]:
     inter_area = box1.intersection(box2).area()
     r1 = inter_area / box1.area() if box1.is_valid() else 0
     r2 = inter_area / box2.area() if box2.is_valid() else 0
-    return max(r1, r2)
+    iou = inter_area / (box1.area() + box2.area() - inter_area)  if box1.is_valid() and box2.is_valid() else 0
+    return (r1, r2, iou)
 
-def find_overlaps(box, candidate_boxes, threshold, candidate_indices=None) -> List[Tuple[int,float]]:
+def find_overlaps_threshold(box, candidate_boxes, threshold, candidate_indices=None) -> List[Tuple[int,float]]:
     if not candidate_indices:
         candidate_indices = list(range(len(candidate_boxes)))
 
     overlaps = []
     for cidx in candidate_indices:
-        ratio = overlap_ratio(box, candidate_boxes[cidx])
-        if ratio > threshold:
-            overlaps.append((cidx, ratio))
+        ratios = overlap_ratios(box, candidate_boxes[cidx])
+        if max(ratios) >= threshold:
+            overlaps.append((cidx, ratios))
+
+    return overlaps
+
+def find_overlaps(box, candidate_boxes, match, candidate_indices=None) -> List[Tuple[int,float]]:
+    if not candidate_indices:
+        candidate_indices = list(range(len(candidate_boxes)))
+
+    overlaps = []
+    for cidx in candidate_indices:
+        ratios = overlap_ratios(box, candidate_boxes[cidx])
+        if match(*list(ratios)):
+            overlaps.append((cidx, ratios))
 
     return overlaps
 

@@ -5,21 +5,21 @@ from pathlib import Path
 import numpy as np
 import cv2
 
-from dna import Size2i
+from dna import Size2d
 from dna.camera.image_capture import ImageCapture
 from dna.camera.video_capture_handle import VideoCaptureHandle
 
 
 _ALPHA = 0.3
 class VideoFileCapture(ImageCapture):
-    def __init__(self, file: Path, sync :bool=True, target_size :Size2i=None,
+    def __init__(self, file: Path, sync :bool=True, target_size :Size2d=None,
                 begin_frame: int=1, end_frame: int=None) -> None:
         """Create a VideoFile ImageCapture object.
 
         Args:
             file (Path): A video file path
             sync (bool, optional): Sync to the fps. Defaults to False.
-            target_size (Size2i, optional): Output image size. Defaults to None.
+            target_size (Size2d, optional): Output image size. Defaults to None.
             begin_frame (int, optional): The index of the first frame. Defaults to 1.
             end_frame (int, optional): The index of the last frame. Defaults to None.
 
@@ -62,7 +62,7 @@ class VideoFileCapture(ImageCapture):
         self.__vch.close()
 
     @property
-    def size(self) -> Size2i:
+    def size(self) -> Size2d:
         return self.__vch.size
 
     @property
@@ -108,7 +108,7 @@ class VideoFileCapture(ImageCapture):
                 f"frames={self.frame_index}/{self.__frame_count}, fps={self.fps:.0f}/s")
 
     @staticmethod
-    def load_camera_info(file: Path) -> Tuple[Size2i, int]:
+    def load_camera_info(file: Path) -> Tuple[Size2d, int]:
         vch = VideoCaptureHandle(str(file.resolve()))
         cap, size, fps = vch.open()
         vch.close()

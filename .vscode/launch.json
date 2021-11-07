@@ -24,9 +24,9 @@
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_detect.py",
             "args": [
-                "etri_04",
-                "--output", "C:/Temp/etri_04_det.txt",
-                "--output_video", "C:/Temp/etri_04_det.mp4",
+                "etri_073",
+                "--output", "C:/Temp/etri_073_det.txt",
+                "--output_video", "C:/Temp/etri_073_det.mp4",
                 "--show_progress",
                 // "--show",
             ]
@@ -46,23 +46,25 @@
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
-                "ai_city_06",
-                // "--output", "C:/Temp/cam_06_track.txt",
-                // "--output_video", "C:/Temp/cam_06_track.mp4",
+                "ai_city_01",
+                "--begin_frame", "20",
+                // "--output", "C:/Temp/cam_01_track.txt",
+                "--output_video", "C:/Temp/cam_01_track.mp4",
                 "--show",
                 // "--show_progress",
+                "--show_blind_regions",
             ]
         },
         {  "name": "Track Video (ETRI)",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
-                "etri_062",
-                // "--begin_frame", "200",
-                "--output", "C:/Temp/etri_062_track.txt",
-                "--output_video", "C:/Temp/etri_062_track.mp4",
-                "--show", 
-                // "--show_progress",
+                "etri_073",
+                // "--begin_frame", "560",
+                "--output", "C:/Temp/etri_073_track.txt",
+                "--output_video", "C:/Temp/etri_073_track.mp4",
+                // "--show", 
+                "--show_progress",
                 // "--show_blind_regions", 
             ]
         },
@@ -87,9 +89,13 @@
                 // "ai_city_06", "--track_file", "C:/Temp/data/ai_city/ai_city_06_track.txt",
                 // "ai_city_09", "--track_file", "C:/Temp/data/ai_city/ai_city_09_track.txt",
                 // "ai_city_11", "--track_file", "C:/Temp/data/ai_city/ai_city_11_track.txt",
-                // "etri_05", "--track_file", "C:/Temp/data/etri/etri_05_track.txt",
-                // "etri_06", "--track_file", "C:/Temp/data/etri/etri_06_track.txt",
-                "etri_041", "--track_file", "C:/Temp/data/etri/etri_041_track.txt",
+                // "etri_041", "--track_file", "C:/Temp/data/etri/etri_041_track.txt",
+                // "etri_042", "--track_file", "C:/Temp/data/etri/etri_042_track.txt",
+                // "etri_051", "--track_file", "C:/Temp/data/etri/etri_051_track.txt",
+                // "etri_052", "--track_file", "C:/Temp/data/etri/etri_052_track.txt",
+                // "etri_061", "--track_file", "C:/Temp/data/etri/etri_061_track.txt",
+                "etri_062", "--track_file", "C:/Temp/data/etri/etri_062_track.txt",
+                // "etri_071", "--track_file", "C:/Temp/data/etri/etri_071_track.txt",
                 // "cross_01", "--track_file", "C:/Temp/data/crossroads/cross_01_track.txt",
                 // "cross_02", "--track_file", "C:/Temp/data/crossroads/cross_02_track.txt",
                 // "cross_03", "--track_file", "C:/Temp/data/crossroads/cross_03_track.txt",
@@ -116,8 +122,12 @@
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_replay_world_path.py",
             "args": [
-                "etri_041",
-                "--id", "4",
+                "etri_062",
+                // "--id", "2", "7", "8", "9", "10", "11", "15"
+                // "--id", "1", "4", "6", "7", "8", "9",
+                // "--id", "25", "23", "24", "26",  "28", "29", "30", "32", "34", // etri_042
+                // "--id", "18", "19", "20", "21",  "22", "23", "24", "26", "27", "30", // etri_052
+                "--id", "48", "52", "54", "55",  "56", "57", "58", // etri_062
                 "--output_video", "C:/Temp/local_path.mp4",
             ]
         },
@@ -144,7 +154,7 @@
         { "name": "Add a blind region",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/add_blind_region.py",
-            "args": [ "cross_02", "--begin_frame", "724", ]
+            "args": [ "ai_city_01", "--begin_frame", "607", ]
         },
         { "name": "Format",
             "type": "python", "request": "launch", "console": "integratedTerminal",
@@ -158,14 +168,14 @@
         },
         { "name": "Test",
             "type": "python", "request": "launch", "console": "integratedTerminal",
-            "program": "${workspaceFolder}/tile_video.py",
+            "program": "${workspaceFolder}/reduce_fps.py",
             "args": [
-                "C:/Temp/data/etri/etri_041_track.mp4",
-                "C:/Temp/data/etri/etri_051_track.mp4",
-                "C:/Temp/data/etri/etri_061_track.mp4",
-                "C:/Temp/data/etri/etri_071_track.mp4",
-                "--skip", "3",
-                "--output_video", "C:/Temp/xxx.mp4"
+                "C:/Temp/data/etri/etri_073.mp4",
+                // "C:/Temp/data/etri/etri_051_track.mp4",
+                // "C:/Temp/data/etri/etri_061_track.mp4",
+                // "C:/Temp/data/etri/etri_071_track.mp4",
+                "--skip", "2",
+                "--output_video", "C:/Temp/etri_073.mp4"
             ]
         },
     ]

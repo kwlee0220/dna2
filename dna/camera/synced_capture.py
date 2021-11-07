@@ -8,7 +8,7 @@ from threading import Thread, Condition
 import numpy as np
 import cv2
 
-from dna import Size2i
+from dna import Size2d
 from .image_capture import ImageCapture
 from .image_processor import ImageProcessor
 
@@ -99,7 +99,7 @@ class SyncImageCapture(ImageCapture):
         return self.__cap.is_open()
 
     @property
-    def size(self) -> Size2i:
+    def size(self) -> Size2d:
         return self.__cap.size
 
     @property

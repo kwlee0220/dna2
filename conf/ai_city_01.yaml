@@ -7,9 +7,11 @@ camera:
   blind_regions:
     - [7,2,504,115]
     - [10,591,279,816]
-    - [909,38,1063,138]
-    - [1045,76,1154,155]
     - [1156,6,1283,287]
+    - [1144, 362, 1332, 683]
+    - [908, -4, 1157, 158]
+    - [-58, 283, 113, 560]
+
 
 tracker:
   # detector: yolov4
@@ -19,6 +21,7 @@ tracker:
   matching_threshold: 0.55
   max_iou_distance: 0.7
   max_age: 20
+  min_size: [20, 18]
   min_detection_score: 0
   det_mapping:
     car: car

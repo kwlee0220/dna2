@@ -19,10 +19,8 @@ def parse_args():
     parser.add_argument("--begin_frame", type=int, metavar="<number>", help="the first frame index (from 1)", default=1)
     parser.add_argument("--end_frame", type=int, metavar="<number>", help="the last frame index", default=None)
 
-    parser.add_argument("--output", metavar="file",
-                        help="output detection file.", required=False)
-    parser.add_argument("--output_video", metavar="file",
-                        help="output video file", required=False)
+    parser.add_argument("--output", metavar="file", help="output detection file.", required=False)
+    parser.add_argument("--output_video", metavar="file", help="output video file", required=False)
     parser.add_argument("--show_progress", help="show progress bar.", action="store_true")
     parser.add_argument("--show", help="show detections.", action="store_true")
     parser.add_argument("--show_blind_regions", help="show blind regions.", action="store_true")

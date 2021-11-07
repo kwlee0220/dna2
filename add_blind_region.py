@@ -6,7 +6,7 @@ import numpy as np
 import threading
 import time
 
-from dna import color, Point, Box, Size2i, DNA_CONIFIG_FILE, parse_config_args, load_config
+from dna import color, Point, Box, Size2d, DNA_CONIFIG_FILE, parse_config_args, load_config
 from dna.camera import Camera, ImageCapture
 from dna.platform import DNAPlatform
 
@@ -23,7 +23,7 @@ class BoxSelector:
         cv2.waitKey(1)
 
     @classmethod
-    def zeros(cls, size: Size2i) -> BoxSelector:
+    def zeros(cls, size: Size2d) -> BoxSelector:
         return BoxSelector(np.zeros((size.height, size.width, 3), np.uint8))
 
     @classmethod

@@ -4,19 +4,19 @@ import time
 import numpy as np
 import cv2
 
-from dna import Size2i
+from dna import Size2d
 from .image_capture import ImageCapture
 
-_INIT_SIZE = Size2i(-1, -1)
+_INIT_SIZE = Size2d(-1, -1)
 
 
 class DefaultImageCapture(ImageCapture):
-    def __init__(self, uri:str, target_size :Size2i=None, begin_frame: int=1, end_frame: int=None) -> None:
+    def __init__(self, uri:str, target_size :Size2d=None, begin_frame: int=1, end_frame: int=None) -> None:
         """Create a DefaultImageCapture object.
 
         Args:
             uri (str): Resource identifier to the ImageCapture.
-            target_size (Size2i, optional): Output image size. Defaults to None.
+            target_size (Size2d, optional): Output image size. Defaults to None.
         """
         self.uri = uri
         self.__cap = None     # None on if it is closed
@@ -48,7 +48,7 @@ class DefaultImageCapture(ImageCapture):
 
         width = int(self.__cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(self.__cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        src_size = Size2i(width, height)
+        src_size = Size2d(width, height)
         if self.__size == _INIT_SIZE:
             self.__size = src_size
         elif self.__size.area() < src_size.area():
@@ -73,7 +73,7 @@ class DefaultImageCapture(ImageCapture):
         return self.__cap
 
     @property
-    def size(self) -> Size2i:
+    def size(self) -> Size2d:
         return self.__size
 
     @property

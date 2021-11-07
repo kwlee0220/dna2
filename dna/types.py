@@ -1,8 +1,5 @@
 from __future__ import annotations
-from os import stat
 from typing import List, Union, Tuple
-from dataclasses import dataclass
-from enum import Enum
 
 import numpy as np
 
@@ -34,7 +31,7 @@ class Point:
     def line_function(pt1:Point, pt2:Point):
         delta = pt1.xy - pt2.xy
         if delta[0] == 0:
-            raise ValueError(f"Cannot find a line function: {pt1} - {pt}")
+            raise ValueError(f"Cannot find a line function: {pt1} - {pt2}")
         slope = delta[1] / delta[0]
         y_int = pt2.y - (slope * pt2.x)
 
@@ -64,7 +61,7 @@ class Point:
     def __sub__(self, rhs) -> Union[Point,Size2d]:
         if isinstance(rhs, Point):
             return Size2d.from_np(self.xy - rhs.xy)
-        elif isinstance(rhs, Size2d) or isinstance(rhs, Size2i):
+        elif isinstance(rhs, Size2d):
             return Point.from_np(self.xy - rhs.wh)
         elif isinstance(rhs, tuple) and len(rhs) >= 2:
             return Point(self.x - rhs[0], self.y - rhs[1])
@@ -76,7 +73,7 @@ class Point:
     def __mul__(self, rhs) -> Point:
         if isinstance(rhs, int) or isinstance(rhs, float):
             return Point(self.x * rhs, self.y * rhs)
-        elif isinstance(rhs, Size2d) or isinstance(rhs, Size2i):
+        elif isinstance(rhs, Size2d):
             return Point.from_np(self.xy * rhs.wh)
         elif isinstance(rhs, tuple) and len(rhs) >= 2:
             return Point(self.x * rhs[0], self.y * rhs[1])
@@ -130,11 +127,11 @@ class Size2d:
     def abs(self) -> Size2d:
         return Size2d.from_np(np.abs(self.__wh))
 
-    def to_size2i(self):
-        return Size2i.from_np(np.rint(self.wh).astype(int))
+    def to_int(self):
+        return Size2d.from_np(np.rint(self.wh).astype(int))
 
     def __sub__(self, rhs) -> Size2d:
-        if isinstance(rhs, Size2d) or isinstance(rhs, Size2i):
+        if isinstance(rhs, Size2d):
             return Size2d.from_np(self.wh - rhs.wh)
         elif isinstance(rhs, int) or isinstance(rhs, float):
             return Size2d.from_np(self.wh - np.array([rhs, rhs]))
@@ -163,54 +160,6 @@ class Size2d:
         else:
             return '{:.1f}x{:.1f}'.format(*self.__wh)
 EMPTY_SIZE2D: Size2d = Size2d(-1, -1)
-
-
-class Size2i:
-    def __init__(self, width: int, height: int) -> None:
-        self.__wh = np.array([width, height])
-
-    @classmethod
-    def from_np(cls, wh: np.ndarray) -> Size2i:
-        return Size2i(int(wh[0]), int(wh[1]))
-
-    @property
-    def wh(self) -> np.ndarray:
-        return self.__wh
-
-    @property
-    def width(self) -> int:
-        return int(self.__wh[0])
-    
-    @property
-    def height(self) -> int:
-        return int(self.__wh[1])
-
-    def area(self) -> int:
-        return self.__wh[0] * self.__wh[1]
-
-    def as_tuple(self) -> Tuple[int,int]:
-        return tuple(self.__wh)
-
-    def __mul__(self, rhs) -> Size2i:
-        if isinstance(rhs, Size2i):
-            return Size2i.from_np(self.__wh / rhs.wh)
-        elif isinstance(rhs, int):
-            return Size2i(self.width*rhs, self.height*rhs)
-        elif isinstance(rhs, float):
-            return Size2i.from_np(self.__wh * rhs)
-        else:
-            raise ValueError('invalid right-hand-side:', rhs)
-
-    def __truediv__(self, rhs) -> Size2d:
-        if isinstance(rhs, Size2i) or isinstance(rhs, Size2d):
-            return Size2d.from_np(self.__wh / rhs.wh)
-        elif isinstance(rhs, int) or isinstance(rhs, float):
-            return Size2d.from_np(self.__wh / np.array([rhs, rhs]))
-        else:
-            raise ValueError('invalid right-hand-side:', rhs)
-    
-    def __repr__(self) -> str:
-        return '{}x{}'.format(*self.__wh)
 
 
 class Box:

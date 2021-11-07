@@ -28,11 +28,11 @@ class WorldPathDraw:
 
     def draw_path(self, convas, map_convas, frame_idx: int, ts):
         convas = plot_utils.draw_line_string(convas, self.points[self.index:], color.GREEN)
-        map_convas = plot_utils.draw_line_string(map_convas, self.coords[self.index:], color.GREEN)
+        # map_convas = plot_utils.draw_line_string(map_convas, self.coords[self.index:], color.GREEN)
 
         if frame_idx >= self.path.first_frame and frame_idx <= self.path.last_frame:
             convas = plot_utils.draw_line_string(convas, self.points[0:self.index+1], color.RED, 3)
-            map_convas = plot_utils.draw_line_string(map_convas, self.coords[0:self.index+1], color.RED, 3)
+            # map_convas = plot_utils.draw_line_string(map_convas, self.coords[0:self.index+1], color.RED, 3)
             
             pt = self.points[self.index]
             convas = cv2.circle(convas, pt.xy.astype(int), 7, color.RED, thickness=-1, lineType=cv2.LINE_AA)

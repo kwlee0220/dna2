@@ -47,7 +47,7 @@ if __name__ == '__main__':
     for cap in caps:
         cap.open()
         if size is None:
-            size = (cap.size / 2).to_size2i().as_tuple()
+            size = (cap.size / 2).to_int().as_tuple()
 
     output = Path(args.output_video)
     ext = output.suffix.lower()
