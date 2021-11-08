@@ -7,7 +7,7 @@ camera:
   blind_regions:
     - [1616, 514, 1929, 1084]
     - [-4, -2, 934, 531]
-    - [-1, 50, 1010, 403]
+    - [-15, 50, 1038, 404]
     - [-3, 312, 155, 624]
     - [891, 115, 1921, 276]
 
@@ -26,4 +26,4 @@ tracker:
     truck: car
 
 camera_geometry:
-  file: C:\development\dna\dna\data\camera_geoms\etri_07.pickle
+  file: C:\development\dna\data\camera_geoms\etri_07.pickle

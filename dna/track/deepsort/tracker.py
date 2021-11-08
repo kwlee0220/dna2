@@ -207,7 +207,7 @@ class Tracker:
                 self.print_metrix_cost(cmatrix, unmatched_tracks, unmatched_detections)
 
         #####################################################################################################
-        ################ Confirmed track에 한정해서 matching 실시
+        ################ Confirmed track에 한정해서  matching 실시
         #####################################################################################################
 
         # confirmed track들 중에서 time_since_update가 큰 경우는 motion 정보의 variance가 큰 상태라

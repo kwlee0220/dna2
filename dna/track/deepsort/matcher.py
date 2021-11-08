@@ -30,7 +30,7 @@ def combine_cost_matrices(metric_costs, dist_costs, tracks, detections):
     for tidx, track in enumerate(tracks):
         if weights[tidx] > 0:
             weighted_dist_costs[tidx,:] = dist_costs[tidx,:] * weights[tidx]
-    dists_mod = weighted_dist_costs / _COMBINED_DIST_THRESHOLD_4S
+    dists_mod = weighted_dist_costs / 100 #_COMBINED_DIST_THRESHOLD_4S
 
     matrix = np.zeros((len(tracks), len(detections)))
     invalid = np.zeros((len(tracks), len(detections)), dtype=bool)

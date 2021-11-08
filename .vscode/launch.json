@@ -47,9 +47,9 @@
             "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
                 "ai_city_01",
-                "--begin_frame", "20",
-                // "--output", "C:/Temp/cam_01_track.txt",
-                "--output_video", "C:/Temp/cam_01_track.mp4",
+                "--begin_frame", "150",
+                // "--output", "C:/Temp/ai_city_01_track.txt",
+                "--output_video", "C:/Temp/ai_city_01_track.mp4",
                 "--show",
                 // "--show_progress",
                 "--show_blind_regions",
@@ -59,12 +59,12 @@
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
-                "etri_073",
-                // "--begin_frame", "560",
-                "--output", "C:/Temp/etri_073_track.txt",
-                "--output_video", "C:/Temp/etri_073_track.mp4",
-                // "--show", 
-                "--show_progress",
+                "etri_061",
+                // "--begin_frame", "70",
+                // "--output", "C:/Temp/etri_073_track.txt",
+                // "--output_video", "C:/Temp/etri_073_track.mp4",
+                "--show", 
+                // "--show_progress",
                 // "--show_blind_regions", 
             ]
         },
@@ -113,8 +113,8 @@
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_replay_local_path.py",
             "args": [
-                "etri_041",
-                "--id", "5",
+                "etri_051",
+                "--id", "09",
                 "--output_video", "C:/Temp/local_path.mp4",
             ]
         },
@@ -122,12 +122,14 @@
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_replay_world_path.py",
             "args": [
-                "etri_062",
+                // "etri_042", "--id", "29", "30", "32",
                 // "--id", "2", "7", "8", "9", "10", "11", "15"
                 // "--id", "1", "4", "6", "7", "8", "9",
-                // "--id", "25", "23", "24", "26",  "28", "29", "30", "32", "34", // etri_042
-                // "--id", "18", "19", "20", "21",  "22", "23", "24", "26", "27", "30", // etri_052
-                "--id", "48", "52", "54", "55",  "56", "57", "58", // etri_062
+                // "etri_042", "--id", "25", "23", "24", "26",  "28", "29", "30", "32", "34",
+                // "etri_052", "--id", "18", "19", "20", "21",  "22", "23", "24", "26", "27", "30",
+                "etri_061", "--id", "19",
+                // "etri_062", "--id", "48", "52", "54", "55",  "56", "57", "58",
+                // "etri_072", "--id", "23", "25", "26", "27",  "29", "30", "33", "38", "39",
                 "--output_video", "C:/Temp/local_path.mp4",
             ]
         },
@@ -135,7 +137,7 @@
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_replay_tracks.py",
             "args": [
-                "etri_06",
+                "etri_041",
                 "--output_video", "C:/Temp/local_path.mp4",
             ]
         },
@@ -154,7 +156,7 @@
         { "name": "Add a blind region",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/add_blind_region.py",
-            "args": [ "ai_city_01", "--begin_frame", "607", ]
+            "args": [ "etri_072", "--begin_frame", "1681", ]
         },
         { "name": "Format",
             "type": "python", "request": "launch", "console": "integratedTerminal",
@@ -170,12 +172,12 @@
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/reduce_fps.py",
             "args": [
-                "C:/Temp/data/etri/etri_073.mp4",
+                "C:/Temp/data/etri/etri_051.mp4",
                 // "C:/Temp/data/etri/etri_051_track.mp4",
                 // "C:/Temp/data/etri/etri_061_track.mp4",
                 // "C:/Temp/data/etri/etri_071_track.mp4",
                 "--skip", "2",
-                "--output_video", "C:/Temp/etri_073.mp4"
+                "--output_video", "C:/Temp/etri_051.mp4"
             ]
         },
     ]

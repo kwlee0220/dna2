@@ -26,4 +26,4 @@ tracker:
   log_level: info
 
 camera_geometry:
-  file: C:\development\dna\dna\data\camera_geoms\etri_04.pickle
+  file: C:\development\dna\data\camera_geoms\etri_04.pickle
