@@ -60,7 +60,7 @@ class Tracker:
 
     """
 
-    def __init__(self, domain, metric, max_iou_distance=0.7, max_age=40, n_init=3, min_size=Size2d(25, 25), blind_regions=[]):
+    def __init__(self, domain, metric, max_iou_distance, max_age, n_init, min_size, blind_regions=[]):
         self.domain = domain
         self.metric = metric
         self.max_iou_distance = max_iou_distance
@@ -132,6 +132,12 @@ class Tracker:
             non_overlapped = unmatched_detections.copy()
             for didx in unmatched_detections:
                 box = det_boxes[didx]
+
+                # 일정 크기 이하의 detection들은 무시한다.
+                if box.width() < self.min_size.width or box.height() < self.min_size.height:
+                    non_overlapped.remove(didx)
+                    continue
+
                 confi = detections[didx].confidence
                 for ov in find_overlaps_threshold(box, det_boxes, self.new_track_overlap_threshold):
                     if ov[0] != didx and (ov[0] not in unmatched_detections or detections[ov[0]].confidence > confi):
@@ -207,35 +213,48 @@ class Tracker:
                 self.print_metrix_cost(cmatrix, unmatched_tracks, unmatched_detections)
 
         #####################################################################################################
-        ################ Confirmed track에 한정해서  matching 실시
+        ################ Tentative track에 penality를 부여하고 전체 track에 대해 matching 실시
         #####################################################################################################
+        unmatched_tracks = unmatched_hot_tracks + tl_tracks + unconfirmed_tracks
+        if len(unmatched_tracks) > 0 and len(unmatched_detections) > 0:
+            unconfirmed_weights = np.array([1 if track.is_confirmed() else 3 for track in self.tracks])
+            cmatrix2 = np.multiply(cmatrix, unconfirmed_weights[:, np.newaxis])
+            self.print_metrix_cost(cmatrix2, unmatched_tracks, unmatched_detections)
 
-        # confirmed track들 중에서 time_since_update가 큰 경우는 motion 정보의 variance가 큰 상태라
-        # 실제로 먼 거리에 있는 detection과의 거리가 그리 멀지 않게되기 때문에 주의해야 함.
-
-        unmatched_confirmed_tracks = unmatched_hot_tracks + tl_tracks
-        if len(unmatched_confirmed_tracks) > 0 and len(unmatched_detections) > 0:
-            # STEP 2
-            # confirmed track들 사이에서 total_cost를 사용해서 matching을 실시한다.
-            matches_s, unmatched_confirmed_tracks, unmatched_detections =\
-                matcher.matching_by_hungarian(cmatrix, _TOTAL_COST_THRESHOLD, unmatched_confirmed_tracks, unmatched_detections)
+            matches_s, unmatched_tracks, unmatched_detections =\
+                matcher.matching_by_hungarian(cmatrix2, _TOTAL_COST_THRESHOLD, unmatched_tracks, unmatched_detections)
             matches += matches_s
 
-            # STEP 3
-            # 만일 STEP 1에서 가까운 detection이 존재했지만, 해당 detection이 타 track 때문에 독점적이지 아니어서 match되지 못했지만,
-            # STEP 2 과정에서 경쟁하던 track이 다른 detection에 match되어 이제는 독점적으로 된 경우를 처리한다.
-            unmatched_hot_tracks = intersection(unmatched_confirmed_tracks, hot_tracks)
-            if len(unmatched_hot_tracks) > 0 and len(matches_s) > 0 and len(unmatched_detections) > 0:
-                matches_s, unmatched_hot_tracks, unmatched_detections \
-                    = matcher.matching_by_excl_best(dist_cost, _HOT_DIST_THRESHOLD, unmatched_hot_tracks, unmatched_detections)
-                matches += matches_s
-                unmatched_confirmed_tracks = subtract(unmatched_confirmed_tracks, project(matches_s, 1))
+        # #####################################################################################################
+        # ################ Confirmed track에 한정해서  matching 실시
+        # #####################################################################################################
+
+        # # confirmed track들 중에서 time_since_update가 큰 경우는 motion 정보의 variance가 큰 상태라
+        # # 실제로 먼 거리에 있는 detection과의 거리가 그리 멀지 않게되기 때문에 주의해야 함.
+
+        # unmatched_confirmed_tracks = unmatched_hot_tracks + tl_tracks
+        # if len(unmatched_confirmed_tracks) > 0 and len(unmatched_detections) > 0:
+        #     # STEP 2
+        #     # confirmed track들 사이에서 total_cost를 사용해서 matching을 실시한다.
+        #     matches_s, unmatched_confirmed_tracks, unmatched_detections =\
+        #         matcher.matching_by_hungarian(cmatrix, _TOTAL_COST_THRESHOLD, unmatched_confirmed_tracks, unmatched_detections)
+        #     matches += matches_s
+
+        #     # STEP 3
+        #     # 만일 STEP 1에서 가까운 detection이 존재했지만, 해당 detection이 타 track 때문에 독점적이지 아니어서 match되지 못했지만,
+        #     # STEP 2 과정에서 경쟁하던 track이 다른 detection에 match되어 이제는 독점적으로 된 경우를 처리한다.
+        #     unmatched_hot_tracks = intersection(unmatched_confirmed_tracks, hot_tracks)
+        #     if len(unmatched_hot_tracks) > 0 and len(matches_s) > 0 and len(unmatched_detections) > 0:
+        #         matches_s, unmatched_hot_tracks, unmatched_detections \
+        #             = matcher.matching_by_excl_best(dist_cost, _HOT_DIST_THRESHOLD, unmatched_hot_tracks, unmatched_detections)
+        #         matches += matches_s
+        #         unmatched_confirmed_tracks = subtract(unmatched_confirmed_tracks, project(matches_s, 1))
 
         #####################################################################################################
         ################ Tentative track에 한정해서 matching 실시
         #####################################################################################################
 
-        unmatched_unconfirmed_tracks = unconfirmed_tracks.copy()
+        unmatched_unconfirmed_tracks = intersection(unmatched_tracks, unconfirmed_tracks)
         # if len(unconfirmed_tracks) > 0 and len(unmatched_detections) > 0:
         #     matches_s, unmatched_unconfirmed_tracks, unmatched_detections =\
         #             matcher.matching_by_excl_best(cmatrix, _TOTAL_COST_HIGH_THRESHOLD, unmatched_unconfirmed_tracks, unmatched_detections)
@@ -245,8 +264,9 @@ class Tracker:
             matches_s, unmatched_unconfirmed_tracks, unmatched_detections =\
                 matcher.matching_by_hungarian(cmatrix, _TOTAL_COST_THRESHOLD, unmatched_unconfirmed_tracks, unmatched_detections)
             matches += matches_s
+            unmatched_tracks = subtract(unmatched_tracks, project(matches_s, 0))
 
-        unmatched_tracks = unmatched_confirmed_tracks + unmatched_unconfirmed_tracks
+        # unmatched_tracks = unmatched_confirmed_tracks + unmatched_unconfirmed_tracks
 
         #####################################################################################################
         ################ 남은 unmatched track에 대해서 matching 실시
@@ -289,8 +309,6 @@ class Tracker:
             for row, track in enumerate(tracks):
                 dist_matrix[row, :] = self.kf.gating_distance(track.mean, track.covariance,
                                                                 measurements, only_position)
-                # print(dist_matrix[row, :])
-                # print(self.kf.gating_distance(track.mean, track.covariance, measurements, True))
         return dist_matrix
 
     # kwlee
@@ -339,7 +357,7 @@ class Tracker:
             print(f"{tag}{track_str}: {dist_str}")
 
 def _pattern(i,v):
-    if v == 9.99:
+    if v >= 9.99:
         return "    "
     else:
         return f"{v:.2f}"

@@ -43,8 +43,8 @@ def get_gaussian_mask():
 
 
 class deepsort_rbc():
-	def __init__(self, domain: Box, wt_path, matching_threshold=0.5, max_iou_distance=0.7,
-					max_age=40, n_init=3, min_size=Size2d(30, 30), blind_regions=[]):
+	def __init__(self, domain: Box, wt_path, matching_threshold, max_iou_distance,
+				max_age, n_init, min_size, blind_regions=[]):
 		self.domain = domain
 
 		#loading this encoder is slow, should be done only once.

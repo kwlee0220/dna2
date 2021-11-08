@@ -84,11 +84,11 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
         detections = []
         small_dets = []
         for det in dets:
-            # 일정 크기 이하의 detection들은 무시한다.
-            box_size = det.bbox.size().to_int()
-            if box_size.width < self.min_size.width or box_size.height < self.min_size.height:
-                small_dets.append(det)
-                continue
+            # # 일정 크기 이하의 detection들은 무시한다.
+            # box_size = det.bbox.size().to_int()
+            # if box_size.width < self.min_size.width or box_size.height < self.min_size.height:
+            #     small_dets.append(det)
+            #     continue
 
             # 일정 점수 이하의 detection들은 무시한다.
             if det.score < self.min_detection_score:

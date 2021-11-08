@@ -47,12 +47,12 @@
             "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
                 "ai_city_01",
-                "--begin_frame", "150",
+                // "--begin_frame", "10",
                 // "--output", "C:/Temp/ai_city_01_track.txt",
-                "--output_video", "C:/Temp/ai_city_01_track.mp4",
+                // "--output_video", "C:/Temp/ai_city_01_track.mp4",
                 "--show",
                 // "--show_progress",
-                "--show_blind_regions",
+                // "--show_blind_regions",
             ]
         },
         {  "name": "Track Video (ETRI)",
