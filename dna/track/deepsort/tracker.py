@@ -188,8 +188,8 @@ class Tracker:
             self.print_dist_cost(dist_cost, 999)
 
         matches = []
+        unmatched_tracks = all_indices(self.tracks)
         unmatched_detections = all_indices(detections)
-        unmatched_tracks= all_indices(self.tracks)
 
         #####################################################################################################
         ################ Hot track에 한정해서 matching 실시
@@ -197,7 +197,7 @@ class Tracker:
 
         # STEP 1: hot track에 독점적으로 가까운 detection이 존재하면, association시킨다.
         if len(detections) > 0 and len(hot_tracks) > 0:
-            matches_hot, _, unmatched_detections \
+            matches_hot, unmatched_hot, unmatched_detections \
                 = matcher.matching_by_excl_best(dist_cost, _HOT_DIST_THRESHOLD, hot_tracks, unmatched_detections)
             matches += matches_hot
             unmatched_tracks = subtract(unmatched_tracks, project(matches_hot, 0))
@@ -206,14 +206,23 @@ class Tracker:
             if len(matches_hot) > 0 and len(unmatched_detections) > 0:
                 unmatched_detections = matcher.remove_overlaps(detections, detections, _REMOVE_OVERLAP_RATIO_THRESHOLD,
                                                                 project(matches_hot, 1), unmatched_detections)
+        else:
+            unmatched_hot = hot_tracks
 
         if len(unmatched_tracks) > 0 and len(unmatched_detections) > 0:
             metric_cost = self.metric_cost(self.tracks, detections)
-            if dna.DEBUG_PRINT_COST:
-                self.print_metrix_cost(metric_cost, unmatched_tracks, unmatched_detections)
             cmatrix = matcher.combine_cost_matrices(metric_cost, dist_cost, self.tracks, detections)
             if dna.DEBUG_PRINT_COST:
+                self.print_metrix_cost(metric_cost, unmatched_tracks, unmatched_detections)
                 self.print_metrix_cost(cmatrix, unmatched_tracks, unmatched_detections)
+
+        if len(unmatched_hot) > 0 and len(unmatched_detections) > 0:
+            # STEP 2
+            matches_s, _, unmatched_detections =\
+                matcher.matching_by_hungarian(cmatrix, _TOTAL_COST_THRESHOLD,
+                                                unmatched_hot, unmatched_detections)
+            matches += matches_s
+            unmatched_tracks = subtract(unmatched_tracks, project(matches_s, 0))
 
         #####################################################################################################
         ################ Confirmed track에 한정해서 강한 threshold를 사용해서  matching 실시

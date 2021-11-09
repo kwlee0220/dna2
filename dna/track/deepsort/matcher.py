@@ -19,7 +19,7 @@ _COMBINED_METRIC_THRESHOLD_4M = 0.55
 _COMBINED_METRIC_THRESHOLD_4L = 0.40
 _COMBINED_DIST_THRESHOLD_4S = 75
 _COMBINED_DIST_THRESHOLD_4M = 150
-_COMBINED_DIST_THRESHOLD_4_LARGE = 310
+_COMBINED_DIST_THRESHOLD_4L = 310
 _COMBINED_INFINITE = 9.99
 
 def _area_ratios(tracks, detections):
@@ -49,15 +49,13 @@ def combine_cost_matrices(metric_costs, dist_costs, tracks, detections):
     invalid = _area_ratios(tracks, detections) <= 0.2
     matrix = np.zeros((len(tracks), len(detections)))
     for didx, det in enumerate(detections):
-        det = detections[didx]
-
         if det.tlwh[2] >= _LARGE and det.tlwh[3] >= _LARGE: # large detections
             # detection 크기가 크면 metric cost에 많은 가중치를 주어, 외형을 보다 많이 고려한다.
             # 또한 외형에 많은 가중치를 주기 때문에 gate용 distance 한계도 넉넉하게 (300) 주는 대신,
             # gate용 metric thresholds는 다른 경우보다 작게 (0.45) 준다.
             matrix[:,didx] = 0.8*metric_costs[:,didx] + 0.2*dists_mod[:,didx]
             invalid[:,didx] = np.logical_or(invalid[:,didx], metric_costs[:,didx] > _COMBINED_METRIC_THRESHOLD_4L,
-                                            weighted_dist_costs[:,didx] > _COMBINED_DIST_THRESHOLD_4_LARGE)
+                                            weighted_dist_costs[:,didx] > _COMBINED_DIST_THRESHOLD_4L)
         elif det.tlwh[2] < _MEDIUM and det.tlwh[3] < _MEDIUM: # small detections
             # detection의 크기가 작으면 외형을 이용한 검색이 의미가 작으므로, track과 detection사이의 거리
             # 정보에 보다 많은 가중치를 부여한다.
@@ -72,6 +70,52 @@ def combine_cost_matrices(metric_costs, dist_costs, tracks, detections):
 
     return matrix
 
+# def _weights_by_size(detections):
+#     metric_weights = []
+#     metric_gates = []
+#     distance_weights = []
+#     distance_gates = []
+#     gates = []
+#     for didx, det in enumerate(detections):
+#         if det.tlwh[2] >= _LARGE and det.tlwh[3] >= _LARGE: # large detections
+#             metric_weights.append(0.8)
+#             distance_weights.append(0.2)
+#             metric_gates.append(_COMBINED_METRIC_THRESHOLD_4L)
+#             distance_gates.append(_COMBINED_DIST_THRESHOLD_4L)
+#         elif det.tlwh[2] < _MEDIUM and det.tlwh[3] < _MEDIUM: # small detections
+#             metric_weights.append(0.2)
+#             distance_weights.append(0.8)
+#             metric_gates.append(_COMBINED_METRIC_THRESHOLD_4S)
+#             distance_gates.append(_COMBINED_DIST_THRESHOLD_4S)
+#         else: # medium detections
+#             metric_weights.append(0.7)
+#             distance_weights.append(0.3)
+#             metric_gates.append(_COMBINED_METRIC_THRESHOLD_4M)
+#             distance_gates.append(_COMBINED_DIST_THRESHOLD_4M)
+#     return metric_weights, distance_weights, metric_gates, distance_gates
+
+# def combine_costs(metric_costs, dist_costs, tracks, detections):
+#     # time_since_update 에 따른 가중치 보정
+#     weights = list(map(lambda t: math.log10(t.time_since_update)+1, tracks))
+#     weighted_dist_costs = dist_costs.copy()
+#     for tidx, track in enumerate(tracks):
+#         if weights[tidx] > 0:
+#             weighted_dist_costs[tidx,:] = dist_costs[tidx,:] * weights[tidx]
+#     dists_mod = weighted_dist_costs / 200 #_COMBINED_DIST_THRESHOLD_4S
+
+#     metric_weights, distance_weights, metric_gates, distance_gates = _weights_by_size(detections)
+#     matrix = np.zeros((len(tracks), len(detections)))
+#     mask = np.zeros((len(tracks), len(detections)), dtype=bool)
+#     for tidx, track in tracks:
+#         if track.is_confirmed() and track.time_since_update >= 4:
+#             matrix[tidx,:] = metric_costs[tidx,:]
+#             mask[tidx,:] = metric_costs[tidx,:] > metric_gates
+#         else:
+#             matrix[tidx,:] = metric_costs[tidx,:] * metric_weights + dists_mod[tidx,:] * distance_weights
+#             mask[tidx,:] = np.logical_or(metric_costs[tidx,:] > metric_gates, dists_mod[tidx,:] > distance_gates)
+#     matrix[mask] = _COMBINED_INFINITE
+
+#     return matrix
 
 def matching_by_excl_best(dist_matrix, threshold, track_indices, detection_indices):
     def find_best2_indices(values, indices):

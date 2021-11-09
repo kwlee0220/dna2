@@ -17,7 +17,7 @@ tracker:
   n_init: 3
   matching_threshold: 0.55
   max_iou_distance: 0.7
-  max_age: 60
+  max_age: 30
   min_detection_score: 0
   det_mapping:
     car: car
