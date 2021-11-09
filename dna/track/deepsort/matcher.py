@@ -6,7 +6,7 @@ from scipy.optimize import linear_sum_assignment
 
 import dna
 from dna import Box, get_logger
-from .utils import find_overlaps, find_overlaps_threshold, project
+from .utils import find_overlaps, find_overlaps_threshold, project, overlap_ratios
 
 
 _logger = get_logger("dna.track.deep_sort")
@@ -22,6 +22,20 @@ _COMBINED_DIST_THRESHOLD_4M = 150
 _COMBINED_DIST_THRESHOLD_4_LARGE = 310
 _COMBINED_INFINITE = 9.99
 
+def _area_ratios(tracks, detections):
+    boxes = [Box.from_tlbr(det.to_tlbr()) for det in detections]
+    det_areas = [box.area() for box in boxes]
+
+    area_ratios = np.zeros((len(tracks), len(detections)))
+    for tidx, track in enumerate(tracks):
+        tlwh = track.to_tlwh()
+        t_area = tlwh[2] * tlwh[3]
+        for didx, _ in enumerate(detections):
+            # area_ratios[tidx,didx] = min(t_area, det_areas[didx]) / max(t_area, det_areas[didx])
+            area_ratios[tidx,didx] = det_areas[didx] / t_area
+
+    return area_ratios
+
 import math
 def combine_cost_matrices(metric_costs, dist_costs, tracks, detections):
     # time_since_update 에 따른 가중치 보정
@@ -30,10 +44,10 @@ def combine_cost_matrices(metric_costs, dist_costs, tracks, detections):
     for tidx, track in enumerate(tracks):
         if weights[tidx] > 0:
             weighted_dist_costs[tidx,:] = dist_costs[tidx,:] * weights[tidx]
-    dists_mod = weighted_dist_costs / 100 #_COMBINED_DIST_THRESHOLD_4S
+    dists_mod = weighted_dist_costs / 200 #_COMBINED_DIST_THRESHOLD_4S
 
+    invalid = _area_ratios(tracks, detections) <= 0.2
     matrix = np.zeros((len(tracks), len(detections)))
-    invalid = np.zeros((len(tracks), len(detections)), dtype=bool)
     for didx, det in enumerate(detections):
         det = detections[didx]
 
@@ -42,18 +56,18 @@ def combine_cost_matrices(metric_costs, dist_costs, tracks, detections):
             # 또한 외형에 많은 가중치를 주기 때문에 gate용 distance 한계도 넉넉하게 (300) 주는 대신,
             # gate용 metric thresholds는 다른 경우보다 작게 (0.45) 준다.
             matrix[:,didx] = 0.8*metric_costs[:,didx] + 0.2*dists_mod[:,didx]
-            invalid[:,didx] = np.logical_or(metric_costs[:,didx] > _COMBINED_METRIC_THRESHOLD_4L,
+            invalid[:,didx] = np.logical_or(invalid[:,didx], metric_costs[:,didx] > _COMBINED_METRIC_THRESHOLD_4L,
                                             weighted_dist_costs[:,didx] > _COMBINED_DIST_THRESHOLD_4_LARGE)
-        elif det.tlwh[2] >= _MEDIUM and det.tlwh[3] >= _MEDIUM: # medium detections
-            matrix[:,didx] = 0.7*metric_costs[:,didx] + 0.3*dists_mod[:,didx]
-            invalid[:,didx] = np.logical_or(metric_costs[:,didx] > _COMBINED_METRIC_THRESHOLD_4M,
-                                            weighted_dist_costs[:,didx] > _COMBINED_DIST_THRESHOLD_4M)
-        else:
+        elif det.tlwh[2] < _MEDIUM and det.tlwh[3] < _MEDIUM: # small detections
             # detection의 크기가 작으면 외형을 이용한 검색이 의미가 작으므로, track과 detection사이의 거리
             # 정보에 보다 많은 가중치를 부여한다.
             matrix[:,didx] = 0.2*metric_costs[:,didx] + 0.8*dists_mod[:,didx]
-            invalid[:,didx] = np.logical_or(metric_costs[:,didx] > _COMBINED_METRIC_THRESHOLD_4S,
+            invalid[:,didx] = np.logical_or(invalid[:,didx], metric_costs[:,didx] > _COMBINED_METRIC_THRESHOLD_4S,
                                             weighted_dist_costs[:,didx] > _COMBINED_DIST_THRESHOLD_4S)
+        else: # medium detections
+            matrix[:,didx] = 0.7*metric_costs[:,didx] + 0.3*dists_mod[:,didx]
+            invalid[:,didx] = np.logical_or(invalid[:,didx], metric_costs[:,didx] > _COMBINED_METRIC_THRESHOLD_4M,
+                                            weighted_dist_costs[:,didx] > _COMBINED_DIST_THRESHOLD_4M)
     matrix[invalid] = _COMBINED_INFINITE
 
     return matrix
@@ -85,7 +99,8 @@ def matching_by_excl_best(dist_matrix, threshold, track_indices, detection_indic
         if v1 < threshold and (v2 >= threshold or v1*2 < v2):
             didx = idxes[0]
             dists2 = dist_matrix[unmatched_tracks, didx]
-            cnt = len(dists2[np.where(dists2 < threshold)])
+            # cnt = len(np.where(dists2 < min(3*v1, threshold))[0])
+            cnt = len(np.where(dists2 < threshold)[0])
             if cnt <= 1:
                 matches.append((tidx, didx))
                 unmatched_tracks.remove(tidx)
@@ -202,3 +217,14 @@ def delete_overlapped_tentative_tracks(tracks, threshold):
                                     f"ratio={ov_ratio:.2f}, frame={dna.DEBUG_FRAME_IDX}"))
             else:
                 suriveds.append(uc_idx)
+
+
+def overlap_cost(tracks, detections, track_indices, detention_indices):
+    det_boxes = [Box.from_tlbr(d.to_tlbr()) for d in detections]
+    ovr_matrix = np.zeros((len(tracks), len(detections)))
+    for tidx in track_indices:
+        t_box = Box.from_tlbr(tracks[tidx].to_tlbr())
+        for didx in detention_indices:
+            ovr_matrix[tidx, didx] = max(overlap_ratios(t_box, det_boxes[didx]))
+
+    return ovr_matrix

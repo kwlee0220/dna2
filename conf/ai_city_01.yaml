@@ -12,7 +12,6 @@ camera:
     - [908, -4, 1157, 158]
     - [-58, 283, 113, 560]
 
-
 tracker:
   # detector: yolov4
   detector: file:C:/Temp/data/ai_city/ai_city_01_det.txt

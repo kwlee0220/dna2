@@ -14,16 +14,6 @@ camera:
 tracker:
   # detector: yolov4
   detector: file:C:/Temp/data/etri/etri_071_det.txt
-  model_file: dna/track/deepsort/ckpts/model640.pt
-  n_init: 3
-  matching_threshold: 0.55
-  max_iou_distance: 0.7
-  max_age: 10
-  min_detection_score: 0
-  det_mapping:
-    car: car
-    bus: bus
-    truck: car
 
 camera_geometry:
   file: C:\development\dna\data\camera_geoms\etri_07.pickle

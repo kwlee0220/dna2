@@ -23,12 +23,13 @@ _logger = get_logger("dna.track.deep_sort")
 
 _HOT_DIST_THRESHOLD = 21
 _TOTAL_COST_THRESHOLD = 0.5
-_TOTAL_COST_HIGH_THRESHOLD = 0.2
+_TOTAL_COST_THRESHOLD_WEAK = 0.75
+_TOTAL_COST_THRESHOLD_STRONG = 0.2
 _REMOVE_OVERLAP_RATIO_THRESHOLD = 0.8
 _OVERLAP_MATCH_HIGH = 0.75
 _OVERLAP_MATCH_LOW = 0.55
 
-_OBSOLTE_TRACK_SIZE = 10
+_OBSOLTE_TRACK_SIZE = 5
 
 class Tracker:
     """
@@ -101,8 +102,8 @@ class Tracker:
                     track.mark_deleted()
                 else:
                     track.mark_missed()
-            else:
-                track.mark_deleted()
+            # else:
+            #     track.mark_deleted()
 
         # Temporarily lost된 track의 bounding-box의 크기가 일정 이하이면 delete시킨다.
         for tidx in range(len(self.tracks)):
@@ -110,8 +111,9 @@ class Tracker:
             if track.is_confirmed() and track.time_since_update > 1:
                 size = t_boxes[tidx].size().to_int()
                 if size.width < _OBSOLTE_TRACK_SIZE or size.height < _OBSOLTE_TRACK_SIZE:
-                    _logger.debug(f"delete too small temp-lost track[{track.track_id}], size={size}, frame={dna.DEBUG_FRAME_IDX}")
-                    track.mark_deleted()
+                    _logger.debug((f"delete too small temp-lost track[{track.track_id}:{track.time_since_update}], "
+                                    f"size={size}, frame={dna.DEBUG_FRAME_IDX}"))
+                    # track.mark_deleted()
 
         # track의 bounding-box가 blind_region에 포함된 경우는 delete시킨다.
         for tidx in range(len(self.tracks)):
@@ -177,8 +179,8 @@ class Tracker:
             return [], all_indices(self.tracks), detections
 
         # Split track set into confirmed and unconfirmed tracks.
+        confirmed_tracks = [i for i, t in enumerate(self.tracks) if t.is_confirmed()]
         hot_tracks = [i for i, t in enumerate(self.tracks) if t.is_confirmed() and t.time_since_update <= 1]
-        tl_tracks = [i for i, t in enumerate(self.tracks) if t.is_confirmed() and t.time_since_update > 1]
         unconfirmed_tracks = [i for i, t in enumerate(self.tracks) if not t.is_confirmed()]
 
         dist_cost = self.distance_cost(self.tracks, detections)
@@ -187,42 +189,75 @@ class Tracker:
 
         matches = []
         unmatched_detections = all_indices(detections)
+        unmatched_tracks= all_indices(self.tracks)
 
         #####################################################################################################
         ################ Hot track에 한정해서 matching 실시
         #####################################################################################################
 
         # STEP 1: hot track에 독점적으로 가까운 detection이 존재하면, association시킨다.
-        unmatched_hot_tracks = hot_tracks.copy()
         if len(detections) > 0 and len(hot_tracks) > 0:
-            matches_hot, unmatched_hot_tracks, unmatched_detections \
-                = matcher.matching_by_excl_best(dist_cost, _HOT_DIST_THRESHOLD, unmatched_hot_tracks, unmatched_detections)
+            matches_hot, _, unmatched_detections \
+                = matcher.matching_by_excl_best(dist_cost, _HOT_DIST_THRESHOLD, hot_tracks, unmatched_detections)
             matches += matches_hot
+            unmatched_tracks = subtract(unmatched_tracks, project(matches_hot, 0))
 
             # active track과 binding된 detection과 상당히 겹치는 detection들을 제거한다.
             if len(matches_hot) > 0 and len(unmatched_detections) > 0:
                 unmatched_detections = matcher.remove_overlaps(detections, detections, _REMOVE_OVERLAP_RATIO_THRESHOLD,
                                                                 project(matches_hot, 1), unmatched_detections)
 
-        unmatched_tracks = unmatched_hot_tracks + tl_tracks + unconfirmed_tracks
         if len(unmatched_tracks) > 0 and len(unmatched_detections) > 0:
             metric_cost = self.metric_cost(self.tracks, detections)
-            cmatrix = matcher.combine_cost_matrices(metric_cost, dist_cost, self.tracks, detections)
             if dna.DEBUG_PRINT_COST:
                 self.print_metrix_cost(metric_cost, unmatched_tracks, unmatched_detections)
+            cmatrix = matcher.combine_cost_matrices(metric_cost, dist_cost, self.tracks, detections)
+            if dna.DEBUG_PRINT_COST:
                 self.print_metrix_cost(cmatrix, unmatched_tracks, unmatched_detections)
 
         #####################################################################################################
-        ################ Tentative track에 penality를 부여하고 전체 track에 대해 matching 실시
+        ################ Confirmed track에 한정해서 강한 threshold를 사용해서  matching 실시
         #####################################################################################################
-        unmatched_tracks = unmatched_hot_tracks + tl_tracks + unconfirmed_tracks
+        # confirmed track들 중에서 time_since_update가 큰 경우는 motion 정보의 variance가 큰 상태라
+        # 실제로 먼 거리에 있는 detection과의 거리가 그리 멀지 않게되기 때문에 주의해야 함.
+        unmatched_confirmed_tracks = subtract(confirmed_tracks, project(matches, 0))
+        if len(unmatched_confirmed_tracks) > 0 and len(unmatched_detections) > 0:
+            # STEP 2
+            # confirmed track들 사이에서 tight한 threshold를 사용해서 matching을 실시한다.
+            matches_s, unmatched_confirmed_tracks, unmatched_detections =\
+                matcher.matching_by_hungarian(cmatrix, _TOTAL_COST_THRESHOLD_STRONG,
+                                                unmatched_confirmed_tracks, unmatched_detections)
+            matches += matches_s
+            unmatched_tracks = subtract(unmatched_tracks, project(matches_s, 0))
+
+        #####################################################################################################
+        ################ Tentative track에 penality를 부여한 weighted matrix를 
+        ################ 사용하여 전체 track에 대해 matching 실시
+        #####################################################################################################
         if len(unmatched_tracks) > 0 and len(unmatched_detections) > 0:
             unconfirmed_weights = np.array([1 if track.is_confirmed() else 3 for track in self.tracks])
-            cmatrix2 = np.multiply(cmatrix, unconfirmed_weights[:, np.newaxis])
-            self.print_metrix_cost(cmatrix2, unmatched_tracks, unmatched_detections)
+            weighted_matrix = np.multiply(cmatrix, unconfirmed_weights[:, np.newaxis])
+            if dna.DEBUG_PRINT_COST:
+                self.print_metrix_cost(weighted_matrix, unmatched_tracks, unmatched_detections)
 
             matches_s, unmatched_tracks, unmatched_detections =\
-                matcher.matching_by_hungarian(cmatrix2, _TOTAL_COST_THRESHOLD, unmatched_tracks, unmatched_detections)
+                    matcher.matching_by_hungarian(weighted_matrix, _TOTAL_COST_THRESHOLD,
+                                                    unmatched_tracks, unmatched_detections)
+            matches += matches_s
+            
+        if len(unmatched_tracks) > 0 and len(unmatched_detections) > 0:
+            ovr_matrix = matcher.overlap_cost(self.tracks, detections, unmatched_tracks, unmatched_detections)
+
+        #####################################################################################################
+        ################ 겹침 정도로 gating하고 조금 더 느슨한 threshold를 사용하여 matching 실시.
+        #####################################################################################################
+        if len(unmatched_tracks) > 0 and len(unmatched_detections) > 0:
+            weighted_matrix[ovr_matrix < 0.35] = 9.99
+            if dna.DEBUG_PRINT_COST:
+                self.print_metrix_cost(weighted_matrix, unmatched_tracks, unmatched_detections)
+            matches_s, unmatched_tracks, unmatched_detections =\
+                    matcher.matching_by_hungarian(weighted_matrix, _TOTAL_COST_THRESHOLD_WEAK,
+                                                    unmatched_tracks, unmatched_detections)
             matches += matches_s
 
         # #####################################################################################################
@@ -274,18 +309,18 @@ class Tracker:
         #####################################################################################################
 
         if len(unmatched_tracks) > 0 and len(unmatched_detections) > 0:
+            matches_s, unmatched_tracks, unmatched_detections = \
+                linear_assignment.min_cost_matching(iou_matching.iou_cost, self.max_iou_distance,
+                                                    self.tracks, detections,
+                                                    unmatched_tracks, unmatched_detections)
+            matches += matches_s
+
+        if len(unmatched_tracks) > 0 and len(unmatched_detections) > 0:
             def match_overlap(r1, r2, iou):
                 return max(r1, r2) >= _OVERLAP_MATCH_HIGH and min(r1, r2) >= _OVERLAP_MATCH_LOW
 
             matches_s, unmatched_tracks, unmatched_detections \
                 = matcher.matching_by_overlap(self.tracks, detections, match_overlap, unmatched_tracks, unmatched_detections)
-            matches += matches_s
-
-        if len(unmatched_tracks) > 0 and len(unmatched_detections) > 0:
-            matches_s, unmatched_tracks, unmatched_detections = \
-                linear_assignment.min_cost_matching(iou_matching.iou_cost, self.max_iou_distance,
-                                                    self.tracks, detections,
-                                                    unmatched_tracks, unmatched_detections)
             matches += matches_s
 
         return matches, unmatched_tracks, unmatched_detections
