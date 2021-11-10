@@ -55,8 +55,8 @@ class VideoFileCapture(ImageCapture):
         self.interval = 1 / fps
 
         if self.begin_frame > 1:
-            cap.set(cv2.CAP_PROP_POS_FRAMES, self.begin_frame)
-        self.__frame_index = self.begin_frame-1
+            cap.set(cv2.CAP_PROP_POS_FRAMES, self.begin_frame-1)
+        self.__frame_index = self.begin_frame -1
 
     def close(self) -> None:
         self.__vch.close()

@@ -59,10 +59,10 @@
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
-                "etri_042",
-                // "--begin_frame", "1100",
-                // "--output", "C:/Temp/etri_073_track.txt",
-                // "--output_video", "C:/Temp/etri_073_track.mp4",
+                "etri_063",
+                "--begin_frame", "1500",
+                // "--output", "C:/Temp/etri_063_track.txt",
+                // "--output_video", "C:/Temp/etri_063_track.mp4",
                 "--show", 
                 // "--show_progress",
                 "--show_blind_regions", 
@@ -72,10 +72,10 @@
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
-                "cross_03",
+                "cross_01",
                 // "--begin_frame", "1000",
-                "--output", "C:/Temp/cross_03_track.txt",
-                "--output_video", "C:/Temp/cross_03_track.mp4",
+                // "--output", "C:/Temp/cross_03_track.txt",
+                // "--output_video", "C:/Temp/cross_03_track.mp4",
                 "--show",
                 // "--show_progress",
                 "--show_blind_regions", 
@@ -156,7 +156,7 @@
         { "name": "Add a blind region",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/add_blind_region.py",
-            "args": [ "etri_063", "--begin_frame", "469", ]
+            "args": [ "etri_043", "--begin_frame", "980", ]
         },
         { "name": "Format",
             "type": "python", "request": "launch", "console": "integratedTerminal",

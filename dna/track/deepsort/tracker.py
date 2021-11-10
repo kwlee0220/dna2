@@ -103,14 +103,14 @@ class Tracker:
                 track.mark_missed()
 
         # Temporarily lost된 track의 bounding-box의 크기가 일정 이하이면 delete시킨다.
-        for tidx in range(len(self.tracks)):
-            track = self.tracks[tidx]
-            if track.is_confirmed() and track.time_since_update > 1:
-                size = t_boxes[tidx].size().to_int()
-                if size.width < _OBSOLTE_TRACK_SIZE or size.height < _OBSOLTE_TRACK_SIZE:
-                    _logger.debug((f"delete too small temp-lost track[{track.track_id}:{track.time_since_update}], "
-                                    f"size={size}, frame={dna.DEBUG_FRAME_IDX}"))
-                    # track.mark_deleted()
+        # for tidx in range(len(self.tracks)):
+        #     track = self.tracks[tidx]
+        #     if track.is_confirmed() and track.time_since_update > 1:
+        #         size = t_boxes[tidx].size().to_int()
+        #         if size.width < _OBSOLTE_TRACK_SIZE or size.height < _OBSOLTE_TRACK_SIZE:
+        #             _logger.debug((f"delete too small temp-lost track[{track.track_id}:{track.time_since_update}], "
+        #                             f"size={size}, frame={dna.DEBUG_FRAME_IDX}"))
+        #             track.mark_deleted()
 
         # track의 bounding-box가 blind_region에 포함된 경우는 delete시킨다.
         for tidx in range(len(self.tracks)):
@@ -177,7 +177,7 @@ class Tracker:
 
         # Split track set into confirmed and unconfirmed tracks.
         confirmed_tracks = [i for i, t in enumerate(self.tracks) if t.is_confirmed()]
-        hot_tracks = [i for i, t in enumerate(self.tracks) if t.is_confirmed() and t.time_since_update <= 1]
+        hot_tracks = [i for i, t in enumerate(self.tracks) if t.is_confirmed() and t.time_since_update <= 3]
         unconfirmed_tracks = [i for i, t in enumerate(self.tracks) if not t.is_confirmed()]
 
         dist_cost = self.distance_cost(self.tracks, detections)

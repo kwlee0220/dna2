@@ -12,8 +12,8 @@ camera:
     - [1170, 84, 1510, 384]
 
 tracker:
-  # detector: yolov4
-  detector: file:C:/Temp/data/etri/etri_042_det.txt
+  #detector: yolov4
+  detector: file:C:/Temp/data/etri/etri_043_det.txt
   max_age: 30
   min_size: [20, 18]
 
