@@ -98,8 +98,17 @@ if __name__ == '__main__':
     _,_,bg_img = cap.capture()
     cap.close()
 
-    for box in camera_info.blind_regions:
+
+    blind_zones, exit_zones = [], []
+    if conf.tracker.get("blind_zones", None):
+        blind_zones = [Box.from_tlbr(np.array(zone, dtype=np.int32)) for zone in conf.tracker.blind_zones]
+    if conf.tracker.get("exit_zones", None):
+        exit_zones = [Box.from_tlbr(np.array(zone, dtype=np.int32)) for zone in conf.tracker.exit_zones]
+
+    for box in blind_zones:
         bg_img = box.draw(bg_img, color.GREEN)
+    for box in exit_zones:
+        bg_img = box.draw(bg_img, color.BLUE)
     selector = BoxSelector(bg_img)
     box = selector.run()
     if box and box.is_valid():

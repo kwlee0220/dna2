@@ -6,8 +6,17 @@ from datetime import datetime
 import numpy as np
 import cv2
 
-import dna.utils as utils
-from dna import Box, plot_utils
+from dna import Box, Size2d, plot_utils
+
+@dataclass(frozen=True, unsafe_hash=True)
+class DeepSORTParams:
+    metric_threshold: float
+    max_iou_distance: float
+    n_init: int
+    max_age: int
+    min_size: Size2d
+    blind_zones: List[Box]
+    exit_zones: List[Box]
 
 from enum import Enum
 class TrackState(Enum):

@@ -18,7 +18,7 @@ class ObjectTracker(metaclass=ABCMeta):
     logger.setLevel(logging.INFO)
 
     @abstractmethod
-    def track(self, frame, frame_idx:int, ts:datetime) -> List[Track]: pass
+    def track(self, frame, frame_idx:int, ts) -> List[Track]: pass
 
 
 class DetectionBasedObjectTracker(ObjectTracker):

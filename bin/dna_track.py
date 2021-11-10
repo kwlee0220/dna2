@@ -23,7 +23,7 @@ def parse_args():
     parser.add_argument("--output_video", metavar="file", help="output video file", required=False)
     parser.add_argument("--show_progress", help="show progress bar.", action="store_true")
     parser.add_argument("--show", help="show detections.", action="store_true")
-    parser.add_argument("--show_blind_regions", help="show blind regions.", action="store_true")
+    parser.add_argument("--show_zones", help="show blind regions.", action="store_true")
     return parser.parse_known_args()
 
 
@@ -37,13 +37,13 @@ if __name__ == '__main__':
 
     detector = DetectorLoader.load(conf.tracker.detector)
     domain = Box.from_size(camera_info.size)
-    tracker = DeepSORTTracker(detector, domain, conf.tracker, blind_regions=camera_info.blind_regions)
+    tracker = DeepSORTTracker(detector, domain, conf.tracker)
     track_writer = TrackWriter(args.output) if args.output else None
 
     win_name = camera_info.camera_id if args.show else None
     with ObjectTrackingProcessor(cap, tracker, track_writer,
                                 window_name=win_name, output_video=args.output_video,
-                                show_blind_regions=args.show_blind_regions,
+                                show_zones=args.show_zones,
                                 show_progress=args.show_progress) as processor:
         from timeit import default_timer as timer
         from datetime import timedelta

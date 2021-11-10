@@ -4,25 +4,17 @@ camera:
   uri: C:/Temp/data/crossroads/cross_01.mp4
   size: [1920, 1080]
   fps: 15
-  blind_regions:
-    - [502,-9,1568,175]
-    - [1590, 656, 1925, 1084]
-    - [1724, 301, 1925, 1083]
-    - [-3, -2, 695, 339]
-    - [-3, 538, 623, 1084]
-    - [-1, 772, 1921, 1081]
 
 tracker:
   # detector: yolov4
   detector: file:C:/Temp/data/crossroads/cross_01_det.txt
   model_file: dna/track/deepsort/ckpts/model640.pt
-  n_init: 3
-  matching_threshold: 0.55
-  max_iou_distance: 0.7
   max_age: 10
-  min_detection_score: 0
-  det_mapping:
-    car: car
-    bus: bus
-    truck: car
-  log_level: info
+  blind_zones:
+    - [-3, -2, 695, 339]
+    - [-3, 538, 623, 1084]
+    - [-1, 772, 1921, 1081]
+    - [1590, 656, 1925, 1084]
+    - [1724, 301, 1925, 1083]
+  exit_zones:
+    - [502,-9,1568,175]

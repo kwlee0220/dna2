@@ -12,7 +12,7 @@ tracker:
   model_file: dna/track/deepsort/ckpts/model640.pt
   min_detection_score: 0
   n_init: 3
-  matching_threshold: 0.55
+  metric_threshold: 0.55
   max_iou_distance: 0.8
   max_age: 20
   min_size: [30, 20]

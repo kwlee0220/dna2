@@ -1,7 +1,9 @@
 from datetime import datetime
 from typing import List, Union
 from pathlib import Path
+from dataclasses import dataclass
 import sys
+from enum import Enum
 
 import numpy as np
 import cv2
@@ -15,17 +17,13 @@ if not DEEPSORT_DIR in sys.path:
 
 from dna import Box, Size2d, utils, get_logger
 from dna.det import ObjectDetector, Detection
-from . import Track, TrackState, DetectionBasedObjectTracker
+from . import Track, TrackState, DetectionBasedObjectTracker, DeepSORTParams
 from .deepsort.deepsort import deepsort_rbc
 from .deepsort.track import Track as DSTrack
 from .deepsort.track import TrackState as DSTrackState
 
-
 class DeepSORTTracker(DetectionBasedObjectTracker):
-    # def __init__(self, detector: ObjectDetector, domain: BBox, weights_file, det_dict = None,
-    #                 min_detection_score=0, matching_threshold=0.5, max_iou_distance=0.7, max_age=30) -> None:
-    def __init__(self, detector: ObjectDetector, domain: Box, tracker_conf: OmegaConf,
-                    blind_regions=None) -> None:
+    def __init__(self, detector: ObjectDetector, domain: Box, tracker_conf: OmegaConf) -> None:
         super().__init__()
 
         self.__detector = detector
@@ -38,15 +36,25 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
         if not wt_path.is_absolute():
             wt_path = utils.get_dna_home_dir() / wt_path
 
+        if tracker_conf.get("blind_zones", None):
+            blind_zones = [Box.from_tlbr(np.array(zone, dtype=np.int32)) for zone in tracker_conf.blind_zones]
+        else:
+            blind_zones = []
+        if tracker_conf.get("exit_zones", None):
+            exit_zones = [Box.from_tlbr(np.array(zone, dtype=np.int32)) for zone in tracker_conf.exit_zones]
+        else:
+            exit_zones = []
+
+        self.params = DeepSORTParams(metric_threshold=tracker_conf.metric_threshold,
+                                max_iou_distance=tracker_conf.max_iou_distance,
+                                max_age=int(tracker_conf.max_age),
+                                n_init=int(tracker_conf.n_init),
+                                min_size=self.min_size,
+                                blind_zones=blind_zones,
+                                exit_zones=exit_zones)
         self.deepsort = deepsort_rbc(domain = domain,
                                     wt_path=wt_path,
-                                    matching_threshold=tracker_conf.matching_threshold,
-                                    max_iou_distance=tracker_conf.max_iou_distance,
-                                    max_age=int(tracker_conf.max_age),
-                                    n_init=int(tracker_conf.n_init),
-                                    min_size=self.min_size,
-                                    blind_regions=blind_regions)
-        self.blind_regions = blind_regions
+                                    params=self.params)
         self.__last_frame_detections = []
 
         level_name = tracker_conf.get("log_level", "info").upper()
@@ -81,8 +89,11 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
                     new_dets.append(Detection(det.bbox, label, det.score))
             dets = new_dets
 
-        # 일정 점수 이하의 detection들은 무시한다.
-        detections = [det for det in dets if det.score >= self.min_detection_score]
+        # 일정 점수 이하의 detection들과 blind zone에 포함된 detection들은 무시한다.
+        def is_valid_detection(det):
+            return det.score >= self.min_detection_score and \
+                    not any(zone.contains(det.bbox) for zone in self.params.blind_zones)
+        detections = [det for det in dets if is_valid_detection(det)]
 
         self.__last_frame_detections = detections
         boxes, scores = self.split_boxes_scores(self.__last_frame_detections)
