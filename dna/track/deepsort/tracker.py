@@ -137,6 +137,13 @@ class Tracker:
                     non_overlapped.remove(didx)
                     continue
 
+                # Blind 영역에 포함되는 detection들은 무시한다
+                if any(region.contains(box) for region in self.blind_regions):
+                    non_overlapped.remove(didx)
+                    _logger.debug((f"remove an unmatched detection contained in a blind region: "
+                                    f"removed={didx}, frame={dna.DEBUG_FRAME_IDX}"))
+                    continue
+
                 confi = detections[didx].confidence
                 for ov in find_overlaps_threshold(box, det_boxes, self.new_track_overlap_threshold):
                     if ov[0] != didx and (ov[0] not in unmatched_detections or detections[ov[0]].confidence > confi):
@@ -243,6 +250,7 @@ class Tracker:
         if len(unmatched_tracks) > 0 and len(unmatched_detections) > 0:
             unconfirmed_weights = np.array([1 if track.is_confirmed() else 3 for track in self.tracks])
             weighted_matrix = np.multiply(cmatrix, unconfirmed_weights[:, np.newaxis])
+            weighted_matrix[weighted_matrix > 1.0] = _TOTAL_COST_THRESHOLD+0.0001
             if dna.DEBUG_PRINT_COST:
                 self.print_metrix_cost(weighted_matrix, unmatched_tracks, unmatched_detections)
 

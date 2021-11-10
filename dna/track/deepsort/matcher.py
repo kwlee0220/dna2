@@ -45,29 +45,34 @@ def combine_cost_matrices(metric_costs, dist_costs, tracks, detections):
     for tidx, track in enumerate(tracks):
         if weights[tidx] > 0:
             weighted_dist_costs[tidx,:] = dist_costs[tidx,:] * weights[tidx]
-    dists_mod = weighted_dist_costs / 150 #_COMBINED_DIST_THRESHOLD_4S
 
-    invalid = _area_ratios(tracks, detections) <= 0.1
+    invalid_ratios = _area_ratios(tracks, detections) > 0.1
     matrix = np.zeros((len(tracks), len(detections)))
     for didx, det in enumerate(detections):
         if det.tlwh[2] >= _LARGE and det.tlwh[3] >= _LARGE: # large detections
             # detection 크기가 크면 metric cost에 많은 가중치를 주어, 외형을 보다 많이 고려한다.
             # 또한 외형에 많은 가중치를 주기 때문에 gate용 distance 한계도 넉넉하게 (300) 주는 대신,
             # gate용 metric thresholds는 다른 경우보다 작게 (0.45) 준다.
-            matrix[:,didx] = 0.8*metric_costs[:,didx] + 0.2*dists_mod[:,didx]
-            invalid[:,didx] = np.logical_or(invalid[:,didx], metric_costs[:,didx] > _COMBINED_METRIC_THRESHOLD_4L,
-                                            weighted_dist_costs[:,didx] > _COMBINED_DIST_THRESHOLD_4L)
+            dists_mod = weighted_dist_costs[:,didx] / _COMBINED_DIST_THRESHOLD_4L
+            matrix[:,didx] = 0.8*metric_costs[:,didx] + 0.2*dists_mod
+            mask[:,didx] = np.logical_and(mask[:,didx], dists_mod <= 1.0,
+                                            metric_costs[:,didx] <= _COMBINED_METRIC_THRESHOLD_4L)
+            # mask[:,didx] = o
         elif det.tlwh[2] >= _MEDIUM and det.tlwh[3] >= _MEDIUM: # medium detections
-            matrix[:,didx] = 0.7*metric_costs[:,didx] + 0.3*dists_mod[:,didx]
-            invalid[:,didx] = np.logical_or(invalid[:,didx], metric_costs[:,didx] > _COMBINED_METRIC_THRESHOLD_4M,
-                                            weighted_dist_costs[:,didx] > _COMBINED_DIST_THRESHOLD_4M)
+            dists_mod = weighted_dist_costs[:,didx] / _COMBINED_DIST_THRESHOLD_4M
+            matrix[:,didx] = 0.7*metric_costs[:,didx] + 0.3*dists_mod
+            mask[:,didx] = np.logical_and(mask[:,didx], dists_mod <= 1.0,
+                                            metric_costs[:,didx] <= _COMBINED_METRIC_THRESHOLD_4M)
+            # mask[:,didx] = o
         else: # small detections
             # detection의 크기가 작으면 외형을 이용한 검색이 의미가 작으므로, track과 detection사이의 거리
             # 정보에 보다 많은 가중치를 부여한다.
-            matrix[:,didx] = 0.2*metric_costs[:,didx] + 0.8*dists_mod[:,didx]
-            invalid[:,didx] = np.logical_or(invalid[:,didx], metric_costs[:,didx] > _COMBINED_METRIC_THRESHOLD_4S,
-                                            weighted_dist_costs[:,didx] > _COMBINED_DIST_THRESHOLD_4S)
-    matrix[invalid] = _COMBINED_INFINITE
+            dists_mod = weighted_dist_costs[:,didx] / _COMBINED_DIST_THRESHOLD_4S
+            matrix[:,didx] = 0.2*metric_costs[:,didx] + 0.8*dists_mod
+            mask[:,didx] = np.logical_and(mask[:,didx], dists_mod <= 1.0,
+                                            metric_costs[:,didx] <= _COMBINED_METRIC_THRESHOLD_4S)
+            # mask[:,didx] = o
+    matrix[~mask] = _COMBINED_INFINITE
 
     return matrix
 

@@ -165,7 +165,7 @@ class deepsort_rbc():
 		return features,corrected_crop
 
 
-	def run_deep_sort(self, frame, bboxes, scores, small_dets=[]):
+	def run_deep_sort(self, frame, bboxes, scores):
 		if len(bboxes) > 0:
 			features = self.extract_features(frame, bboxes)
 			dets = [Detection(bbox, score, feature)	\
@@ -184,9 +184,6 @@ class deepsort_rbc():
 			from dna import color
 
 			convas = frame.copy()
-			for det in small_dets:
-				convas = det.bbox.draw(convas, color.YELLOW, line_thickness=1)
-
 			convas = draw_ds_detections(convas, dets, color.GREEN, color.BLACK, line_thickness=1)
 			cv2.imshow("dets", convas)
 			cv2.waitKey(1)

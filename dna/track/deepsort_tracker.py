@@ -81,33 +81,13 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
                     new_dets.append(Detection(det.bbox, label, det.score))
             dets = new_dets
 
-        detections = []
-        small_dets = []
-        for det in dets:
-            # # 일정 크기 이하의 detection들은 무시한다.
-            # box_size = det.bbox.size().to_int()
-            # if box_size.width < self.min_size.width or box_size.height < self.min_size.height:
-            #     small_dets.append(det)
-            #     continue
-
-            # 일정 점수 이하의 detection들은 무시한다.
-            if det.score < self.min_detection_score:
-                continue
-
-            # Blind 영역에 포함되지 않은 detection만 사용한다.
-            is_blind = False
-            for region in self.blind_regions:
-                if region.contains(det.bbox):
-                    is_blind = True
-                    break
-            if is_blind:
-                continue
-            detections.append(det)
+        # 일정 점수 이하의 detection들은 무시한다.
+        detections = [det for det in dets if det.score >= self.min_detection_score]
 
         self.__last_frame_detections = detections
         boxes, scores = self.split_boxes_scores(self.__last_frame_detections)
 
-        tracker, deleted_tracks = self.deepsort.run_deep_sort(frame.astype(np.uint8), boxes, scores, small_dets)
+        tracker, deleted_tracks = self.deepsort.run_deep_sort(frame.astype(np.uint8), boxes, scores)
 
         active_tracks = [self.to_dna_track(ds_track, frame_idx, ts) for ds_track in tracker.tracks]
         deleted_tracks = [self.to_dna_track(ds_track, frame_idx, ts) for ds_track in deleted_tracks]
