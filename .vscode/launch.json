@@ -59,8 +59,8 @@
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
-                "etri_041",
-                // "--begin_frame", "100",
+                "etri_042",
+                // "--begin_frame", "1100",
                 // "--output", "C:/Temp/etri_073_track.txt",
                 // "--output_video", "C:/Temp/etri_073_track.mp4",
                 "--show", 

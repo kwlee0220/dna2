@@ -96,14 +96,11 @@ class Tracker:
         for tidx in unmatched_tracks:
             # track 영역이 image 전체의 영역에서 1/4 이상 벗어난 경우에는 더 이상 추적하지 않는다.
             track = self.tracks[tidx]
-            if t_boxes[tidx].is_valid():
-                ratios = overlap_ratios(t_boxes[tidx], self.domain)
-                if ratios[0] < 0.85:
-                    track.mark_deleted()
-                else:
-                    track.mark_missed()
-            # else:
-            #     track.mark_deleted()
+            ratios = overlap_ratios(t_boxes[tidx], self.domain)
+            if ratios[0] < 0.85:
+                track.mark_deleted()
+            else:
+                track.mark_missed()
 
         # Temporarily lost된 track의 bounding-box의 크기가 일정 이하이면 delete시킨다.
         for tidx in range(len(self.tracks)):

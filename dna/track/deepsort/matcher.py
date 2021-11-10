@@ -29,10 +29,11 @@ def _area_ratios(tracks, detections):
     area_ratios = np.zeros((len(tracks), len(detections)))
     for tidx, track in enumerate(tracks):
         tlwh = track.to_tlwh()
-        t_area = tlwh[2] * tlwh[3]
+        t_area = max(tlwh[2], 20) * max(tlwh[3], 20)
         for didx, _ in enumerate(detections):
             # area_ratios[tidx,didx] = min(t_area, det_areas[didx]) / max(t_area, det_areas[didx])
-            area_ratios[tidx,didx] = det_areas[didx] / t_area
+            ratio = det_areas[didx] / t_area
+            area_ratios[tidx,didx] = ratio if ratio <= 1 else 1/ratio
 
     return area_ratios
 
@@ -46,7 +47,7 @@ def combine_cost_matrices(metric_costs, dist_costs, tracks, detections):
             weighted_dist_costs[tidx,:] = dist_costs[tidx,:] * weights[tidx]
     dists_mod = weighted_dist_costs / 200 #_COMBINED_DIST_THRESHOLD_4S
 
-    invalid = _area_ratios(tracks, detections) <= 0.2
+    invalid = _area_ratios(tracks, detections) <= 0.1
     matrix = np.zeros((len(tracks), len(detections)))
     for didx, det in enumerate(detections):
         if det.tlwh[2] >= _LARGE and det.tlwh[3] >= _LARGE: # large detections
