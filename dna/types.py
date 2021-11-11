@@ -201,6 +201,13 @@ class Box:
         return np.hstack([self.__tl, self.__wh])
 
     @property
+    def xyah(self) -> np.ndarray:
+        ret = self.tlwh
+        ret[:2] += ret[2:] / 2
+        ret[2] /= ret[3]
+        return ret
+
+    @property
     def tl(self) -> np.ndarray:
         return self.__tl
 
@@ -267,12 +274,12 @@ class Box:
         tlbr = self.tlbr.astype(int)
         return cv2.rectangle(mat, tlbr[0:2], tlbr[2:4], color, thickness=line_thickness, lineType=cv2.LINE_AA)
 
-    def __truediv__(self, rhs) -> Box:
-        if isinstance(rhs, Size2d):
-            wh = self.size().wh / rhs
-            return Box.from_tlwh(self.tl, wh)
+    # def __truediv__(self, rhs) -> Box:
+    #     if isinstance(rhs, Size2d):
+    #         wh = self.size().wh / rhs
+    #         return Box.from_tlwh(self.tl, wh)
 
-        raise ValueError('invalid right-hand-side:', rhs)
+    #     raise ValueError('invalid right-hand-side:', rhs)
     
     def __repr__(self):
         return '{}:{}'.format(self.top_left, self.size())

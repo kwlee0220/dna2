@@ -99,15 +99,15 @@ if __name__ == '__main__':
     cap.close()
 
 
-    blind_zones, exit_zones = [], []
+    blind_zones, dim_zones = [], []
     if conf.tracker.get("blind_zones", None):
         blind_zones = [Box.from_tlbr(np.array(zone, dtype=np.int32)) for zone in conf.tracker.blind_zones]
-    if conf.tracker.get("exit_zones", None):
-        exit_zones = [Box.from_tlbr(np.array(zone, dtype=np.int32)) for zone in conf.tracker.exit_zones]
+    if conf.tracker.get("dim_zones", None):
+        dim_zones = [Box.from_tlbr(np.array(zone, dtype=np.int32)) for zone in conf.tracker.dim_zones]
 
     for box in blind_zones:
         bg_img = box.draw(bg_img, color.GREEN)
-    for box in exit_zones:
+    for box in dim_zones:
         bg_img = box.draw(bg_img, color.BLUE)
     selector = BoxSelector(bg_img)
     box = selector.run()

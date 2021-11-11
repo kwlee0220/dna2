@@ -85,7 +85,7 @@ class ObjectTrackingProcessor(ImageProcessor):
             if self.show_zones:
                 for region in self.tracker.params.blind_zones:
                     frame = region.draw(frame, color.MAGENTA, 2)
-                for region in self.tracker.params.exit_zones:
+                for region in self.tracker.params.dim_zones:
                     frame = region.draw(frame, color.RED, 2)
 
             if self.is_detection_based:

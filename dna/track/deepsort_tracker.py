@@ -40,10 +40,10 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
             blind_zones = [Box.from_tlbr(np.array(zone, dtype=np.int32)) for zone in tracker_conf.blind_zones]
         else:
             blind_zones = []
-        if tracker_conf.get("exit_zones", None):
-            exit_zones = [Box.from_tlbr(np.array(zone, dtype=np.int32)) for zone in tracker_conf.exit_zones]
+        if tracker_conf.get("dim_zones", None):
+            dim_zones = [Box.from_tlbr(np.array(zone, dtype=np.int32)) for zone in tracker_conf.dim_zones]
         else:
-            exit_zones = []
+            dim_zones = []
 
         self.params = DeepSORTParams(metric_threshold=tracker_conf.metric_threshold,
                                 max_iou_distance=tracker_conf.max_iou_distance,
@@ -51,7 +51,7 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
                                 n_init=int(tracker_conf.n_init),
                                 min_size=self.min_size,
                                 blind_zones=blind_zones,
-                                exit_zones=exit_zones)
+                                dim_zones=dim_zones)
         self.deepsort = deepsort_rbc(domain = domain,
                                     wt_path=wt_path,
                                     params=self.params)

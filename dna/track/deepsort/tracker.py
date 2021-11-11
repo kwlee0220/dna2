@@ -26,10 +26,6 @@ _COST_THRESHOLD = 0.5
 _COST_THRESHOLD_WEAK = 0.75
 _COST_THRESHOLD_STRONG = 0.2
 _REMOVE_OVERLAP_RATIO_THRESHOLD = 0.75
-_OVERLAP_MATCH_HIGH = 0.75
-_OVERLAP_MATCH_LOW = 0.55
-
-_OBSOLTE_TRACK_SIZE = 5
 
 class Tracker:
     def __init__(self, domain, metric, params):
@@ -82,7 +78,7 @@ class Tracker:
         # track의 bounding-box가 exit_region에 포함된 경우는 delete시킨다.
         for tidx in range(len(self.tracks)):
             tbox = t_boxes[tidx]
-            if any(r.contains(t_boxes[tidx]) for r in self.params.exit_zones):
+            if any(r.contains(t_boxes[tidx]) for r in self.params.dim_zones):
                 self.tracks[tidx].mark_deleted()
             elif any(r.contains(t_boxes[tidx]) for r in self.params.blind_zones):
                 self.tracks[tidx].mark_deleted()
@@ -92,7 +88,6 @@ class Tracker:
         # 경우가 많아서 이를 제거하기 위함이다.
         matcher.delete_overlapped_tentative_tracks(self.tracks, _REMOVE_OVERLAP_RATIO_THRESHOLD)
 
-        # kwlee
         # unmatched detection 중에서 다른 detection과 일정부분 이상 겹치는 경우에는
         # 새로운 track으로 간주되지 않게하기 위해 제거한다.
         if len(unmatched_detections) > 0:
@@ -107,7 +102,7 @@ class Tracker:
                     continue
 
                 # Exit 영역에 포함되는 detection들은 무시한다
-                if any(region.contains(box) for region in self.params.exit_zones):
+                if any(region.contains(box) for region in self.params.dim_zones):
                     non_overlapped.remove(didx)
                     # _logger.debug((f"remove an unmatched detection contained in a blind region: "
                     #                 f"removed={didx}, frame={dna.DEBUG_FRAME_IDX}"))
@@ -206,7 +201,7 @@ class Tracker:
             matches_s, _, unmatched_detections =\
                 matcher.matching_by_hungarian(matrix, _COST_THRESHOLD_STRONG, unmatched_hot, unmatched_detections)
             if dna.DEBUG_PRINT_COST:
-                print("[hot, combined]:", self.matches_str(matches_s))
+                print(f"[hot, combined, {_COST_THRESHOLD_STRONG}]:", self.matches_str(matches_s))
             matches += matches_s
             unmatched_tracks = subtract(unmatched_tracks, project(matches_s, 0))
         else:
@@ -220,7 +215,7 @@ class Tracker:
             matches_s, _, unmatched_detections =\
                 matcher.matching_by_hungarian(matrix, _COST_THRESHOLD_STRONG, unconfirmed_tracks, unmatched_detections)
             if dna.DEBUG_PRINT_COST:
-                print("[tentative, combined]:", self.matches_str(matches_s))
+                print(f"[tentative, combined, {_COST_THRESHOLD_STRONG}]:", self.matches_str(matches_s))
             matches += matches_s
             unmatched_tracks = subtract(unmatched_tracks, project(matches_s, 0))
 
@@ -238,7 +233,7 @@ class Tracker:
             matches_s, unmatched_tracks, unmatched_detections =\
                 matcher.matching_by_hungarian(matrix, _COST_THRESHOLD, unmatched_tracks, unmatched_detections)
             if dna.DEBUG_PRINT_COST:
-                print("[all, combined]:", self.matches_str(matches_s))
+                print(f"[all, combined, {_COST_THRESHOLD}]:", self.matches_str(matches_s))
             matches += matches_s
 
         #####################################################################################################
@@ -254,7 +249,7 @@ class Tracker:
             matches_s, unmatched_tracks, unmatched_detections =\
                 matcher.matching_by_hungarian(matrix, _COST_THRESHOLD_WEAK, unmatched_tracks, unmatched_detections)
             if dna.DEBUG_PRINT_COST:
-                print("[all, gated_weak]:", self.matches_str(matches_s))
+                print(f"[all, gated_weak, {_COST_THRESHOLD_WEAK}]:", self.matches_str(matches_s))
             matches += matches_s
 
         #####################################################################################################
@@ -292,18 +287,6 @@ class Tracker:
 
     def matches_str(self, matches):
         return ",".join([f"({self.tracks[tidx].track_id}, {didx})" for tidx, didx in matches])
-
-    # kwlee
-    def print_cost(self, metric_cost, dist_cost):
-        dist_cost = dist_cost.copy()
-        dist_cost[dist_cost > 999] = 999
-
-        for tidx, track in enumerate(self.tracks):
-            dists = [int(round(v)) for v in dist_cost[tidx]]
-            metrics = [round(v, 2) for v in metric_cost[tidx]]
-            track_str = f"[{tidx:02d}]{track.track_id:03d}({track.state},{track.time_since_update})"
-            cost_str = ', '.join([f"({v1:3d}, {v2:.2f})" for v1, v2 in zip(dists, metrics)])
-            print(f"{track_str}: {cost_str}")
 
     def print_dist_cost(self, dist_cost, trim_overflow=None):
         if trim_overflow:

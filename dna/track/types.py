@@ -16,7 +16,7 @@ class DeepSORTParams:
     max_age: int
     min_size: Size2d
     blind_zones: List[Box]
-    exit_zones: List[Box]
+    dim_zones: List[Box]
 
 from enum import Enum
 class TrackState(Enum):
