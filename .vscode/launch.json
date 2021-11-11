@@ -59,7 +59,7 @@
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
-                "etri_051",
+                "etri_061",
                 // "--begin_frame", "1500",
                 // "--output", "C:/Temp/etri_063_track.txt",
                 // "--output_video", "C:/Temp/etri_063_track.mp4",
@@ -156,7 +156,7 @@
         { "name": "Add a blind region",
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/add_blind_region.py",
-            "args": [ "etri_051", "--begin_frame", "980", ]
+            "args": [ "etri_061", "--begin_frame", "980", ]
         },
         { "name": "Format",
             "type": "python", "request": "launch", "console": "integratedTerminal",

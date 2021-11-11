@@ -2,6 +2,8 @@ from typing import List, Union, Tuple
 
 import numpy as np
 
+from dna import Box, Size2d
+
 
 def all_indices(values):
     return list(range(len(values)))
@@ -11,6 +13,14 @@ def intersection(list1, list2):
 
 def subtract(list1, list2):
     return [v for v in list1 if v not in list2]
+
+def track_to_box(track, epsilon=0.00001):
+    box = Box.from_tlbr(track.to_tlbr())
+    if not box.is_valid():
+        tl = box.top_left
+        br = tl + Size2d(epsilon, epsilon)
+        box = Box.from_points(tl, br)
+    return box
 
 def boxes_distance(tlbr1, tlbr2):
     delta1 = tlbr1[0,3] - tlbr2[2,1]
