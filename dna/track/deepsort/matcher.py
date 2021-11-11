@@ -2,6 +2,7 @@
 import logging
 
 import numpy as np
+from numpy.linalg import det
 from scipy.optimize import linear_sum_assignment
 
 import dna
@@ -22,6 +23,13 @@ _COMBINED_DIST_THRESHOLD_4M = 150
 _COMBINED_DIST_THRESHOLD_4L = 310
 _COMBINED_INFINITE = 9.99
 
+def create_matrix(matrix, threshold, mask=None):
+    new_matrix = matrix.copy()
+    if mask is not None:
+        new_matrix[mask] = threshold + 0.00001
+    new_matrix[new_matrix > threshold] = threshold + 0.00001
+    return new_matrix
+
 def _area_ratios(tracks, detections):
     boxes = [Box.from_tlbr(det.to_tlbr()) for det in detections]
     det_areas = [box.area() for box in boxes]
@@ -37,6 +45,18 @@ def _area_ratios(tracks, detections):
 
     return area_ratios
 
+def hot_unconfirmed_mask(cmatrix, threshold, track_indices, detection_indices):
+    mask = np.zeros(cmatrix.shape, dtype=bool)
+    
+    target_dets = set()
+    for tidx in track_indices:
+        selecteds = np.where(cmatrix[tidx,:] < threshold)[0]
+        target_dets = target_dets.union(selecteds)
+    for didx in detection_indices:
+        mask[:,didx] = cmatrix[:,didx] >= 0.1
+
+    return mask
+
 import math
 def combine_cost_matrices(metric_costs, dist_costs, tracks, detections):
     # time_since_update 에 따른 가중치 보정
@@ -46,7 +66,7 @@ def combine_cost_matrices(metric_costs, dist_costs, tracks, detections):
         if weights[tidx] > 0:
             weighted_dist_costs[tidx,:] = dist_costs[tidx,:] * weights[tidx]
 
-    invalid = _area_ratios(tracks, detections) <= 0.1
+    mask = _area_ratios(tracks, detections) < 0.1
     matrix = np.zeros((len(tracks), len(detections)))
     for didx, det in enumerate(detections):
         if det.tlwh[2] >= _LARGE and det.tlwh[3] >= _LARGE: # large detections
@@ -55,26 +75,22 @@ def combine_cost_matrices(metric_costs, dist_costs, tracks, detections):
             # gate용 metric thresholds는 다른 경우보다 작게 (0.45) 준다.
             dists_mod = weighted_dist_costs[:,didx] / _COMBINED_DIST_THRESHOLD_4L
             matrix[:,didx] = 0.8*metric_costs[:,didx] + 0.2*dists_mod
-            invalid[:,didx] = np.logical_or(invalid[:,didx], dists_mod > 1.0,
-                                            metric_costs[:,didx] > _COMBINED_METRIC_THRESHOLD_4L)
-            # mask[:,didx] = o
+            mask[:,didx] = np.logical_or(mask[:,didx], dists_mod > 1.0,
+                                        metric_costs[:,didx] > _COMBINED_METRIC_THRESHOLD_4L)
         elif det.tlwh[2] >= _MEDIUM and det.tlwh[3] >= _MEDIUM: # medium detections
             dists_mod = weighted_dist_costs[:,didx] / _COMBINED_DIST_THRESHOLD_4M
             matrix[:,didx] = 0.7*metric_costs[:,didx] + 0.3*dists_mod
-            invalid[:,didx] = np.logical_or(invalid[:,didx], dists_mod > 1.0,
-                                            metric_costs[:,didx] > _COMBINED_METRIC_THRESHOLD_4M)
-            # mask[:,didx] = o
+            mask[:,didx] = np.logical_or(mask[:,didx], dists_mod > 1.0,
+                                        metric_costs[:,didx] > _COMBINED_METRIC_THRESHOLD_4M)
         else: # small detections
             # detection의 크기가 작으면 외형을 이용한 검색이 의미가 작으므로, track과 detection사이의 거리
             # 정보에 보다 많은 가중치를 부여한다.
             dists_mod = weighted_dist_costs[:,didx] / _COMBINED_DIST_THRESHOLD_4S
             matrix[:,didx] = 0.2*metric_costs[:,didx] + 0.8*dists_mod
-            invalid[:,didx] = np.logical_or(invalid[:,didx], dists_mod > 1.0,
-                                            metric_costs[:,didx] > _COMBINED_METRIC_THRESHOLD_4S)
-            # mask[:,didx] = o
-    matrix[invalid] = _COMBINED_INFINITE
+            mask[:,didx] = np.logical_or(mask[:,didx], dists_mod > 1.0,
+                                        metric_costs[:,didx] > _COMBINED_METRIC_THRESHOLD_4S)
 
-    return matrix
+    return matrix, mask
 
 # def _weights_by_size(detections):
 #     metric_weights = []

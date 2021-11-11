@@ -22,9 +22,9 @@ from track import Track
 _logger = get_logger("dna.track.deep_sort")
 
 _HOT_DIST_THRESHOLD = 21
-_TOTAL_COST_THRESHOLD = 0.5
-_TOTAL_COST_THRESHOLD_WEAK = 0.75
-_TOTAL_COST_THRESHOLD_STRONG = 0.2
+_COST_THRESHOLD = 0.5
+_COST_THRESHOLD_WEAK = 0.75
+_COST_THRESHOLD_STRONG = 0.2
 _REMOVE_OVERLAP_RATIO_THRESHOLD = 0.8
 _OVERLAP_MATCH_HIGH = 0.75
 _OVERLAP_MATCH_LOW = 0.55
@@ -172,6 +172,8 @@ class Tracker:
             matches_hot, unmatched_hot, unmatched_detections \
                 = matcher.matching_by_excl_best(dist_cost, _HOT_DIST_THRESHOLD, hot_tracks, unmatched_detections)
             matches += matches_hot
+            if dna.DEBUG_PRINT_COST:
+                print("[hot, only_dist]:", self.matches_str(matches_hot))
             unmatched_tracks = subtract(unmatched_tracks, project(matches_hot, 0))
 
             # active track과 binding된 detection과 상당히 겹치는 detection들을 제거한다.
@@ -181,18 +183,29 @@ class Tracker:
         else:
             unmatched_hot = hot_tracks
 
+        #####################################################################################################
+        ########## 통합 비용 행렬을 생성한다.
+        ########## cmatrix: 통합 비용 행렬
+        ########## ua_matrix: unconfirmed track을 고려한 통합 비용 행렬
+        #####################################################################################################
         if len(unmatched_tracks) > 0 and len(unmatched_detections) > 0:
             metric_cost = self.metric_cost(self.tracks, detections)
-            cmatrix = matcher.combine_cost_matrices(metric_cost, dist_cost, self.tracks, detections)
-            if dna.DEBUG_PRINT_COST:
-                self.print_metrix_cost(metric_cost, 1, unmatched_tracks, unmatched_detections)
-                self.print_metrix_cost(cmatrix, 9.98, unmatched_tracks, unmatched_detections)
+            cmatrix, cmask = matcher.combine_cost_matrices(metric_cost, dist_cost, self.tracks, detections)
+            cmatrix[cmask] = 9.99
+            ua_matrix = cmatrix
+        if len(unconfirmed_tracks) > 0 and len(unmatched_detections) > 0:
+            hot_mask = matcher.hot_unconfirmed_mask(cmatrix, 0.1, unconfirmed_tracks, unmatched_detections)
+            ua_matrix = matcher.create_matrix(cmatrix, 9.99, hot_mask)
 
         if len(unmatched_hot) > 0 and len(unmatched_detections) > 0:
-            # STEP 2
+            matrix = matcher.create_matrix(ua_matrix, _COST_THRESHOLD_STRONG)
+            if dna.DEBUG_PRINT_COST:
+                self.print_matrix(matrix, _COST_THRESHOLD_STRONG, unmatched_hot, unmatched_detections)
+
             matches_s, _, unmatched_detections =\
-                matcher.matching_by_hungarian(cmatrix, _TOTAL_COST_THRESHOLD,
-                                                unmatched_hot, unmatched_detections)
+                matcher.matching_by_hungarian(matrix, _COST_THRESHOLD_STRONG, unmatched_hot, unmatched_detections)
+            if dna.DEBUG_PRINT_COST:
+                print("[hot, combined]:", self.matches_str(matches_s))
             matches += matches_s
             unmatched_tracks = subtract(unmatched_tracks, project(matches_s, 0))
 
@@ -205,11 +218,15 @@ class Tracker:
         if len(unmatched_confirmed_tracks) > 0 and len(unmatched_detections) > 0:
             # STEP 2
             # confirmed track들 사이에서 tight한 threshold를 사용해서 matching을 실시한다.
+            matrix = matcher.create_matrix(ua_matrix, _COST_THRESHOLD_STRONG)
             matches_s, unmatched_confirmed_tracks, unmatched_detections =\
-                matcher.matching_by_hungarian(cmatrix, _TOTAL_COST_THRESHOLD_STRONG,
+                matcher.matching_by_hungarian(matrix, _COST_THRESHOLD_STRONG,
                                                 unmatched_confirmed_tracks, unmatched_detections)
             matches += matches_s
             unmatched_tracks = subtract(unmatched_tracks, project(matches_s, 0))
+            
+        if len(unmatched_tracks) > 0 and len(unmatched_detections) > 0:
+            iou_matrix = matcher.iou_matrix(self.tracks, detections, unmatched_tracks, unmatched_detections)
 
         #####################################################################################################
         ################ Tentative track에 penality를 부여한 weighted matrix를 
@@ -218,31 +235,32 @@ class Tracker:
         if len(unmatched_tracks) > 0 and len(unmatched_detections) > 0:
             unconfirmed_weights = np.array([1 if track.is_confirmed() else 2 for track in self.tracks])
             weighted_matrix = np.multiply(cmatrix, unconfirmed_weights[:, np.newaxis])
-            matrix = weighted_matrix.copy()
-            matrix[matrix > _TOTAL_COST_THRESHOLD] = _TOTAL_COST_THRESHOLD+0.0001
+            matrix = matcher.create_matrix(weighted_matrix, _COST_THRESHOLD)
+            for tidx in unconfirmed_tracks:
+                non_overlaps = iou_matrix[tidx,:] <= 0
+                matrix[tidx][non_overlaps] = _COST_THRESHOLD + 0.00001
             if dna.DEBUG_PRINT_COST:
-                self.print_metrix_cost(matrix, _TOTAL_COST_THRESHOLD, unmatched_tracks, unmatched_detections)
+                self.print_matrix(matrix, _COST_THRESHOLD, unmatched_tracks, unmatched_detections)
 
             matches_s, unmatched_tracks, unmatched_detections =\
-                    matcher.matching_by_hungarian(weighted_matrix, _TOTAL_COST_THRESHOLD,
-                                                    unmatched_tracks, unmatched_detections)
+                    matcher.matching_by_hungarian(matrix, _COST_THRESHOLD, unmatched_tracks, unmatched_detections)
+            if dna.DEBUG_PRINT_COST:
+                print("[all, weighted_combined]:", self.matches_str(matches_s))
             matches += matches_s
-            
-        if len(unmatched_tracks) > 0 and len(unmatched_detections) > 0:
-            # ovr_matrix = matcher.overlap_cost(self.tracks, detections, unmatched_tracks, unmatched_detections)
-            iou_matrix = matcher.iou_matrix(self.tracks, detections, unmatched_tracks, unmatched_detections)
 
         #####################################################################################################
         ################ 겹침 정도로 gating하고 조금 더 느슨한 threshold를 사용하여 matching 실시.
         #####################################################################################################
         if len(unmatched_tracks) > 0 and len(unmatched_detections) > 0:
-            matrix = weighted_matrix.copy()
-            matrix[matrix > _TOTAL_COST_THRESHOLD_WEAK] = _TOTAL_COST_THRESHOLD_WEAK+0.0001
-            matrix[iou_matrix < 0.15] = _TOTAL_COST_THRESHOLD_WEAK + 0.0001
+            matrix = matcher.create_matrix(weighted_matrix, _COST_THRESHOLD_WEAK)
+            matrix[iou_matrix < 0.15] = _COST_THRESHOLD_WEAK + 0.00001
             if dna.DEBUG_PRINT_COST:
-                self.print_metrix_cost(weighted_matrix, _TOTAL_COST_THRESHOLD_WEAK, unmatched_tracks, unmatched_detections)
+                self.print_matrix(matrix, _COST_THRESHOLD_WEAK, unmatched_tracks, unmatched_detections)
+
             matches_s, unmatched_tracks, unmatched_detections =\
-                matcher.matching_by_hungarian(matrix, _TOTAL_COST_THRESHOLD_WEAK, unmatched_tracks, unmatched_detections)
+                matcher.matching_by_hungarian(matrix, _COST_THRESHOLD_WEAK, unmatched_tracks, unmatched_detections)
+            if dna.DEBUG_PRINT_COST:
+                print("[all, gated_weak]:", self.matches_str(matches_s))
             matches += matches_s
 
         # #####################################################################################################
@@ -299,6 +317,9 @@ class Tracker:
                                                                 measurements, only_position)
         return dist_matrix
 
+    def matches_str(self, matches):
+        return ",".join([f"({self.tracks[tidx].track_id}, {didx})" for tidx, didx in matches])
+
     # kwlee
     def print_cost(self, metric_cost, dist_cost):
         dist_cost = dist_cost.copy()
@@ -322,17 +343,17 @@ class Tracker:
             dist_str = ', '.join([f"{v:3d}" if v != trim_overflow else "   " for v in dists])
             print(f"{track_str}: {dist_str}")
 
-    def print_metrix_cost(self, metric_cost, threshold, task_indices=None, detection_indices=None):
-        def pattern(i,v):
-            return f"{v:.2f}" if v <= threshold else "    "
+    def print_matrix(self, matrix, threshold, task_indices=None, detection_indices=None):
+        def pattern(v):
+            return "    " if v > threshold else f"{v:.2f}"
 
         if not task_indices:
             task_indices = list(range(len(self.tracks)))
         if not detection_indices:
-            detection_indices = list(range(metric_cost.shape[1]))
+            detection_indices = list(range(matrix.shape[1]))
 
         col_exprs = []
-        for c in range(metric_cost.shape[1]):
+        for c in range(matrix.shape[1]):
             if c in detection_indices:
                 col_exprs.append(f"{c:-5d}")
             else:
@@ -341,8 +362,7 @@ class Tracker:
 
         for tidx, track in enumerate(self.tracks):
             track_str = f"{tidx:02d}: {track.track_id:03d}({track.state},{track.time_since_update:02d})"
-            # dist_str = ', '.join([f"{v:.2f}" for v in costs])
-            dist_str = ', '.join([pattern(i,v) for i, v in enumerate(metric_cost[tidx])])
+            dist_str = ', '.join([pattern(v) for v in matrix[tidx]])
             tag = '*' if tidx in task_indices else ' '
             print(f"{tag}{track_str}: {dist_str}")
 
