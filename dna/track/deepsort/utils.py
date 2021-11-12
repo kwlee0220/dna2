@@ -17,7 +17,7 @@ def subtract(list1, list2):
 def track_to_box(track, epsilon=0.00001):
     box = Box.from_tlbr(track.to_tlbr())
     if not box.is_valid():
-        tl = box.top_left
+        tl = box.top_left()
         br = tl + Size2d(epsilon, epsilon)
         box = Box.from_points(tl, br)
     return box

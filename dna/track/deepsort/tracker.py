@@ -25,7 +25,6 @@ _HOT_DIST_THRESHOLD = 21
 _COST_THRESHOLD = 0.5
 _COST_THRESHOLD_WEAK = 0.75
 _COST_THRESHOLD_STRONG = 0.2
-_REMOVE_OVERLAP_RATIO_THRESHOLD = 0.75
 
 class Tracker:
     def __init__(self, domain, metric, params):
@@ -86,7 +85,7 @@ class Tracker:
         # confirmed track과 너무 가까운 tentative track들을 제거한다.
         # 일반적으로 이런 track들은 이전 frame에서 한 물체의 여러 detection 검출을 통해 track이 생성된
         # 경우가 많아서 이를 제거하기 위함이다.
-        matcher.delete_overlapped_tentative_tracks(self.tracks, _REMOVE_OVERLAP_RATIO_THRESHOLD)
+        matcher.delete_overlapped_tentative_tracks(self.tracks, self.params.max_overlap_ratio)
 
         # unmatched detection 중에서 다른 detection과 일정부분 이상 겹치는 경우에는
         # 새로운 track으로 간주되지 않게하기 위해 제거한다.
@@ -174,7 +173,7 @@ class Tracker:
 
             # active track과 binding된 detection과 상당히 겹치는 detection들을 제거한다.
             if len(matches_hot) > 0 and len(unmatched_detections) > 0:
-                unmatched_detections = matcher.remove_overlaps(detections, detections, _REMOVE_OVERLAP_RATIO_THRESHOLD,
+                unmatched_detections = matcher.remove_overlaps(detections, detections, self.params.max_overlap_ratio,
                                                                 project(matches_hot, 1), unmatched_detections)
         else:
             unmatched_hot = hot_tracks
@@ -188,15 +187,20 @@ class Tracker:
             metric_cost = self.metric_cost(self.tracks, detections)
             cmatrix, cmask = matcher.combine_cost_matrices(metric_cost, dist_cost, self.tracks, detections)
             cmatrix[cmask] = 9.99
+            if dna.DEBUG_PRINT_COST:
+                matcher.print_matrix(self.tracks, detections, metric_cost, 1, unmatched_tracks, unmatched_detections)
+                matcher.print_matrix(self.tracks, detections, cmatrix, 9.98, unmatched_tracks, unmatched_detections)
             ua_matrix = cmatrix
         if len(unconfirmed_tracks) > 0 and len(unmatched_detections) > 0:
             hot_mask = matcher.hot_unconfirmed_mask(cmatrix, 0.1, unconfirmed_tracks, unmatched_detections)
+            hot_mask = np.logical_and(hot_mask, cmatrix >= 0.2)
             ua_matrix = matcher.create_matrix(cmatrix, 9.99, hot_mask)
 
         if len(unmatched_hot) > 0 and len(unmatched_detections) > 0:
             matrix = matcher.create_matrix(ua_matrix, _COST_THRESHOLD_STRONG)
             if dna.DEBUG_PRINT_COST:
-                self.print_matrix(matrix, _COST_THRESHOLD_STRONG, unmatched_hot, unmatched_detections)
+                matcher.print_matrix(self.tracks, detections, matrix, _COST_THRESHOLD_STRONG,
+                                        unmatched_hot, unmatched_detections)
 
             matches_s, _, unmatched_detections =\
                 matcher.matching_by_hungarian(matrix, _COST_THRESHOLD_STRONG, unmatched_hot, unmatched_detections)
@@ -228,7 +232,8 @@ class Tracker:
             weighted_matrix = np.multiply(cmatrix, unconfirmed_weights[:, np.newaxis])
             matrix = matcher.create_matrix(weighted_matrix, _COST_THRESHOLD)
             if dna.DEBUG_PRINT_COST:
-                self.print_matrix(matrix, _COST_THRESHOLD, unmatched_tracks, unmatched_detections)
+                matcher.print_matrix(self.tracks, detections, matrix, _COST_THRESHOLD,
+                                        unmatched_tracks, unmatched_detections)
 
             matches_s, unmatched_tracks, unmatched_detections =\
                 matcher.matching_by_hungarian(matrix, _COST_THRESHOLD, unmatched_tracks, unmatched_detections)
@@ -244,7 +249,8 @@ class Tracker:
             matrix = matcher.create_matrix(weighted_matrix, _COST_THRESHOLD_WEAK)
             matrix[iou_matrix < 0.1] = _COST_THRESHOLD_WEAK + 0.00001
             if dna.DEBUG_PRINT_COST:
-                self.print_matrix(matrix, _COST_THRESHOLD_WEAK, unmatched_tracks, unmatched_detections)
+                matcher.print_matrix(self.tracks, detections, matrix, _COST_THRESHOLD_WEAK,
+                                        unmatched_tracks, unmatched_detections)
 
             matches_s, unmatched_tracks, unmatched_detections =\
                 matcher.matching_by_hungarian(matrix, _COST_THRESHOLD_WEAK, unmatched_tracks, unmatched_detections)
@@ -298,28 +304,5 @@ class Tracker:
             track_str = f"{tidx:02d}: {track.track_id:03d}({track.state},{track.time_since_update:02d})"
             dist_str = ', '.join([f"{v:3d}" if v != trim_overflow else "   " for v in dists])
             print(f"{track_str}: {dist_str}")
-
-    def print_matrix(self, matrix, threshold, task_indices=None, detection_indices=None):
-        def pattern(v):
-            return "    " if v > threshold else f"{v:.2f}"
-
-        if not task_indices:
-            task_indices = list(range(len(self.tracks)))
-        if not detection_indices:
-            detection_indices = list(range(matrix.shape[1]))
-
-        col_exprs = []
-        for c in range(matrix.shape[1]):
-            if c in detection_indices:
-                col_exprs.append(f"{c:-5d}")
-            else:
-                col_exprs.append("-----")
-        print("              ", ",".join(col_exprs))
-
-        for tidx, track in enumerate(self.tracks):
-            track_str = f"{tidx:02d}: {track.track_id:03d}({track.state},{track.time_since_update:02d})"
-            dist_str = ', '.join([pattern(v) for v in matrix[tidx]])
-            tag = '*' if tidx in task_indices else ' '
-            print(f"{tag}{track_str}: {dist_str}")
 
     ###############################################################################################################

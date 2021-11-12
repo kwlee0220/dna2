@@ -60,12 +60,12 @@
             "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
                 "etri_062",
-                "--begin_frame", "1850",
-                // "--output", "C:/Temp/etri_063_track.txt",
-                // "--output_video", "C:/Temp/etri_063_track.mp4",
+                // "--begin_frame", "2100",
+                // "--output", "C:/Temp/etri_043_track.txt",
+                // "--output_video", "C:/Temp/etri_043_track.mp4",
                 "--show", 
                 // "--show_progress",
-                "--show_zones", 
+                // "--show_zones", 
             ]
         },
         {  "name": "Track Video (crossroads)",
@@ -73,7 +73,7 @@
             "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
                 "cross_01",
-                // "--begin_frame", "1000",
+                "--begin_frame", "1000",
                 // "--output", "C:/Temp/cross_03_track.txt",
                 // "--output_video", "C:/Temp/cross_03_track.mp4",
                 "--show",

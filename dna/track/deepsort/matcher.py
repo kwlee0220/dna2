@@ -57,6 +57,14 @@ def hot_unconfirmed_mask(cmatrix, threshold, track_indices, detection_indices):
 
     return mask
 
+def size_class(tlwh):
+    if tlwh[2] >= _LARGE and tlwh[3] >= _LARGE: # large detections
+        return 'L'
+    elif tlwh[2] >= _MEDIUM and tlwh[3] >= _MEDIUM: # medium detections
+        return 'M'
+    else: # small detections
+        return 'S'
+
 import math
 def combine_cost_matrices(metric_costs, dist_costs, tracks, detections):
     # time_since_update 에 따른 가중치 보정
@@ -91,6 +99,24 @@ def combine_cost_matrices(metric_costs, dist_costs, tracks, detections):
                                         metric_costs[:,didx] > _COMBINED_METRIC_THRESHOLD_4S)
 
     return matrix, mask
+
+def print_matrix(tracks, detections, matrix, threshold, track_indice, detection_indices):
+    def pattern(v):
+        return "    " if v > threshold else f"{v:.2f}"
+
+    col_exprs = []
+    for didx, det in enumerate(detections):
+        if didx in detection_indices:
+            col_exprs.append(f"{didx:-2d}({size_class(det.tlwh)})")
+        else:
+            col_exprs.append("-----")
+    print("              ", ",".join(col_exprs))
+
+    for tidx, track in enumerate(tracks):
+        track_str = f"{tidx:02d}: {track.track_id:03d}({track.state},{track.time_since_update:02d})"
+        dist_str = ', '.join([pattern(v) for v in matrix[tidx]])
+        tag = '*' if tidx in track_indice else ' '
+        print(f"{tag}{track_str}: {dist_str}")
 
 # def _weights_by_size(detections):
 #     metric_weights = []

@@ -13,21 +13,21 @@ class Detection:
     label: str
     score: float
 
-    @property
-    def tlwh(self) -> np.ndarray:
-        return self.bbox.tlwh
+    # @property
+    # def tlwh(self) -> np.ndarray:
+    #     return self.bbox.tlwh
 
-    @property
-    def tlbr(self) -> np.ndarray:
-        return self.bbox.tlbr
+    # @property
+    # def tlbr(self) -> np.ndarray:
+    #     return self.bbox.tlbr
 
-    @property
-    def tl(self) -> np.ndarray:
-        return self.bbox.tl
+    # @property
+    # def tl(self) -> np.ndarray:
+    #     return self.bbox.tl
 
-    @property
-    def br(self) -> np.ndarray:
-        return self.bbox.br
+    # @property
+    # def br(self) -> np.ndarray:
+    #     return self.bbox.br
 
     def __truediv__(self, rhs) -> Detection:
         if isinstance(rhs, Size2d):

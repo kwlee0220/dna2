@@ -49,6 +49,7 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
                                 max_iou_distance=tracker_conf.max_iou_distance,
                                 max_age=int(tracker_conf.max_age),
                                 n_init=int(tracker_conf.n_init),
+                                max_overlap_ratio = tracker_conf.max_overlap_ratio,
                                 min_size=self.min_size,
                                 blind_zones=blind_zones,
                                 dim_zones=dim_zones)
@@ -120,7 +121,7 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
         boxes = []
         scores = []
         for det in det_list:
-            boxes.append(det.bbox.tlwh)
+            boxes.append(det.bbox.to_tlwh())
             scores.append(det.score)
         
         return np.array(boxes), scores

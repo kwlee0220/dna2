@@ -15,6 +15,7 @@ class DeepSORTParams:
     n_init: int
     max_age: int
     min_size: Size2d
+    max_overlap_ratio: float
     blind_zones: List[Box]
     dim_zones: List[Box]
 
@@ -62,7 +63,7 @@ class Track:
         return mat
 
     def to_string(self) -> str:
-        tlbr = self.location.tlbr
+        tlbr = self.location.to_tlbr()
         epoch = int(round(self.ts * 1000))
         return (f"{self.frame_index},{self.id},{tlbr[0]:.0f},{tlbr[1]:.0f},{tlbr[2]:.0f},{tlbr[3]:.0f},"
                 f"{self.state.value},{epoch}")
