@@ -59,11 +59,11 @@
             "type": "python", "request": "launch", "console": "integratedTerminal",
             "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
-                "etri_062",
+                "etri_063",
                 // "--begin_frame", "2100",
-                // "--output", "C:/Temp/etri_043_track.txt",
-                // "--output_video", "C:/Temp/etri_043_track.mp4",
-                "--show", 
+                "--output", "C:/Temp/etri_043_track.txt",
+                "--output_video", "C:/Temp/etri_043_track.mp4",
+                // "--show", 
                 // "--show_progress",
                 // "--show_zones", 
             ]
@@ -73,12 +73,12 @@
             "program": "${workspaceFolder}/bin/dna_track.py",
             "args": [
                 "cross_01",
-                "--begin_frame", "1000",
+                // "--begin_frame", "1000",
                 // "--output", "C:/Temp/cross_03_track.txt",
                 // "--output_video", "C:/Temp/cross_03_track.mp4",
                 "--show",
                 // "--show_progress",
-                "--show_blind_regions", 
+                // "--show_zones", 
             ]
         },
         { "name": "DNA Node",

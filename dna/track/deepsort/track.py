@@ -132,7 +132,7 @@ class Track:
             The associated detection.
 
         """
-        self.mean, self.covariance = kf.update(self.mean, self.covariance, detection.to_xyah())
+        self.mean, self.covariance = kf.update(self.mean, self.covariance, detection.bbox.to_xyah())
         self.features.append(detection.feature)
         self.last_detection = detection
         

@@ -1,9 +1,9 @@
+from collections import namedtuple
 from typing import List, Union, Tuple
 
 import numpy as np
 
 from dna import Box, Size2d
-
 
 def all_indices(values):
     return list(range(len(values)))
@@ -37,29 +37,16 @@ def overlap_ratios(box1, box2) -> Tuple[float,float,float]:
     iou = inter_area / (box1.area() + box2.area() - inter_area)  if box1.is_valid() and box2.is_valid() else 0
     return (r1, r2, iou)
 
-def find_overlaps_threshold(box, candidate_boxes, threshold, candidate_indices=None) -> List[Tuple[int,float]]:
+def overlaps(box, candidate_boxes, candidate_indices=None) -> List[Tuple[int,Tuple[float,float,float]]]:
     if not candidate_indices:
         candidate_indices = list(range(len(candidate_boxes)))
+    return [(idx, overlap_ratios(box, candidate_boxes[idx])) for idx in candidate_indices]
 
-    overlaps = []
-    for cidx in candidate_indices:
-        ratios = overlap_ratios(box, candidate_boxes[cidx])
-        if max(ratios) >= threshold:
-            overlaps.append((cidx, ratios))
+def overlaps_threshold(box, candidate_boxes, threshold, candidate_indices=None) -> List[Tuple[int,float]]:
+    return [(idx, ov) for idx, ov in overlaps(box, candidate_boxes, candidate_indices) if max(ov) >= threshold]
 
-    return overlaps
-
-def find_overlaps(box, candidate_boxes, match, candidate_indices=None) -> List[Tuple[int,float]]:
-    if not candidate_indices:
-        candidate_indices = list(range(len(candidate_boxes)))
-
-    overlaps = []
-    for cidx in candidate_indices:
-        ratios = overlap_ratios(box, candidate_boxes[cidx])
-        if match(*list(ratios)):
-            overlaps.append((cidx, ratios))
-
-    return overlaps
+def overlaps_cond(box, candidate_boxes, filter, candidate_indices=None) -> List[Tuple[int,float]]:
+    return [(idx, ov) for idx, ov in overlaps(box, candidate_boxes, candidate_indices) if filter(ov)]
 
 def split_tuples(tuples: List[Tuple]):
     firsts = []

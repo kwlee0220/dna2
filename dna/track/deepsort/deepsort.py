@@ -1,3 +1,4 @@
+from typing import List
 from re import L
 from dna import det
 from cv2 import determinant
@@ -54,16 +55,16 @@ class deepsort_rbc():
 
 		self.gaussian_mask = get_gaussian_mask().cuda()
 		self.transforms = torchvision.transforms.Compose([ \
-				torchvision.transforms.ToPILImage(),\
-				torchvision.transforms.Resize((128,128)),\
-				torchvision.transforms.ToTensor()])
+							torchvision.transforms.ToPILImage(),\
+							torchvision.transforms.Resize((128,128)),\
+							torchvision.transforms.ToTensor()])
 
-	def run_deep_sort(self, frame, bboxes, scores):
+	def run_deep_sort(self, frame, bboxes: List[Box], scores: List[float]):
 		if len(bboxes) > 0:
-			features = self.extract_features(frame, bboxes)
-			dets = [Detection(bbox, score, feature)	\
-					for bbox, score, feature in zip(bboxes, scores, features)]
-			outboxes = np.array([d.tlwh for d in dets])
+			tlwhs = [b.to_tlwh() for b in bboxes]
+			features = self.extract_features(frame, tlwhs)
+			dets = [Detection(bbox, score, feature)	for bbox, score, feature in zip(bboxes, scores, features)]
+			outboxes = np.array(tlwhs)
 			outscores = np.array([d.confidence for d in dets])
 			indices = prep.non_max_suppression(outboxes, 0.8, outscores)
 			dets = [dets[i] for i in indices]
@@ -73,8 +74,7 @@ class deepsort_rbc():
 		##################################################################################
 		# kwlee
 		if dna.DEBUG_SHOW_IMAGE:
-			convas = frame.copy()
-			convas = draw_ds_detections(convas, dets, color.GREEN, color.BLACK, line_thickness=1)
+			convas = draw_ds_detections(frame.copy(), dets, color.GREEN, color.BLACK, line_thickness=1)
 			cv2.imshow("dets", convas)
 			cv2.waitKey(1)
 		##################################################################################
@@ -84,8 +84,6 @@ class deepsort_rbc():
 		##################################################################################
 		# kwlee
 		if dna.DEBUG_SHOW_IMAGE:
-			import cv2
-			from dna import color
 			convas = draw_ds_tracks(frame.copy(), self.tracker.tracks, color.RED, color.BLACK, 1,
 									dna.DEBUG_TARGET_TRACKS)
 			cv2.imshow("predictions", convas)
@@ -96,8 +94,8 @@ class deepsort_rbc():
 
 		return self.tracker, deleteds
 
-	def extract_features(self, frame, bboxes):
-		processed_crops = self.pre_process(frame, bboxes).cuda()
+	def extract_features(self, frame, tlwhs):
+		processed_crops = self.pre_process(frame, tlwhs).cuda()
 		processed_crops = self.gaussian_mask * processed_crops
 
 		features = self.encoder.forward_once(processed_crops)
@@ -107,14 +105,9 @@ class deepsort_rbc():
 
 		return features
 		
-	def pre_process(self,frame,detections):
-		transforms = torchvision.transforms.Compose([ \
-			torchvision.transforms.ToPILImage(),\
-			torchvision.transforms.Resize((128,128)),\
-			torchvision.transforms.ToTensor()])
-
+	def pre_process(self, frame, tlwhs):
 		crops = []
-		for d in detections:
+		for d in tlwhs:
 			for i in range(len(d)):
 				if d[i] <0:
 					d[i] = 0	
@@ -139,11 +132,9 @@ class deepsort_rbc():
 
 			try:
 				crop = frame[ymin:ymax,xmin:xmax,:]
-				crop = transforms(crop)
+				crop = self.transforms(crop)
 				crops.append(crop)
 			except:
 				continue
 
-		crops = torch.stack(crops)
-
-		return crops
+		return torch.stack(crops)

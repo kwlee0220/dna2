@@ -198,7 +198,7 @@ class Box:
         return tlwh
 
     def to_xyah(self) -> np.ndarray:
-        ret = self.tlwh
+        ret = self.to_tlwh()
         ret[:2] += ret[2:] / 2
         ret[2] /= ret[3]
         return ret

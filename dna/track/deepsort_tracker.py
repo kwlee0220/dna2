@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Union
+from typing import List, Union, Tuple
 from pathlib import Path
 from dataclasses import dataclass
 import sys
@@ -29,7 +29,6 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
         self.__detector = detector
         self.det_dict = tracker_conf.det_mapping
         self.domain = domain
-        self.min_size = Size2d.from_np(tracker_conf.min_size)
         self.min_detection_score = tracker_conf.min_detection_score
 
         wt_path = Path(tracker_conf.model_file)
@@ -50,7 +49,7 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
                                 max_age=int(tracker_conf.max_age),
                                 n_init=int(tracker_conf.n_init),
                                 max_overlap_ratio = tracker_conf.max_overlap_ratio,
-                                min_size=self.min_size,
+                                min_size=Size2d.from_np(tracker_conf.min_size),
                                 blind_zones=blind_zones,
                                 dim_zones=dim_zones)
         self.deepsort = deepsort_rbc(domain = domain,
@@ -77,7 +76,7 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
         else:
             return None
 
-    def track(self, frame, frame_idx:int, ts:datetime) -> List[Track]:
+    def track(self, frame, frame_idx:int, ts) -> List[Track]:
         # detector를 통해 match 대상 detection들을 얻는다.
         dets = self.detector.detect(frame, frame_index=frame_idx)
 
@@ -97,9 +96,8 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
         detections = [det for det in dets if is_valid_detection(det)]
 
         self.__last_frame_detections = detections
-        boxes, scores = self.split_boxes_scores(self.__last_frame_detections)
-
-        tracker, deleted_tracks = self.deepsort.run_deep_sort(frame.astype(np.uint8), boxes, scores)
+        bboxes, scores = self.split_boxes_scores(self.__last_frame_detections)
+        tracker, deleted_tracks = self.deepsort.run_deep_sort(frame.astype(np.uint8), bboxes, scores)
 
         active_tracks = [self.to_dna_track(ds_track, frame_idx, ts) for ds_track in tracker.tracks]
         deleted_tracks = [self.to_dna_track(ds_track, frame_idx, ts) for ds_track in deleted_tracks]
@@ -117,11 +115,11 @@ class DeepSORTTracker(DetectionBasedObjectTracker):
                     location=Box.from_tlbr(np.rint(ds_track.to_tlbr())),
                     frame_index=frame_idx, ts=ts)
 
-    def split_boxes_scores(self, det_list):
+    def split_boxes_scores(self, det_list) -> Tuple[List[Box], List[float]]:
         boxes = []
         scores = []
         for det in det_list:
-            boxes.append(det.bbox.to_tlwh())
+            boxes.append(det.bbox)
             scores.append(det.score)
         
         return np.array(boxes), scores

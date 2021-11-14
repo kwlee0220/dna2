@@ -107,7 +107,7 @@ def draw_ds_tracks(convas, tracks, box_color, label_color=None, line_thickness=2
 
 def draw_ds_detections(convas, dets, box_color, label_color=None, line_thickness=2):
     for idx, det in enumerate(dets):
-        box = Box.from_tlbr(det.to_tlbr())
+        box = det.bbox
         box.draw(convas, box_color, line_thickness=line_thickness)
         if label_color:
             msg = f"{idx:02d}"
