@@ -46,6 +46,8 @@ class ImageProcessor(metaclass=ABCMeta):
         self.__cap.open()
         try:
             self.on_started(self.__cap)
+            if self.window_name:
+                cv2.namedWindow(self.window_name)
             if self.output_video:
                 fourcc = None
                 ext = self.output_video.suffix.lower()
@@ -69,6 +71,8 @@ class ImageProcessor(metaclass=ABCMeta):
         try:
             self.on_stopped()
         finally:
+            if self.window_name:
+                cv2.destroyWindow(self.window_name)
             self.__cap.close()
 
     def run(self) -> int:
@@ -132,7 +136,5 @@ class ImageProcessor(metaclass=ABCMeta):
 
         if progress:
             progress.close()
-        if self.window_name:
-            cv2.destroyWindow(self.window_name)
 
         return capture_count
